@@ -3,6 +3,8 @@
 import subprocess
 from pathlib import Path
 
+from .git_command_runner import GitCommandRunner
+
 
 class GitCodeVersionProvider:
     """
@@ -16,6 +18,7 @@ class GitCodeVersionProvider:
         *,
         repository_path: Path | None = None,
         fallback: str = "unknown",
+        git_command_runner: GitCommandRunner | None = None,
     ) -> None:
         if (
             not isinstance(fallback, str)
@@ -29,32 +32,23 @@ class GitCodeVersionProvider:
             repository_path or Path.cwd()
         )
         self._fallback = fallback.strip()
+        self._git_command_runner = (
+            git_command_runner
+            or GitCommandRunner()
+        )
 
     def get_code_version(self) -> str:
         try:
-            commit = self._read_git_commit()
+            commit = self._git_command_runner.read_head_commit(
+                self._repository_path,
+            )
         except (
             OSError,
             subprocess.CalledProcessError,
         ):
-            return self._fallback
+            commit = ""
 
         if not commit:
             return self._fallback
 
         return f"git:{commit}"
-
-    def _read_git_commit(self) -> str:
-        completed = subprocess.run(
-            [
-                "git",
-                "rev-parse",
-                "HEAD",
-            ],
-            cwd=self._repository_path,
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-
-        return completed.stdout.strip()
