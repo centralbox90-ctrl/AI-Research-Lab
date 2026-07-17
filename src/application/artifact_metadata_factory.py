@@ -1,10 +1,14 @@
-from datetime import datetime, UTC
-from uuid import uuid4
+﻿from uuid import uuid4
 
 from src.application.artifact_metadata import ArtifactMetadata
+from src.application.clock import Clock
+from src.application.system_clock import SystemClock
 
 
 class ArtifactMetadataFactory:
+
+    def __init__(self, clock: Clock | None = None) -> None:
+        self._clock = clock or SystemClock()
 
     def create(
         self,
@@ -18,7 +22,7 @@ class ArtifactMetadataFactory:
         return ArtifactMetadata(
             artifact_id=str(uuid4()),
             schema_version="1.0",
-            created_at=datetime.now(UTC),
+            created_at=self._clock.now(),
             experiment_id=experiment_id,
             executor_type=executor_type,
             executor_version=executor_version,
