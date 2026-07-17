@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from src.application.clock import Clock
+from src.application.system_clock import SystemClock
+
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -33,8 +36,10 @@ class Mt5MarketDataProvider(
     def __init__(
         self,
         mt5_module: Any = mt5,
+        clock: Clock | None = None,
     ) -> None:
         self._mt5 = mt5_module
+        self._clock = clock or SystemClock()
 
     def load(
         self,
@@ -334,7 +339,7 @@ class Mt5MarketDataProvider(
                 None,
             ),
             "retrieved_at_utc": (
-                datetime.now(timezone.utc).isoformat()
+                self._to_utc(self._clock.now()).isoformat()
             ),
         }
 
