@@ -3,7 +3,7 @@
 import subprocess
 from pathlib import Path
 
-from .git_commit_reader import GitCommitReader
+from .ports.git_commit_reader import GitCommitReader
 
 
 class GitCodeVersionProvider:

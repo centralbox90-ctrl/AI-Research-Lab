@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.application.clock import Clock
+from src.application.ports.clock import Clock
 from src.application.system_clock import SystemClock
 
 from datetime import datetime, timedelta, timezone

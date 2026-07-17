@@ -1,7 +1,7 @@
 ﻿from uuid import uuid4
 
 from src.application.artifact_metadata import ArtifactMetadata
-from src.application.clock import Clock
+from src.application.ports.clock import Clock
 from src.application.system_clock import SystemClock
 
 
