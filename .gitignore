@@ -1,19 +1,22 @@
-# Python
+# Local databases
+*.db
+
+# Local research state
+.project_memory/
+.research_lab/
+
+# Generated artifacts
+artifacts/
+result.json
+experiment.json
+*_current.txt
+
+# Local datasets
+data/
+
+# Backup files
+*.bak
+
+# Python cache
 __pycache__/
-*.pyc
-
-# Virtual environment
-.venv/
-
-# Jupyter
-.ipynb_checkpoints/
-
-# Logs
-logs/*.log
-
-# Data
-data/raw/
-data/processed/
-
-# IDE
-.vscode/
+*.py[cod]
