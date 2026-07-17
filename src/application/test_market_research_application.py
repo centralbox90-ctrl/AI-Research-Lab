@@ -144,21 +144,3 @@ def test_build_market_research_application_creates_ready_use_case(
     assert stored is not None
     assert stored["cycle"]["result"]["id"] == cycle.result.id
     assert stored["cycle"]["result"]["success"] is True
-
-
-def test_default_application_registers_market_backtest(
-    tmp_path: Path,
-) -> None:
-    store = SqliteResearchCycleStore(
-        db_path=tmp_path / "research_cycles.db",
-    )
-
-    application = build_market_research_application(
-        data_provider=FakeMarketDataProvider(),
-        signal_provider=FakeMarketSignalProvider(),
-        store=store,
-    )
-
-    assert application.registry.list_executor_types() == [
-        "market_backtest",
-    ]

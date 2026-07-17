@@ -1,17 +1,17 @@
-from src.application.canonical_market_data_provider import (
+﻿from src.application.canonical_market_data_provider import (
     CanonicalMarketDataProvider,
 )
 from src.application.generated_market_data_provider import (
     GeneratedMarketDataProvider,
 )
-from src.application.market_backtest_executor_factory import (
-    MarketBacktestExecutorFactory,
+from src.application.git_code_version_provider import (
+    GitCodeVersionProvider,
+)
+from src.application.git_command_runner import (
+    GitCommandRunner,
 )
 from src.application.market_data_provider import (
     MarketDataProvider,
-)
-from src.application.market_experiment_executor_registry import (
-    MarketExperimentExecutorRegistry,
 )
 from src.application.market_research_context_factory import (
     MarketResearchContextFactory,
@@ -21,6 +21,9 @@ from src.application.market_research_session_factory import (
 )
 from src.application.market_signal_provider import (
     MarketSignalProvider,
+)
+from src.application.research_runtime_configuration import (
+    ResearchRuntimeConfiguration,
 )
 from src.application.run_and_store_research_artifact import (
     RunAndStoreResearchArtifact,
@@ -38,15 +41,7 @@ from src.storage import (
     RESEARCH_CYCLE_DATABASE_PATH,
     SqliteResearchCycleStore,
 )
-from src.application.research_runtime_configuration import (
-    ResearchRuntimeConfiguration,
-)
-from src.application.git_code_version_provider import (
-    GitCodeVersionProvider,
-)
-from src.application.git_command_runner import (
-    GitCommandRunner,
-)
+
 
 def build_market_research_application(
     data_provider: MarketDataProvider,
@@ -56,10 +51,7 @@ def build_market_research_application(
     """
     Build the market-research application dependency graph.
 
-    The application uses the reproducible session pipeline by default.
-
-    The legacy executor registry remains registered as a compatibility
-    fallback while existing callers and tests are migrated.
+    The application uses the reproducible session pipeline.
     """
 
     canonical_data_provider = CanonicalMarketDataProvider(
@@ -91,24 +83,11 @@ def build_market_research_application(
         context_factory=context_factory,
     )
 
-    legacy_executor_factory = MarketBacktestExecutorFactory(
-        data_provider=data_provider,
-        signal_provider=signal_provider,
-    )
-
-    registry = MarketExperimentExecutorRegistry()
-
-    registry.register(
-        executor_type="market_backtest",
-        factory=legacy_executor_factory,
-    )
-
     run_and_store = RunAndStoreResearchArtifact(
         store=store,
     )
 
     return RunMarketResearch(
-        registry=registry,
         run_and_store=run_and_store,
         session_factory=session_factory,
     )

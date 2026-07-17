@@ -1,12 +1,10 @@
-from datetime import datetime, timezone
+﻿from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
 
 from src.application import (
     MarketExperimentExecutor,
-    MarketExperimentExecutorFactory,
-    MarketExperimentExecutorRegistry,
     MarketExperimentSpecification,
     MarketPositionDirection,
     RunAndStoreResearchArtifact,
@@ -53,24 +51,6 @@ class SuccessfulMarketExecutor:
                 "A stable positive effect was observed."
             ),
         )
-
-
-class RecordingMarketExecutorFactory:
-    def __init__(self) -> None:
-        self.received_specification: (
-            MarketExperimentSpecification | None
-        ) = None
-
-        self.executor = SuccessfulMarketExecutor()
-
-    def create(
-        self,
-        specification: MarketExperimentSpecification,
-    ) -> MarketExperimentExecutor:
-        self.received_specification = specification
-
-        return self.executor
-
 
 class FakeContext:
     def __init__(
@@ -180,145 +160,6 @@ def build_specification() -> MarketExperimentSpecification:
     )
 
 
-def test_run_market_research_executes_and_persists_artifact(
-    tmp_path: Path,
-) -> None:
-    specification = build_specification()
-
-    factory = RecordingMarketExecutorFactory()
-
-    typed_factory: MarketExperimentExecutorFactory = (
-        factory
-    )
-
-    registry = MarketExperimentExecutorRegistry()
-
-    registry.register(
-        executor_type="market_backtest",
-        factory=typed_factory,
-    )
-
-    store = SqliteResearchCycleStore(
-        db_path=tmp_path / "research_cycles.db",
-    )
-
-    use_case = RunMarketResearch(
-        registry=registry,
-        run_and_store=RunAndStoreResearchArtifact(
-            store=store,
-        ),
-    )
-
-    cycle = use_case.execute(
-        specification,
-    )
-
-    assert isinstance(
-        cycle,
-        NextExperimentResearchCycleResult,
-    )
-
-    assert factory.received_specification is specification
-
-    executed_experiment = (
-        factory.executor.received_experiment
-    )
-
-    assert executed_experiment is not None
-
-    assert (
-        cycle.result.experiment_id
-        == executed_experiment.id
-    )
-
-    assert (
-        executed_experiment.title
-        == specification.experiment_title
-    )
-
-    assert (
-        executed_experiment.parameters["symbol"]
-        == specification.symbol
-    )
-
-    assert (
-        executed_experiment.parameters[
-            "strategy_parameters"
-        ]
-        == specification.strategy_parameters
-    )
-
-    assert cycle.result.success is True
-
-    stored = store.get(
-        cycle.result.id,
-    )
-
-    assert stored is not None
-
-    assert stored["artifact_version"] == 1
-
-    assert (
-        stored["specification"]["symbol"]
-        == specification.symbol
-    )
-
-    assert (
-        stored["specification"]["timeframe"]
-        == specification.timeframe
-    )
-
-    assert (
-        stored["specification"][
-            "strategy_parameters"
-        ]
-        == specification.strategy_parameters
-    )
-
-    assert (
-        stored["cycle"]["result"]["id"]
-        == cycle.result.id
-    )
-
-    assert (
-        stored["cycle"]["result"]["success"]
-        is True
-    )
-
-    assert "research_environment" not in stored
-
-
-def test_run_market_research_rejects_unregistered_executor(
-    tmp_path: Path,
-) -> None:
-    specification = build_specification()
-
-    registry = MarketExperimentExecutorRegistry()
-
-    store = SqliteResearchCycleStore(
-        db_path=tmp_path / "research_cycles.db",
-    )
-
-    use_case = RunMarketResearch(
-        registry=registry,
-        run_and_store=RunAndStoreResearchArtifact(
-            store=store,
-        ),
-    )
-
-    with pytest.raises(
-        LookupError,
-        match=(
-            "unsupported executor_type: market_backtest"
-        ),
-    ):
-        use_case.execute(
-            specification,
-        )
-
-    assert store.list_result_ids() == []
-
-
 def test_run_market_research_uses_reproducible_session(
     tmp_path: Path,
 ) -> None:
@@ -384,7 +225,6 @@ def test_run_market_research_uses_reproducible_session(
     )
 
     use_case = RunMarketResearch(
-        registry=MarketExperimentExecutorRegistry(),
         run_and_store=RunAndStoreResearchArtifact(
             store=store,
         ),

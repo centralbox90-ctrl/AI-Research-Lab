@@ -22,9 +22,7 @@ from src.application.list_stored_research_cycles import (
 from src.application.market_backtest_executor import (
     MarketBacktestExecutor,
 )
-from src.application.market_backtest_executor_factory import (
-    MarketBacktestExecutorFactory,
-)
+
 from src.application.market_data_provider import (
     MarketDataProvider,
 )
@@ -32,9 +30,7 @@ from src.application.market_experiment_executor import (
     MarketExperimentExecutor,
     MarketExperimentExecutorFactory,
 )
-from src.application.market_experiment_executor_registry import (
-    MarketExperimentExecutorRegistry,
-)
+
 from src.application.market_experiment_mapper import (
     MappedMarketExperiment,
     MarketExperimentMapper,
@@ -119,11 +115,9 @@ __all__ = [
     "ListStoredResearchCycles",
     "MappedMarketExperiment",
     "MarketBacktestExecutor",
-    "MarketBacktestExecutorFactory",
     "MarketDataProvider",
     "MarketExperimentExecutor",
     "MarketExperimentExecutorFactory",
-    "MarketExperimentExecutorRegistry",
     "MarketExperimentMapper",
     "MarketExperimentSpecification",
     "MarketExperimentSpecificationLoader",
