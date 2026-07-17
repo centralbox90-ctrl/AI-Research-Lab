@@ -1,4 +1,4 @@
-﻿from datetime import datetime, UTC
+﻿from datetime import UTC, datetime
 
 from src.application.artifact_metadata_factory import ArtifactMetadataFactory
 
@@ -12,11 +12,23 @@ class StubClock:
         return self._current_time
 
 
+class StubIdGenerator:
+
+    def __init__(self, generated_id: str) -> None:
+        self._generated_id = generated_id
+
+    def generate(self) -> str:
+        return self._generated_id
+
+
 def test_artifact_metadata_factory_creation():
 
     created_at = datetime(2026, 7, 17, 12, 30, tzinfo=UTC)
+    artifact_id = "artifact-001"
+
     factory = ArtifactMetadataFactory(
         clock=StubClock(created_at),
+        id_generator=StubIdGenerator(artifact_id),
     )
 
     metadata = factory.create(
@@ -27,7 +39,7 @@ def test_artifact_metadata_factory_creation():
         code_version="abc123",
     )
 
-    assert metadata.artifact_id is not None
+    assert metadata.artifact_id == artifact_id
     assert metadata.schema_version == "1.0"
     assert metadata.created_at == created_at
     assert metadata.experiment_id == "experiment-001"
