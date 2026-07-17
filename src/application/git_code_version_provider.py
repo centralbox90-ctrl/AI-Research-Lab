@@ -3,7 +3,7 @@
 import subprocess
 from pathlib import Path
 
-from .git_command_runner import GitCommandRunner
+from .git_commit_reader import GitCommitReader
 
 
 class GitCodeVersionProvider:
@@ -16,9 +16,9 @@ class GitCodeVersionProvider:
     def __init__(
         self,
         *,
+        git_commit_reader: GitCommitReader,
         repository_path: Path | None = None,
         fallback: str = "unknown",
-        git_command_runner: GitCommandRunner | None = None,
     ) -> None:
         if (
             not isinstance(fallback, str)
@@ -32,14 +32,11 @@ class GitCodeVersionProvider:
             repository_path or Path.cwd()
         )
         self._fallback = fallback.strip()
-        self._git_command_runner = (
-            git_command_runner
-            or GitCommandRunner()
-        )
+        self._git_commit_reader = git_commit_reader
 
     def get_code_version(self) -> str:
         try:
-            commit = self._git_command_runner.read_head_commit(
+            commit = self._git_commit_reader.read_head_commit(
                 self._repository_path,
             )
         except (
