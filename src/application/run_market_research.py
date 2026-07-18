@@ -42,9 +42,9 @@ class RunMarketResearch:
 
         return self._run_and_store.execute(
             specification=specification,
-            question=session.question,
-            hypothesis=session.hypothesis,
-            experiment=session.experiment,
+            question=session.graph.question,
+            hypothesis=session.graph.hypothesis,
+            experiment=session.graph.experiment,
             executor=session.executor,
             research_environment=(
                 session.context.environment

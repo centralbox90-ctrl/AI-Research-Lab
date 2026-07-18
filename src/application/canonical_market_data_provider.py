@@ -13,7 +13,13 @@ from src.application.market_dataset_fingerprint import (
 from src.application.market_experiment_specification import (
     MarketExperimentSpecification,
 )
+from src.application.canonical_market_dataset import (
+    CanonicalMarketDataset,
+)
 
+from src.application.market_dataset_quality import (
+    MarketDatasetQualityAnalyzer,
+)
 
 class CanonicalMarketDataProvider:
     """
@@ -25,10 +31,11 @@ class CanonicalMarketDataProvider:
     """
 
     def __init__(
-        self,
-        provider: MarketDataProvider,
-        canonicalizer: MarketDatasetCanonicalizer | None = None,
-        fingerprinter: MarketDatasetFingerprinter | None = None,
+         self,
+         provider: MarketDataProvider,
+         canonicalizer: MarketDatasetCanonicalizer | None = None,
+         fingerprinter: MarketDatasetFingerprinter | None = None,
+        quality_analyzer: MarketDatasetQualityAnalyzer | None = None,
     ) -> None:
         self._provider = provider
         self._canonicalizer = (
@@ -38,6 +45,10 @@ class CanonicalMarketDataProvider:
         self._fingerprinter = (
             fingerprinter
             or MarketDatasetFingerprinter()
+        )
+        self._quality_analyzer = (
+            quality_analyzer
+            or MarketDatasetQualityAnalyzer()
         )
 
     def load(
@@ -54,17 +65,27 @@ class CanonicalMarketDataProvider:
             canonical_input
         )
 
-        self._fingerprinter.attach(
+        fingerprint = self._fingerprinter.attach(
             canonical,
             DatasetFingerprintContext(
                 symbol=specification.symbol,
                 timeframe=specification.timeframe,
                 closed_bars_policy=(
-                    "closed-bars-only-v1"
+                     "closed-bars-only-v1"
                 ),
             ),
         )
+        quality_report = (
+           self._quality_analyzer.analyze(
+                canonical
+           )
+        )
 
+        dataset = CanonicalMarketDataset(
+           data=canonical,
+           fingerprint=fingerprint,
+           quality_report=quality_report,
+        )
         provenance = source_data.attrs.get(
             "provenance"
         )

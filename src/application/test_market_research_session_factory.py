@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+﻿from datetime import datetime, timezone
 
 import pandas as pd
 
@@ -267,7 +267,7 @@ def test_created_session_executes_experiment() -> None:
 
     assert (
         result.experiment_id
-        == session.experiment.id
+        == session.graph.experiment.id
     )
 
     assert result.metrics["total_trades"] == 1

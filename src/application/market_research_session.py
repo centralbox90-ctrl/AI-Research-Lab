@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from dataclasses import dataclass
 
@@ -6,11 +6,14 @@ from src.application.market_experiment_executor import (
     MarketExperimentExecutor,
 )
 from src.research import (
-    Experiment,
     ExperimentResult,
-    Hypothesis,
-    Question,
     ResearchContext,
+)
+from src.application.prepared_market_backtest_executor import (
+    PreparedMarketBacktestExecutor,
+)
+from src.research.research_graph import (
+    ResearchGraph,
 )
 
 
@@ -20,35 +23,35 @@ class MarketResearchSession:
     Immutable application-level execution session for one market
     research experiment.
 
-    Question, Hypothesis and Experiment must originate from the same
-    mapping operation and preserve their research identity links.
+    The research graph preserves the identity links between Question,
+    Hypothesis, and Experiment.
     """
 
     context: ResearchContext
 
-    question: Question
-
-    hypothesis: Hypothesis
-
-    experiment: Experiment
+    graph: ResearchGraph
 
     executor: MarketExperimentExecutor
 
     def __post_init__(self) -> None:
-        if self.hypothesis.question_id != self.question.id:
+        if self.graph.hypothesis.question_id != self.graph.question.id:
             raise ValueError(
                 "hypothesis does not belong to session question"
             )
 
-        if self.experiment.hypothesis_id != self.hypothesis.id:
+        if (
+            self.graph.experiment.hypothesis_id
+            != self.graph.hypothesis.id
+        ):
             raise ValueError(
                 "experiment does not belong to session hypothesis"
             )
 
+    
     def execute(self) -> ExperimentResult:
         """
         Execute the experiment inside this immutable session.
         """
         return self.executor(
-            self.experiment,
+            self.graph.experiment,
         )

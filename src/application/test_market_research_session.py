@@ -1,3 +1,4 @@
+﻿from dataclasses import FrozenInstanceError
 from datetime import datetime, timezone
 
 import pandas as pd
@@ -24,12 +25,15 @@ from src.research import (
     ResearchContext,
     ResearchEnvironmentRef,
 )
+from src.research.research_graph import (
+    ResearchGraph,
+)
 
 
 class FakeExecutor:
     def __init__(self) -> None:
         self.called = False
-        self.received = None
+        self.received: Experiment | None = None
 
     def __call__(
         self,
@@ -99,9 +103,8 @@ def build_context() -> ResearchContext:
         }
     )
 
-    data = (
-        MarketDatasetCanonicalizer()
-        .canonicalize(raw)
+    data = MarketDatasetCanonicalizer().canonicalize(
+        raw,
     )
 
     MarketDatasetFingerprinter().attach(
@@ -134,6 +137,8 @@ def build_context() -> ResearchContext:
         market_data=data,
         assumptions=assumptions,
     )
+
+
 def build_question() -> Question:
     return Question(
         title="Question",
@@ -148,21 +153,29 @@ def build_hypothesis(
         title="Hypothesis",
     )
 
+
 def test_session_executes_executor() -> None:
     question = build_question()
-    hypothesis = build_hypothesis(question)
-    executor = FakeExecutor()
+    hypothesis = build_hypothesis(
+        question,
+    )
 
     experiment = Experiment(
         hypothesis_id=hypothesis.id,
         title="session test",
     )
 
-    session = MarketResearchSession(
-        context=build_context(),
+    executor = FakeExecutor()
+
+    graph = ResearchGraph(
         question=question,
         hypothesis=hypothesis,
         experiment=experiment,
+    )
+
+    session = MarketResearchSession(
+        context=build_context(),
+        graph=graph,
         executor=executor,
     )
 
@@ -173,30 +186,46 @@ def test_session_executes_executor() -> None:
     assert result.success is True
     assert result.experiment_id == experiment.id
 
+    assert session.graph is graph
+    assert session.graph.question is question
+    assert session.graph.hypothesis is hypothesis
+    assert session.graph.experiment is experiment
+
 
 def test_session_is_immutable() -> None:
     question = build_question()
-    hypothesis = build_hypothesis(question)
+    hypothesis = build_hypothesis(
+        question,
+    )
+
+    experiment = Experiment(
+        hypothesis_id=hypothesis.id,
+        title="immutable",
+    )
 
     session = MarketResearchSession(
         context=build_context(),
-        question=question,
-        hypothesis=hypothesis,
-        experiment=Experiment(
-            hypothesis_id=hypothesis.id,
-            title="immutable",
+        graph=ResearchGraph(
+            question=question,
+            hypothesis=hypothesis,
+            experiment=experiment,
         ),
         executor=FakeExecutor(),
     )
 
-    try:
-        session.experiment = Experiment(
+    replacement_graph = ResearchGraph(
+        question=question,
+        hypothesis=hypothesis,
+        experiment=Experiment(
             hypothesis_id=hypothesis.id,
             title="changed",
-        )
-        assert False
-    except Exception:
-        pass
+        ),
+    )
+
+    with pytest.raises(FrozenInstanceError):
+        session.graph = replacement_graph
+
+
 def test_session_rejects_inconsistent_graph() -> None:
     question = build_question()
 
@@ -210,14 +239,46 @@ def test_session_rejects_inconsistent_graph() -> None:
         title="Experiment",
     )
 
+    graph = ResearchGraph(
+        question=question,
+        hypothesis=hypothesis,
+        experiment=experiment,
+    )
+
     with pytest.raises(
         ValueError,
-        match="question",
+        match="hypothesis does not belong to session question",
     ):
         MarketResearchSession(
             context=build_context(),
-            question=question,
-            hypothesis=hypothesis,
-            experiment=experiment,
+            graph=graph,
+            executor=FakeExecutor(),
+        )
+
+
+def test_session_rejects_experiment_from_other_hypothesis() -> None:
+    question = build_question()
+    hypothesis = build_hypothesis(
+        question,
+    )
+
+    experiment = Experiment(
+        hypothesis_id="different-hypothesis",
+        title="Experiment",
+    )
+
+    graph = ResearchGraph(
+        question=question,
+        hypothesis=hypothesis,
+        experiment=experiment,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="experiment does not belong to session hypothesis",
+    ):
+        MarketResearchSession(
+            context=build_context(),
+            graph=graph,
             executor=FakeExecutor(),
         )

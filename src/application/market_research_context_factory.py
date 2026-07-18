@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import pandas as pd
 
+from src.application.canonical_market_dataset import (
+    CanonicalMarketDataset,
+)
 from src.application.code_version_provider import (
     CodeVersionProvider,
     StaticCodeVersionProvider,
@@ -30,6 +33,9 @@ class MarketResearchContextFactory:
     The factory does not load data and does not execute an experiment.
     It combines an already canonical fingerprinted dataset with the
     specification-derived assumption set and research environment.
+
+    During the dataset-contract migration, the factory accepts either
+    CanonicalMarketDataset or a legacy pandas DataFrame.
     """
 
     def __init__(
@@ -61,8 +67,18 @@ class MarketResearchContextFactory:
         self,
         *,
         specification: MarketExperimentSpecification,
-        market_data: pd.DataFrame,
+        dataset: (
+            CanonicalMarketDataset
+            | pd.DataFrame
+            | None
+        ) = None,
+        market_data: pd.DataFrame | None = None,
     ) -> ResearchContext:
+        resolved_market_data = self._resolve_market_data(
+            dataset=dataset,
+            market_data=market_data,
+        )
+
         assumptions = (
             build_assumption_set_from_market_specification(
                 specification
@@ -71,7 +87,7 @@ class MarketResearchContextFactory:
 
         environment = (
             self._research_environment_builder.build(
-                market_data,
+                resolved_market_data,
                 assumption_set_fingerprint=(
                     assumptions.fingerprint()
                 ),
@@ -80,14 +96,16 @@ class MarketResearchContextFactory:
                     .get_code_version()
                 ),
                 executor_version=(
-                    self._runtime_configuration.executor_version
+                    self._runtime_configuration
+                    .executor_version
                 ),
                 statistical_method_version=(
                     self._runtime_configuration
                     .statistical_method_version
                 ),
                 random_seed=(
-                    self._runtime_configuration.random_seed
+                    self._runtime_configuration
+                    .random_seed
                 ),
             )
         )
@@ -95,6 +113,49 @@ class MarketResearchContextFactory:
         return ResearchContext(
             specification=specification,
             environment=environment,
-            market_data=market_data,
+            market_data=resolved_market_data,
             assumptions=assumptions,
+        )
+
+    @staticmethod
+    def _resolve_market_data(
+        *,
+        dataset: (
+            CanonicalMarketDataset
+            | pd.DataFrame
+            | None
+        ),
+        market_data: pd.DataFrame | None,
+    ) -> pd.DataFrame:
+        if (
+            dataset is not None
+            and market_data is not None
+        ):
+            raise ValueError(
+                "Provide either dataset or market_data, "
+                "not both."
+            )
+
+        if isinstance(
+            dataset,
+            CanonicalMarketDataset,
+        ):
+            return dataset.data
+
+        if isinstance(
+            dataset,
+            pd.DataFrame,
+        ):
+            return dataset
+
+        if isinstance(
+            market_data,
+            pd.DataFrame,
+        ):
+            return market_data
+
+        raise TypeError(
+            "MarketResearchContextFactory.create() "
+            "requires CanonicalMarketDataset or "
+            "pandas DataFrame."
         )

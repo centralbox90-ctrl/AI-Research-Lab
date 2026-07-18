@@ -4,9 +4,13 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-from src.application.market_experiment_specification import (
-    MarketExperimentSpecification,
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.application.market_experiment_specification import (
+        MarketExperimentSpecification,
 )
+
 from src.research.assumption import (
     AssumptionSet,
 )

@@ -58,18 +58,20 @@ def build_market_research_application(
         provider=data_provider,
     )
 
-    runtime_configuration = ResearchRuntimeConfiguration(
-        code_version="development",
-        executor_version="backtest-engine:v1",
-        statistical_method_version="statistics:v1",
-        random_seed=42,
-    )
-
     git_commit_reader = GitCommandRunner()
 
     code_version_provider = GitCodeVersionProvider(
         git_commit_reader=git_commit_reader,
-        fallback=runtime_configuration.code_version,
+        fallback="development",
+    )
+
+    runtime_configuration = ResearchRuntimeConfiguration(
+        code_version=(
+            code_version_provider.get_code_version()
+    ),
+        executor_version="backtest-engine:v1",
+        statistical_method_version="statistics:v1",
+        random_seed=42,
     )
 
     context_factory = MarketResearchContextFactory(

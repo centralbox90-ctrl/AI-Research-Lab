@@ -26,14 +26,21 @@ from src.cli.research_cycle_json import (
 from src.cli.run_market_research_command import (
     RunMarketResearchCommand,
 )
-
+from src.cli.list_stored_research_campaigns_command import (
+    ListStoredResearchCampaignsCommand,
+)
+from src.cli.get_stored_research_campaign_command import (
+    GetStoredResearchCampaignCommand,
+)
 
 __all__ = [
     "ExportResearchArtifactCommand",
     "GetResearchCycleCommand",
     "GetStoredResearchArtifactCommand",
     "GetStoredResearchCycleCommand",
+    "GetStoredResearchCampaignCommand",
     "ListStoredResearchCyclesCommand",
+    "ListStoredResearchCampaignsCommand",
     "ResearchCli",
     "ResearchCycleJsonPresenter",
     "RunMarketResearchCommand",

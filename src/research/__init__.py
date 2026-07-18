@@ -5,6 +5,9 @@ from src.research.assumption import (
     AssumptionStatus,
     AssumptionType,
 )
+from src.research.research_graph import (
+    ResearchGraph,
+)
 from src.research.conclusion import Conclusion
 from src.research.contradiction_evaluation import ContradictionEvaluation
 from src.research.cycle_results import (
@@ -70,4 +73,5 @@ __all__ = [
     "StaleDatasetFingerprintError",
     "UnsupportedFingerprintSchemaError",
     "ResearchContext",
+    "ResearchGraph",
 ]

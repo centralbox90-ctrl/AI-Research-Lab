@@ -1,0 +1,12 @@
+warning: in the working copy of 'src/application/market_research_application.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/application/run_market_research.py', LF will be replaced by CRLF the next time Git touches it
+ src/application/__init__.py                        |  10 [32m+[m[31m-[m
+ .../market_backtest_executor_factory.py            |  44 [31m-----[m
+ .../market_experiment_executor_registry.py         |  70 [31m--------[m
+ src/application/market_research_application.py     |  45 [32m++[m[31m---[m
+ src/application/run_market_research.py             |  90 [32m++[m[31m--------[m
+ .../test_market_backtest_executor_factory.py       |  72 [31m--------[m
+ .../test_market_experiment_executor_registry.py    | 181 [31m---------------------[m
+ .../test_market_research_application.py            |  18 [31m--[m
+ src/application/test_run_market_research.py        | 164 [32m+[m[31m------------------[m
+ 9 files changed, 30 insertions(+), 664 deletions(-)

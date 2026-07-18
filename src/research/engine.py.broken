@@ -1,4 +1,4 @@
-﻿from collections.abc import Callable
+from collections.abc import Callable
 
 from src.research.analysis import Analysis
 from src.research.conclusion import Conclusion
@@ -56,7 +56,7 @@ from src.research.statistical_evaluator import StatisticalEvaluator
 
 class ResearchEngine:
     """
-    РљРѕРѕСЂРґРёРЅРёСЂСѓРµС‚ РІС‹РїРѕР»РЅРµРЅРёРµ РёСЃСЃР»РµРґРѕРІР°С‚РµР»СЊСЃРєРёС… С†РёРєР»РѕРІ.
+    Координирует выполнение исследовательских циклов.
     """
 
     def __init__(self) -> None:
@@ -98,7 +98,7 @@ class ResearchEngine:
             conclusion=conclusion,
             knowledge=knowledge,
         )
-    def run_campaign(
+          def run_campaign(
         self,
         question: Question,
         hypothesis: Hypothesis,
@@ -148,7 +148,6 @@ class ResearchEngine:
         except Exception:
             campaign.fail()
             raise
-
     def run_with_evaluation(
         self,
         question: Question,

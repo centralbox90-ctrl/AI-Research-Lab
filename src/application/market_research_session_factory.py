@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from src.application.market_data_provider import (
     MarketDataProvider,
@@ -21,14 +21,14 @@ from src.application.market_signal_provider import (
 from src.application.prepared_market_backtest_executor import (
     PreparedMarketBacktestExecutor,
 )
+from src.research.research_graph import (
+    ResearchGraph,
+)
 
 
 class MarketResearchSessionFactory:
     """
-    Builds one complete market research execution session.
-
-    Market data is loaded exactly once. The same dataset is used both
-    for ResearchContext construction and experiment execution.
+    Creates one immutable market research session.
     """
 
     def __init__(
@@ -42,35 +42,42 @@ class MarketResearchSessionFactory:
         self._data_provider = data_provider
         self._signal_provider = signal_provider
         self._context_factory = context_factory
-        self._mapper = mapper or MarketExperimentMapper()
+        self._mapper = (
+            mapper
+            or MarketExperimentMapper()
+        )
 
     def create(
         self,
         specification: MarketExperimentSpecification,
     ) -> MarketResearchSession:
         mapped = self._mapper.map(
-            specification,
+            specification
         )
 
-        market_data = self._data_provider.load(
-            specification,
+        dataset = self._data_provider.load(
+            specification
         )
 
         context = self._context_factory.create(
             specification=specification,
-            market_data=market_data,
+            dataset=dataset,
+        )
+
+        graph = ResearchGraph(
+            question=mapped.question,
+            hypothesis=mapped.hypothesis,
+            experiment=mapped.experiment,
         )
 
         executor = PreparedMarketBacktestExecutor(
             specification=specification,
-            market_data=market_data,
+            market_data=context.market_data,
             signal_provider=self._signal_provider,
         )
 
         return MarketResearchSession(
             context=context,
-            question=mapped.question,
-            hypothesis=mapped.hypothesis,
-            experiment=mapped.experiment,
+            graph=graph,
             executor=executor,
         )

@@ -1,6 +1,8 @@
 ﻿from datetime import datetime, timezone
 from pathlib import Path
-
+from src.research.research_graph import (
+    ResearchGraph,
+)
 import pytest
 
 from src.application import (
@@ -64,17 +66,12 @@ class FakeContext:
 class FakeSession:
     def __init__(
         self,
-        *,
-        context: FakeContext,
-        question: Question,
-        hypothesis: Hypothesis,
-        experiment: Experiment,
-        executor: MarketExperimentExecutor,
+        context,
+        graph: ResearchGraph,
+        executor,
     ) -> None:
         self.context = context
-        self.question = question
-        self.hypothesis = hypothesis
-        self.experiment = experiment
+        self.graph = graph
         self.executor = executor
 
 
@@ -209,11 +206,13 @@ def test_run_market_research_uses_reproducible_session(
     )
 
     session = FakeSession(
-        context=context,
-        question=question,
-        hypothesis=hypothesis,
-        experiment=experiment,
-        executor=executor,
+       context=context,
+       graph=ResearchGraph(
+           question=question,
+           hypothesis=hypothesis,
+           experiment=experiment,
+       ),
+       executor=executor,
     )
 
     session_factory = RecordingSessionFactory(

@@ -199,3 +199,23 @@ def test_provider_rejects_non_datetime_index() -> None:
         provider.load(
             build_specification()
         )
+def test_provider_generates_quality_metadata() -> None:
+    provider = CanonicalMarketDataProvider(
+        StubMarketDataProvider(
+            build_legacy_dataset()
+        )
+    )
+
+    data = provider.load(
+        build_specification()
+    )
+
+    assert len(data) == 2
+
+    assert data.attrs[
+        "dataset_fingerprint"
+    ].startswith(
+        "sha256:market-dataset:v1:"
+    )
+
+    assert data["timestamp"].is_monotonic_increasing

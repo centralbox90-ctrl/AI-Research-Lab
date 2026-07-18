@@ -1,4 +1,4 @@
-from src.research.analysis import Analysis
+﻿from src.research.analysis import Analysis
 from src.research.conclusion import Conclusion
 from src.research.evidence import Evidence
 from src.research.experiment import Experiment
@@ -7,6 +7,7 @@ from src.research.experiment_runner import ExperimentRunner
 from src.research.hypothesis import Hypothesis
 from src.research.knowledge import Knowledge
 from src.research.question import Question
+from src.research.research_campaign import ResearchCampaign
 from src.research.research_plan import ResearchPlan
 from src.research.research_types import ExperimentStatus
 
@@ -24,25 +25,45 @@ def test_research_pipeline() -> None:
     experiment = Experiment(
         hypothesis_id=hypothesis.id,
         title="Test experiment",
-        parameters={"period": 14},
+        parameters={
+            "period": 14,
+        },
+    )
+
+    campaign = ResearchCampaign(
+        title="Test campaign",
+        hypothesis_id=hypothesis.id,
+    )
+
+    campaign.add_experiment(
+        experiment.id,
     )
 
     plan = ResearchPlan(
         question_id=question.id,
         title="Test plan",
     )
-    plan.add_hypothesis(hypothesis.id)
-    plan.add_experiment(experiment.id)
 
-    def execute(current_experiment: Experiment) -> ExperimentResult:
+    plan.add_campaign(
+        campaign.id,
+    )
+
+    def execute(
+        current_experiment: Experiment,
+    ) -> ExperimentResult:
         return ExperimentResult(
             experiment_id=current_experiment.id,
             success=True,
-            metrics={"profit": 10.0},
+            metrics={
+                "profit": 10.0,
+            },
             conclusion="Hypothesis supported",
         )
 
-    result = ExperimentRunner().run(experiment, execute)
+    result = ExperimentRunner().run(
+        experiment,
+        execute,
+    )
 
     evidence = Evidence(
         experiment_id=experiment.id,
@@ -55,11 +76,16 @@ def test_research_pipeline() -> None:
         experiment_id=experiment.id,
         title="Experiment analysis",
         findings={
-            "profitable": result.metrics["profit"] > 0,
+            "profitable": (
+                result.metrics["profit"] > 0
+            ),
         },
         interpretation="Positive experiment result",
     )
-    analysis.add_evidence(evidence.id)
+
+    analysis.add_evidence(
+        evidence.id,
+    )
 
     conclusion = Conclusion(
         analysis_id=analysis.id,
@@ -81,10 +107,13 @@ def test_research_pipeline() -> None:
 
     assert hypothesis.question_id == question.id
     assert experiment.hypothesis_id == hypothesis.id
-    assert hypothesis.id in plan.hypothesis_ids
-    assert experiment.id in plan.experiment_ids
+
+    assert campaign.hypothesis_id == hypothesis.id
+    assert experiment.id in campaign.experiment_ids
+    assert campaign.id in plan.campaign_ids
 
     assert experiment.status == ExperimentStatus.COMPLETED
+
     assert result.experiment_id == experiment.id
     assert result.success is True
 
@@ -98,5 +127,6 @@ def test_research_pipeline() -> None:
     assert conclusion.hypothesis_id == hypothesis.id
     assert conclusion.supported is True
 
-    assert knowledge.statement == conclusion.statement
-    assert knowledge.confidence == conclusion.confidence
+    assert knowledge.question_id == question.id
+    assert knowledge.hypothesis_id == hypothesis.id
+    assert knowledge.experiment_id == experiment.id

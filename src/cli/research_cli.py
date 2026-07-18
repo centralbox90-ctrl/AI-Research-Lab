@@ -20,7 +20,20 @@ class ResearchCycleCommand(Protocol):
         Return a research cycle as JSON or None when missing.
         """
 
+class ResearchCampaignCommand(Protocol):
+    """
+    Command boundary for retrieving one research campaign.
+    """
 
+    def execute(
+        self,
+        campaign_id: str,
+        *,
+        indent: int | None = 2,
+    ) -> str | None:
+        """
+        Return a research campaign as JSON or None when missing.
+        """
 class ResearchArtifactCommand(Protocol):
     """
     Command boundary for retrieving one research artifact.
@@ -35,7 +48,6 @@ class ResearchArtifactCommand(Protocol):
         """
         Return a research artifact as JSON or None when missing.
         """
-
 
 class ExportResearchArtifactCommand(Protocol):
     """
@@ -83,6 +95,19 @@ class ListResearchCyclesCommand(Protocol):
         Return stored research-cycle IDs as JSON.
         """
 
+class ListResearchCampaignsCommand(Protocol):
+    """
+    Command boundary for listing stored research-campaign IDs.
+    """
+
+    def execute(
+        self,
+        *,
+        indent: int | None = 2,
+    ) -> str:
+        """
+        Return stored research-campaign IDs as JSON.
+        """
 
 class RunResearchCommand(Protocol):
     """
@@ -108,6 +133,9 @@ class ResearchCli:
     def __init__(
         self,
         get_research_cycle_command: ResearchCycleCommand,
+        get_research_campaign_command: (
+        ResearchCampaignCommand | None
+        ) = None,
         list_research_cycles_command: (
             ListResearchCyclesCommand | None
         ) = None,
@@ -121,15 +149,22 @@ class ResearchCli:
         compare_research_artifacts_command: (
             CompareResearchArtifactsCommand | None
         ) = None,
+        list_research_campaigns_command: (
+            ListResearchCampaignsCommand | None
+        ) = None,
     ) -> None:
         self.get_research_cycle_command = (
             get_research_cycle_command
         )
-
+        self.get_research_campaign_command = (
+            get_research_campaign_command
+        )
         self.list_research_cycles_command = (
             list_research_cycles_command
         )
-
+        self.list_research_campaigns_command = (
+            list_research_campaigns_command
+        )
         self.run_research_command = (
             run_research_command
         )
@@ -144,6 +179,9 @@ class ResearchCli:
 
         self.compare_research_artifacts_command = (
             compare_research_artifacts_command
+        )
+        self.list_research_campaigns_command = (
+             list_research_campaigns_command
         )
 
         self.parser = self._build_parser()
@@ -176,6 +214,12 @@ class ResearchCli:
                 output_stream,
                 error_stream,
             )
+        if arguments.command == "get-research-campaign":
+            return self._run_get_research_campaign(
+                arguments,
+                output_stream,
+                error_stream,
+            )
 
         if arguments.command == "export-research-artifact":
             return self._run_export_research_artifact(
@@ -197,7 +241,18 @@ class ResearchCli:
                 output_stream,
                 error_stream,
             )
-
+        if arguments.command == "list-research-campaigns":
+            return self._run_list_research_campaigns(
+                arguments,
+                output_stream,
+                error_stream,
+            )
+        if arguments.command == "list-research-campaigns":
+            return self._run_list_research_campaigns(
+                arguments,
+                output_stream,
+                error_stream,
+           )
         if arguments.command == "run-research":
             return self._run_market_research(
                 arguments,
@@ -353,6 +408,59 @@ class ResearchCli:
 
         return 0
 
+    def _run_list_research_campaigns(
+        self,
+        arguments: argparse.Namespace,
+        stdout: TextIO,
+        stderr: TextIO,
+    ) -> int:
+        if self.list_research_campaigns_command is None:
+            stderr.write(
+                "List research campaigns command is not configured.\n"
+            )
+            return 2
+
+        indent = None if arguments.compact else 2
+
+        rendered = self.list_research_campaigns_command.execute(
+            indent=indent,
+        )
+
+        stdout.write(rendered)
+        stdout.write("\n")
+
+        return 0
+
+    def _run_get_research_campaign(
+        self,
+        arguments: argparse.Namespace,
+        stdout: TextIO,
+        stderr: TextIO,
+    ) -> int:
+        if self.get_research_campaign_command is None:
+            stderr.write(
+                "Get research campaign command is not configured.\n"
+            )
+            return 2
+
+        indent = None if arguments.compact else 2
+
+        rendered = self.get_research_campaign_command.execute(
+            arguments.campaign_id,
+            indent=indent,
+        )
+
+        if rendered is None:
+            stderr.write(
+                f"Research campaign not found: {arguments.campaign_id}\n"
+            )
+            return 1
+
+        stdout.write(rendered)
+        stdout.write("\n")
+
+        return 0
+
     def _run_market_research(
         self,
         arguments: argparse.Namespace,
@@ -382,7 +490,7 @@ class ResearchCli:
         stdout.write("\n")
 
         return 0
-
+       
     def _build_parser(self) -> argparse.ArgumentParser:
         parser = argparse.ArgumentParser(
             prog="ai-research-lab",
@@ -402,6 +510,18 @@ class ResearchCli:
         )
 
         get_cycle_parser.add_argument(
+            "--compact",
+            action="store_true",
+        )
+        get_campaign_parser = subparsers.add_parser(
+           "get-research-campaign",
+        )
+
+        get_campaign_parser.add_argument(
+            "campaign_id",
+        )
+
+        get_campaign_parser.add_argument(
             "--compact",
             action="store_true",
         )
@@ -456,6 +576,14 @@ class ResearchCli:
 
         list_cycles_parser = subparsers.add_parser(
             "list-research-cycles",
+        )
+        list_campaigns_parser = subparsers.add_parser(
+            "list-research-campaigns",
+        )
+
+        list_campaigns_parser.add_argument(
+           "--compact",
+           action="store_true",
         )
 
         list_cycles_parser.add_argument(
