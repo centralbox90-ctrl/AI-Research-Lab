@@ -1,0 +1,140 @@
+import pandas as pd
+import pytest
+
+from src.indicators.descriptor import (
+    IndicatorDescriptor,
+    IntegerParameterSpace,
+    LevelCrossResearchProfile,
+    NumericParameterSpace,
+)
+from src.indicators.series import IndicatorSeries
+from src.indicators.specification import IndicatorSpecification
+
+
+def stub_calculator(
+    data: pd.DataFrame,
+    specification: IndicatorSpecification,
+) -> IndicatorSeries:
+    raise NotImplementedError
+
+
+def test_creates_indicator_descriptor() -> None:
+    descriptor = IndicatorDescriptor(
+        id="williams_r",
+        symbol="WILLR",
+        name="Williams %R",
+        version=1,
+        calculator=stub_calculator,
+        default_parameters={
+            "period": 14,
+        },
+        parameter_spaces={
+            "period": IntegerParameterSpace(
+                minimum=5,
+                maximum=50,
+                step=1,
+                default=14,
+                coarse_values=(
+                    5,
+                    8,
+                    11,
+                    14,
+                    17,
+                    20,
+                    25,
+                    30,
+                    40,
+                    50,
+                ),
+            ),
+        },
+        research_profiles=(
+            LevelCrossResearchProfile(
+                level_space=NumericParameterSpace(
+                    minimum=-95.0,
+                    maximum=-5.0,
+                    step=5.0,
+                    coarse_values=(
+                        -90.0,
+                        -70.0,
+                        -50.0,
+                        -30.0,
+                        -10.0,
+                    ),
+                ),
+                canonical_levels=(
+                    -80.0,
+                    -20.0,
+                ),
+            ),
+        ),
+    )
+
+    assert descriptor.id == "williams_r"
+    assert descriptor.symbol == "WILLR"
+    assert descriptor.default_parameters["period"] == 14
+
+    period_space = descriptor.parameter_spaces["period"]
+
+    assert period_space.minimum == 5
+    assert period_space.maximum == 50
+
+    profile = descriptor.research_profiles[0]
+
+    assert profile.canonical_levels == (
+        -80.0,
+        -20.0,
+    )
+
+
+def test_rejects_canonical_level_outside_space() -> None:
+    with pytest.raises(
+        ValueError,
+        match="canonical levels",
+    ):
+        LevelCrossResearchProfile(
+            level_space=NumericParameterSpace(
+                minimum=-95.0,
+                maximum=-5.0,
+                step=5.0,
+            ),
+            canonical_levels=(
+                -100.0,
+            ),
+        )
+
+
+def test_rejects_invalid_direction() -> None:
+    with pytest.raises(
+        ValueError,
+        match="unsupported directions",
+    ):
+        LevelCrossResearchProfile(
+            level_space=NumericParameterSpace(
+                minimum=-95.0,
+                maximum=-5.0,
+                step=5.0,
+            ),
+            canonical_levels=(
+                -80.0,
+            ),
+            directions=(
+                "unknown",
+            ),
+        )
+
+
+def test_descriptor_parameters_are_immutable() -> None:
+    descriptor = IndicatorDescriptor(
+        id="williams_r",
+        symbol="WILLR",
+        name="Williams %R",
+        version=1,
+        calculator=stub_calculator,
+        default_parameters={
+            "period": 14,
+        },
+    )
+
+    with pytest.raises(TypeError):
+        descriptor.default_parameters["period"] = 20

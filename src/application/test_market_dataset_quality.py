@@ -6,7 +6,7 @@ from src.application.market_dataset_quality import (
     MarketDatasetQualityAnalyzer,
 )
 
-from src.application.market_dataset_fingerprint import (
+from src.research.market_dataset_fingerprint import (
     MarketDatasetCanonicalizer,
 )
 

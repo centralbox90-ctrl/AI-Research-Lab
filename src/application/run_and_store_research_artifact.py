@@ -24,15 +24,14 @@ from src.research import (
     ResearchEnvironmentRef,
 )
 
+
 class RunAndStoreResearchArtifact:
     """
     Runs a research cycle and stores a reproducible research artifact.
 
-    The artifact contains:
-    - artifact metadata;
-    - optional artifact lineage;
-    - original market experiment specification;
-    - completed research cycle.
+    Every persisted artifact must include the immutable research
+    environment that identifies the dataset, assumptions, code,
+    executor, statistical method, and random seed used by the run.
 
     This use case keeps artifact persistence outside the research
     domain and outside storage implementation details.
@@ -69,12 +68,21 @@ class RunAndStoreResearchArtifact:
         hypothesis: Hypothesis,
         experiment: Experiment,
         executor: Any,
+        research_environment: ResearchEnvironmentRef,
         lineage: ArtifactLineage | None = None,
-        research_environment: ResearchEnvironmentRef | None = None,
     ) -> NextExperimentResearchCycleResult:
         """
-        Execute research and persist a complete artifact.
+        Execute research and persist a reproducible artifact.
         """
+
+        if not isinstance(
+            research_environment,
+            ResearchEnvironmentRef,
+        ):
+            raise TypeError(
+                "research_environment must be a "
+                "ResearchEnvironmentRef"
+            )
 
         cycle = (
             self.research_engine.run_with_next_experiment_selection(
@@ -88,9 +96,13 @@ class RunAndStoreResearchArtifact:
         metadata = self.metadata_factory.create(
             experiment_id=str(experiment.id),
             executor_type=specification.executor_type,
-            executor_version=None,
+            executor_version=(
+                research_environment.executor_version
+            ),
             data_source=specification.data_source,
-            code_version=None,
+            code_version=(
+                research_environment.code_version
+            ),
         )
 
         artifact = self.serializer.serialize(

@@ -5,7 +5,7 @@ import pandas as pd
 from src.application.market_data_provider import (
     MarketDataProvider,
 )
-from src.application.market_dataset_fingerprint import (
+from src.research.market_dataset_fingerprint import (
     DatasetFingerprintContext,
     MarketDatasetCanonicalizer,
     MarketDatasetFingerprinter,

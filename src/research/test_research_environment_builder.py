@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import pytest
 
-from src.application.market_dataset_fingerprint import (
+from src.research.market_dataset_fingerprint import (
     DatasetFingerprintContext,
     MarketDatasetCanonicalizer,
     MarketDatasetFingerprinter,

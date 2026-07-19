@@ -14,6 +14,7 @@ from src.application.run_and_store_research_artifact import (
 from src.research import (
     Experiment,
     ExperimentResult,
+    ResearchEnvironmentRef,
     Hypothesis,
     Question,
 )
@@ -97,6 +98,17 @@ def build_research_entities():
 
     return question, hypothesis, experiment
 
+def build_research_environment() -> ResearchEnvironmentRef:
+    return ResearchEnvironmentRef(
+        dataset_fingerprint="dataset-fingerprint-001",
+        assumption_set_fingerprint=(
+            "assumption-set-fingerprint-001"
+        ),
+        code_version="git:test-commit",
+        executor_version="backtest-engine:test",
+        statistical_method_version="statistics:test",
+        random_seed=42,
+    )
 
 def test_run_and_store_research_artifact_persists_artifact(
     tmp_path: Path,
@@ -119,6 +131,7 @@ def test_run_and_store_research_artifact_persists_artifact(
         hypothesis=hypothesis,
         experiment=experiment,
         executor=SuccessfulExecutor(),
+        research_environment=build_research_environment(),        
     )
 
     stored = store.get(
@@ -164,7 +177,9 @@ def test_run_and_store_research_artifact_persists_lineage(
         hypothesis=hypothesis,
         experiment=experiment,
         executor=SuccessfulExecutor(),
+        research_environment=build_research_environment(),
         lineage=lineage,
+        
     )
 
     reopened_store = SqliteResearchCycleStore(

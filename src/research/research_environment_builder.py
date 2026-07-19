@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import pandas as pd
 
-from src.application.market_dataset_fingerprint import (
+from src.research.market_dataset_fingerprint import (
     DatasetFingerprintContext,
     MarketDatasetFingerprinter,
 )
+
 from src.research.research_environment import (
     ResearchEnvironmentRef,
 )

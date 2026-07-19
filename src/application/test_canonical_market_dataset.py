@@ -6,7 +6,7 @@ from src.application.canonical_market_dataset import (
     CanonicalMarketDataset,
 )
 
-from src.application.market_dataset_fingerprint import (
+from src.research.market_dataset_fingerprint import (
     MarketDatasetFingerprint,
 )
 

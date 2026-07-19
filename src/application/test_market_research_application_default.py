@@ -1,4 +1,4 @@
-from src.application.market_research_application import (
+from src.cli.market_research_composition_root import (
     build_default_market_research_application,
 )
 from src.application.market_experiment_specification import (

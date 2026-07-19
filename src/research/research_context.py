@@ -1,15 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Generic, TypeVar
 
 import pandas as pd
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from src.application.market_experiment_specification import (
-        MarketExperimentSpecification,
-)
 
 from src.research.assumption import (
     AssumptionSet,
@@ -19,15 +13,18 @@ from src.research.research_environment import (
 )
 
 
+SpecificationT = TypeVar("SpecificationT")
+
+
 @dataclass(frozen=True)
-class ResearchContext:
+class ResearchContext(Generic[SpecificationT]):
     """
     Immutable execution context for one research experiment.
 
     Every research cycle operates inside one immutable context.
     """
 
-    specification: MarketExperimentSpecification
+    specification: SpecificationT
 
     environment: ResearchEnvironmentRef
 

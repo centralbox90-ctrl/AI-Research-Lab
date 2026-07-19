@@ -21,6 +21,7 @@ from src.research import (
     NextExperimentResearchCycleResult,
     NextExperimentSelection,
     Question,
+    ResearchEnvironmentRef,
 )
 
 
@@ -52,6 +53,7 @@ class RunSelectedNextExperiment:
         hypothesis: Hypothesis,
         parent_experiment: Experiment,
         selection: NextExperimentSelection,
+        research_environment: ResearchEnvironmentRef,
         executor: Any,
     ) -> NextExperimentResearchCycleResult:
         parent_artifact = self.artifact_getter.execute(
@@ -89,6 +91,7 @@ class RunSelectedNextExperiment:
             hypothesis=hypothesis,
             experiment=child_experiment,
             executor=executor,
+            research_environment=research_environment,
             lineage=lineage,
         )
 

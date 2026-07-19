@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-from src.application.market_dataset_fingerprint import (
+from src.research.market_dataset_fingerprint import (
     MarketDatasetFingerprint,
 )
 

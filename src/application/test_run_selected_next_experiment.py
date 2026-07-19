@@ -20,6 +20,7 @@ from src.research import (
     Hypothesis,
     NextExperimentSelection,
     Question,
+    ResearchEnvironmentRef,
 )
 from src.storage import SqliteResearchCycleStore
 
@@ -74,6 +75,17 @@ def build_specification():
         max_holding_bars=10,
     )
 
+def build_research_environment() -> ResearchEnvironmentRef:
+    return ResearchEnvironmentRef(
+        dataset_fingerprint="dataset-fingerprint-001",
+        assumption_set_fingerprint=(
+            "assumption-set-fingerprint-001"
+        ),
+        code_version="git:test-commit",
+        executor_version="backtest-engine:test",
+        statistical_method_version="statistics:test",
+        random_seed=42,
+    )
 
 def test_run_selected_next_experiment_persists_child_lineage(
     tmp_path: Path,
@@ -115,6 +127,7 @@ def test_run_selected_next_experiment_persists_child_lineage(
         hypothesis=hypothesis,
         experiment=parent_experiment,
         executor=SuccessfulExecutor(),
+        research_environment=build_research_environment(),
     )
 
     parent_artifact = store.get(
@@ -150,6 +163,7 @@ def test_run_selected_next_experiment_persists_child_lineage(
         hypothesis=hypothesis,
         parent_experiment=parent_experiment,
         selection=selection,
+        research_environment=build_research_environment(),
         executor=SuccessfulExecutor(),
     )
 

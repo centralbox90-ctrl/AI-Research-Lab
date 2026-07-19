@@ -57,7 +57,6 @@ from src.application.market_experiment_specification_loader import (
     MarketExperimentSpecificationLoader,
 )
 from src.application.market_research_application import (
-    build_default_market_research_application,
     build_market_research_application,
 )
 from src.application.market_research_context_factory import (
@@ -158,7 +157,6 @@ __all__ = [
     "RunResearchCycle",
     "SerializedResearchCycleStore",
     "StaticCodeVersionProvider",
-    "build_default_market_research_application",
     "build_market_research_application",
     "SerializedResearchCampaignStore",
     "RunAndStoreSerializedResearchCampaign",

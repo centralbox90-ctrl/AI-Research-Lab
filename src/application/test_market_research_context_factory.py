@@ -8,7 +8,7 @@ from src.application import (
     MarketPositionDirection,
     ResearchRuntimeConfiguration,
 )
-from src.application.market_dataset_fingerprint import (
+from src.research.market_dataset_fingerprint import (
     DatasetFingerprintContext,
     MarketDatasetCanonicalizer,
     MarketDatasetFingerprinter,

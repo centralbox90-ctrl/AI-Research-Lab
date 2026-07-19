@@ -1,9 +1,7 @@
 ﻿from src.application.canonical_market_data_provider import (
     CanonicalMarketDataProvider,
 )
-from src.application.generated_market_data_provider import (
-    GeneratedMarketDataProvider,
-)
+
 from src.application.git_code_version_provider import (
     GitCodeVersionProvider,
 )
@@ -34,14 +32,6 @@ from src.application.run_market_research import (
 from src.application.serialized_research_cycle_store import (
     SerializedResearchCycleStore,
 )
-from src.application.simple_market_signal_provider import (
-    SimpleMarketSignalProvider,
-)
-from src.storage import (
-    RESEARCH_CYCLE_DATABASE_PATH,
-    SqliteResearchCycleStore,
-)
-
 
 def build_market_research_application(
     data_provider: MarketDataProvider,
@@ -94,25 +84,3 @@ def build_market_research_application(
         session_factory=session_factory,
     )
 
-
-def build_default_market_research_application(
-) -> RunMarketResearch:
-    """
-    Build a ready-to-run local market research application.
-
-    Uses generated market data, simple rule-based signals, and the
-    default SQLite research-cycle store.
-
-    Production adapters can replace these dependencies without changing
-    the market-research use case.
-    """
-
-    store = SqliteResearchCycleStore(
-        db_path=RESEARCH_CYCLE_DATABASE_PATH,
-    )
-
-    return build_market_research_application(
-        data_provider=GeneratedMarketDataProvider(),
-        signal_provider=SimpleMarketSignalProvider(),
-        store=store,
-    )
