@@ -9,7 +9,7 @@ from src.research.experiment_result import ExperimentResult
 from src.research.hypothesis import Hypothesis
 from src.research.question import Question
 from src.research.research_execution import ResearchExecution
-
+from src.research.research_campaign import ResearchCampaign
 
 @dataclass
 class AIScientist:
@@ -93,6 +93,84 @@ class AIScientist:
 
         except Exception as error:
             execution.fail(error)
+            raise
+
+    def run_campaign(
+        self,
+        engine: ResearchEngine,
+        question: Question,
+        hypothesis: Hypothesis,
+        campaign: ResearchCampaign,
+        experiments: list[Experiment],
+        executor: Callable[[Experiment], ExperimentResult],
+    ) -> list[ResearchExecution]:
+        """
+        Runs a research campaign through the existing research engine.
+
+        ResearchEngine remains responsible for campaign orchestration.
+        AIScientist records the lifecycle of each individual cycle.
+        """
+
+        executions: list[ResearchExecution] = []
+        active_execution: ResearchExecution | None = None
+
+        def on_cycle_started(
+            experiment: Experiment,
+        ) -> None:
+            nonlocal active_execution
+
+            execution = ResearchExecution(
+                question_id=question.id,
+                hypothesis_id=hypothesis.id,
+                experiment_id=experiment.id,
+                status="RUNNING",
+            )
+
+            self.start_execution(execution)
+            executions.append(execution)
+            active_execution = execution
+
+        def on_cycle_completed(
+            experiment: Experiment,
+            result: ResearchCycleResult,
+        ) -> None:
+            nonlocal active_execution
+
+            if (
+                active_execution is None
+                or active_execution.experiment_id
+                != experiment.id
+            ):
+                raise RuntimeError(
+                    "completed cycle has no active execution"
+                )
+
+            active_execution.complete(result)
+            active_execution.evidence_id = result.evidence.id
+            active_execution.knowledge_id = result.knowledge.id
+
+            active_execution = None
+
+        try:
+            engine.run_campaign(
+                question=question,
+                hypothesis=hypothesis,
+                campaign=campaign,
+                experiments=experiments,
+                executor=executor,
+                on_cycle_started=on_cycle_started,
+                on_cycle_completed=on_cycle_completed,
+            )
+
+            return executions
+
+        except Exception as error:
+            if (
+                active_execution is not None
+                and not active_execution.is_completed()
+            ):
+                active_execution.fail(error)
+
             raise
 
     def completed_executions(self) -> list[ResearchExecution]:

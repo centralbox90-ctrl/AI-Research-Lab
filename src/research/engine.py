@@ -110,6 +110,14 @@ class ResearchEngine:
             [Experiment],
             ExperimentResult,
         ],
+        on_cycle_started: Callable[
+            [Experiment],
+            None,
+        ] | None = None,
+        on_cycle_completed: Callable[
+            [Experiment, ResearchCycleResult],
+            None,
+        ] | None = None,
     ) -> list[ResearchCycleResult]:
         if campaign.hypothesis_id != hypothesis.id:
             raise ValueError(
@@ -134,6 +142,9 @@ class ResearchEngine:
 
         try:
             for experiment in experiments:
+                if on_cycle_started is not None:
+                    on_cycle_started(experiment)
+
                 result = self.run(
                     question=question,
                     hypothesis=hypothesis,
@@ -143,6 +154,12 @@ class ResearchEngine:
 
                 results.append(result)
 
+                if on_cycle_completed is not None:
+                    on_cycle_completed(
+                        experiment,
+                        result,
+                    )
+
             campaign.complete()
 
             return results
@@ -150,7 +167,6 @@ class ResearchEngine:
         except Exception:
             campaign.fail()
             raise
-
     def run_with_evaluation(
         self,
         question: Question,
@@ -650,3 +666,5 @@ class ResearchEngine:
         )
 
         return cycles, best
+
+
