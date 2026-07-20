@@ -238,6 +238,16 @@ def test_factory_builds_campaign_from_two_specifications() -> None:
         session.experiments[0].title
         == "Campaign experiment A"
     )
+    
+    assert (
+        session.campaign.hypothesis_id
+        == session.hypothesis.id
+    )
+
+    assert session.campaign.experiment_ids == [
+        experiment.id
+        for experiment in session.experiments
+    ] 
 
     assert (
         session.experiments[1].title

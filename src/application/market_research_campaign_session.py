@@ -8,12 +8,15 @@ from src.research.research_context import (
 from src.application.prepared_market_campaign_executor import (
     PreparedMarketCampaignExecutor,
 )
-from src.research import (
-    Experiment,
-    Hypothesis,
+from src.research import ( 
+    Experiment, 
+    Hypothesis, 
     Question,
-)
+) 
 
+from src.research.research_campaign import ( 
+    ResearchCampaign, 
+)
 
 @dataclass(frozen=True, slots=True)
 class MarketResearchCampaignSession:
@@ -29,6 +32,8 @@ class MarketResearchCampaignSession:
     question: Question
 
     hypothesis: Hypothesis
+
+    campaign: ResearchCampaign
 
     experiments: tuple[
         Experiment,

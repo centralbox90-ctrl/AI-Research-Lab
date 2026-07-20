@@ -29,7 +29,9 @@ from src.application.prepared_market_backtest_executor import (
 from src.application.prepared_market_campaign_executor import (
     PreparedMarketCampaignExecutor,
 )
-
+from src.research.research_campaign import ( 
+    ResearchCampaign, 
+)
 
 class MarketResearchCampaignSessionFactory:
     """
@@ -98,6 +100,16 @@ class MarketResearchCampaignSessionFactory:
             executors_by_experiment_id[
                 experiment.id
             ] = executor
+        
+        campaign = ResearchCampaign(
+           title=mapped.question.title,
+           hypothesis_id=mapped.hypothesis.id,
+        )
+
+        for experiment in mapped.experiments:
+           campaign.add_experiment(
+               experiment.id,
+        )
 
         campaign_executor = PreparedMarketCampaignExecutor(
             executors_by_experiment_id
@@ -107,6 +119,7 @@ class MarketResearchCampaignSessionFactory:
             contexts=tuple(contexts),
             question=mapped.question,
             hypothesis=mapped.hypothesis,
+            campaign=campaign,
             experiments=tuple(
                 mapped.experiments
             ),
