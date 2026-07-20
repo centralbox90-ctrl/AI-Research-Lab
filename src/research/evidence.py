@@ -26,6 +26,18 @@ class Evidence:
 
     notes: str = ""
 
+    question_id: str = ""
+
+    hypothesis_id: str = ""
+
+    observation_ids: list[str] = field(default_factory=list)
+
+    description: str = ""
+
+    supports_hypothesis: bool = False
+
+    confidence: float = 0.0
+
     def summary(self) -> str:
         return (
             f"Evidence: {self.title}\n"
