@@ -1,4 +1,7 @@
+from dataclasses import replace
 from datetime import datetime, timezone
+
+import pytest
 
 from src.application import (
     MarketExperimentMapper,
@@ -143,3 +146,114 @@ def test_market_experiment_mapper_copies_mutable_values() -> None:
         specification.strategy_parameters["williams_period"]
         == 14
     )
+
+
+def test_market_experiment_mapper_maps_campaign() -> None:
+    first_specification = build_specification()
+    second_specification = replace(
+        first_specification,
+        experiment_title=(
+            "Williams BTCUSDT four-hour historical backtest"
+        ),
+        experiment_description=(
+            "Run the same Williams rules on four-hour "
+            "historical BTCUSDT data."
+        ),
+        timeframe="4h",
+    )
+
+    mapped = MarketExperimentMapper().map_campaign(
+        (
+            first_specification,
+            second_specification,
+        )
+    )
+
+    assert mapped.question.title == (
+        first_specification.question_title
+    )
+    assert mapped.hypothesis.question_id == mapped.question.id
+    assert len(mapped.experiments) == 2
+
+    assert (
+        mapped.experiments[0].title
+        == first_specification.experiment_title
+    )
+    assert (
+        mapped.experiments[1].title
+        == second_specification.experiment_title
+    )
+    assert mapped.experiments[0].parameters["timeframe"] == "1h"
+    assert mapped.experiments[1].parameters["timeframe"] == "4h"
+
+
+def test_market_experiment_mapper_campaign_shares_hypothesis() -> None:
+    first_specification = build_specification()
+    second_specification = replace(
+        first_specification,
+        experiment_title="Second Williams experiment",
+        timeframe="4h",
+    )
+
+    mapped = MarketExperimentMapper().map_campaign(
+        (
+            first_specification,
+            second_specification,
+        )
+    )
+
+    assert all(
+        experiment.hypothesis_id == mapped.hypothesis.id
+        for experiment in mapped.experiments
+    )
+
+
+def test_market_experiment_mapper_rejects_empty_campaign() -> None:
+    with pytest.raises(
+        ValueError,
+        match="must contain at least one",
+    ):
+        MarketExperimentMapper().map_campaign(())
+
+
+def test_market_experiment_mapper_rejects_different_questions() -> None:
+    first_specification = build_specification()
+    second_specification = replace(
+        first_specification,
+        question_title="Does RSI oversold predict a rebound?",
+        experiment_title="RSI historical backtest",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="same research question",
+    ):
+        MarketExperimentMapper().map_campaign(
+            (
+                first_specification,
+                second_specification,
+            )
+        )
+
+
+def test_market_experiment_mapper_rejects_different_hypotheses() -> None:
+    first_specification = build_specification()
+    second_specification = replace(
+        first_specification,
+        hypothesis_title=(
+            "Williams oversold values do not precede "
+            "positive returns"
+        ),
+        experiment_title="Alternative Williams experiment",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="same hypothesis",
+    ):
+        MarketExperimentMapper().map_campaign(
+            (
+                first_specification,
+                second_specification,
+            )
+        )
