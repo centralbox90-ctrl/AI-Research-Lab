@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from src.application.market_research_context import (
-    MarketResearchContext,
+from src.research.research_context import (
+    ResearchContext,
 )
 from src.application.prepared_market_campaign_executor import (
     PreparedMarketCampaignExecutor,
@@ -22,7 +22,7 @@ class MarketResearchCampaignSession:
     """
 
     contexts: tuple[
-        MarketResearchContext,
+        ResearchContext,
         ...,
     ]
 
@@ -36,3 +36,4 @@ class MarketResearchCampaignSession:
     ]
 
     executor: PreparedMarketCampaignExecutor
+

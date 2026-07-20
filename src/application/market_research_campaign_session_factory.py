@@ -14,6 +14,9 @@ from src.application.market_experiment_specification import (
 from src.application.market_research_campaign_session import (
     MarketResearchCampaignSession,
 )
+from src.research.research_context import (
+    ResearchContext,
+)
 from src.application.market_research_context_factory import (
     MarketResearchContextFactory,
 )
@@ -30,7 +33,7 @@ from src.application.prepared_market_campaign_executor import (
 
 class MarketResearchCampaignSessionFactory:
     """
-    Creates one immutable campaign session.
+    Creates one immutable prepared market research campaign session.
     """
 
     def __init__(
@@ -55,4 +58,63 @@ class MarketResearchCampaignSessionFactory:
             MarketExperimentSpecification
         ],
     ) -> MarketResearchCampaignSession:
-        raise NotImplementedError
+        mapped = self._mapper.map_campaign(
+            specifications
+        )
+
+        contexts: list[
+            ResearchContext
+        ] = []
+
+        executors_by_experiment_id: dict[
+            str,
+            PreparedMarketBacktestExecutor,
+        ] = {}
+
+        for specification, experiment in zip(
+            specifications,
+            mapped.experiments,
+            strict=True,
+        ):
+            dataset = self._data_provider.load(
+                specification
+            )
+
+            context = self._context_factory.create(
+                specification=specification,
+                dataset=dataset,
+            )
+
+            executor = PreparedMarketBacktestExecutor(
+                specification=specification,
+                market_data=context.market_data,
+                signal_provider=self._signal_provider,
+            )
+
+            contexts.append(
+                context
+            )
+
+            executors_by_experiment_id[
+                experiment.id
+            ] = executor
+
+        campaign_executor = PreparedMarketCampaignExecutor(
+            executors_by_experiment_id
+        )
+
+        return MarketResearchCampaignSession(
+            contexts=tuple(contexts),
+            question=mapped.question,
+            hypothesis=mapped.hypothesis,
+            experiments=tuple(
+                mapped.experiments
+            ),
+            executor=campaign_executor,
+        )
+
+
+
+
+
+
