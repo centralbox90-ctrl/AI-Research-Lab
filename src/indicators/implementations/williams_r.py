@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from src.indicators.descriptor import IndicatorDescriptor
 from src.indicators.parameter_spaces import (
+    ChoiceParameter,
     FloatParameter,
     IntegerParameter,
 )
@@ -38,6 +39,13 @@ RESEARCH_SPACE = IndicatorResearchSpace(
             minimum=-100.0,
             maximum=0.0,
             default=-20.0,
+        ),
+        "direction": ChoiceParameter(
+            values=(
+                "cross_above",
+                "cross_below",
+            ),
+            default="cross_below",
         ),
     },
     observation_types=(
