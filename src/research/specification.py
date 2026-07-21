@@ -22,7 +22,10 @@ ParameterItems: TypeAlias = tuple[
 ]
 
 
-def _freeze_value(value: object) -> ParameterValue:
+def _freeze_value(
+    value: object,
+) -> ParameterValue:
+
     if value is None or isinstance(
         value,
         (bool, int, float, str),
@@ -56,6 +59,7 @@ def _freeze_value(value: object) -> ParameterValue:
 def _freeze_parameters(
     parameters: Mapping[str, object],
 ) -> ParameterItems:
+
     return tuple(
         sorted(
             (
@@ -70,6 +74,7 @@ def _freeze_parameters(
 def _to_json_value(
     value: ParameterValue,
 ) -> object:
+
     if not isinstance(value, tuple):
         return value
 
@@ -93,6 +98,7 @@ def _to_json_value(
 def _parameters_to_dict(
     parameters: ParameterItems,
 ) -> dict[str, object]:
+
     return {
         name: _to_json_value(value)
         for name, value in parameters
@@ -105,7 +111,11 @@ class IndicatorReference:
     indicator_version: int
 
     def __post_init__(self) -> None:
-        if not isinstance(self.indicator_id, str):
+
+        if not isinstance(
+            self.indicator_id,
+            str,
+        ):
             raise TypeError(
                 "indicator_id must be a string."
             )
@@ -116,8 +126,14 @@ class IndicatorReference:
             )
 
         if (
-            not isinstance(self.indicator_version, int)
-            or isinstance(self.indicator_version, bool)
+            not isinstance(
+                self.indicator_version,
+                int,
+            )
+            or isinstance(
+                self.indicator_version,
+                bool,
+            )
         ):
             raise TypeError(
                 "indicator_version must be an integer."
@@ -131,14 +147,27 @@ class IndicatorReference:
 
 @dataclass(frozen=True, slots=True)
 class ResearchSpecification:
+    """
+    Declarative research configuration.
+
+    Defines:
+
+    - indicator
+    - observation
+    - signal generation rule
+    - parameters
+    """
+
     indicator: IndicatorReference
     output: str
     profile: str | None
     observation_type: str | None
+    signal_rule_id: str
     calculation_parameters: ParameterItems
     observation_parameters: ParameterItems
 
     def __post_init__(self) -> None:
+
         if not isinstance(
             self.indicator,
             IndicatorReference,
@@ -147,7 +176,10 @@ class ResearchSpecification:
                 "indicator must be an IndicatorReference."
             )
 
-        if not isinstance(self.output, str):
+        if not isinstance(
+            self.output,
+            str,
+        ):
             raise TypeError(
                 "output must be a string."
             )
@@ -159,7 +191,10 @@ class ResearchSpecification:
 
         if (
             self.profile is not None
-            and not isinstance(self.profile, str)
+            and not isinstance(
+                self.profile,
+                str,
+            )
         ):
             raise TypeError(
                 "profile must be a string or None."
@@ -176,6 +211,19 @@ class ResearchSpecification:
                 "observation_type must be a string or None."
             )
 
+        if not isinstance(
+            self.signal_rule_id,
+            str,
+        ):
+            raise TypeError(
+                "signal_rule_id must be a string."
+            )
+
+        if not self.signal_rule_id.strip():
+            raise ValueError(
+                "signal_rule_id must not be empty."
+            )
+
     @classmethod
     def create(
         cls,
@@ -184,19 +232,26 @@ class ResearchSpecification:
         output: str,
         profile: str | None,
         observation_type: str | None,
+        signal_rule_id: str = "indicator_direction",
         calculation_parameters: Mapping[str, object],
         observation_parameters: Mapping[str, object],
     ) -> ResearchSpecification:
+
         return cls(
             indicator=indicator,
             output=output,
             profile=profile,
             observation_type=observation_type,
-            calculation_parameters=_freeze_parameters(
-                calculation_parameters
+            signal_rule_id=signal_rule_id,
+            calculation_parameters=(
+                _freeze_parameters(
+                    calculation_parameters
+                )
             ),
-            observation_parameters=_freeze_parameters(
-                observation_parameters
+            observation_parameters=(
+                _freeze_parameters(
+                    observation_parameters
+                )
             ),
         )
 
@@ -204,6 +259,7 @@ class ResearchSpecification:
     def calculation_parameter_values(
         self,
     ) -> dict[str, object]:
+
         return _parameters_to_dict(
             self.calculation_parameters
         )
@@ -212,14 +268,20 @@ class ResearchSpecification:
     def observation_parameter_values(
         self,
     ) -> dict[str, object]:
+
         return _parameters_to_dict(
             self.observation_parameters
         )
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(
+        self,
+    ) -> dict[str, object]:
+
         return {
             "indicator": {
-                "id": self.indicator.indicator_id,
+                "id": (
+                    self.indicator.indicator_id
+                ),
                 "version": (
                     self.indicator.indicator_version
                 ),
@@ -228,6 +290,9 @@ class ResearchSpecification:
             "profile": self.profile,
             "observation_type": (
                 self.observation_type
+            ),
+            "signal_rule_id": (
+                self.signal_rule_id
             ),
             "calculation_parameters": (
                 self.calculation_parameter_values
@@ -239,6 +304,7 @@ class ResearchSpecification:
 
     @property
     def fingerprint(self) -> str:
+
         payload = json.dumps(
             self.to_dict(),
             sort_keys=True,

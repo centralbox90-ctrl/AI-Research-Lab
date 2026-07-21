@@ -3,6 +3,9 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Any
 
+from src.research.specification import (
+    ResearchSpecification,
+)
 
 class MarketPositionDirection(StrEnum):
     """
@@ -53,6 +56,7 @@ class MarketExperimentSpecification:
     commission_percent: float = 0.0
     slippage_percent: float = 0.0
 
+    research_specification: ResearchSpecification | None = None
     strategy_parameters: dict[str, Any] = field(default_factory=dict)
 
     tags: tuple[str, ...] = ()
@@ -63,6 +67,7 @@ class MarketExperimentSpecification:
         self._validate_time_range()
         self._validate_risk_parameters()
         self._validate_cost_parameters()
+        self._validate_research_specification()
         self._validate_tags()
 
     def _validate_required_text(self) -> None:
@@ -153,3 +158,16 @@ class MarketExperimentSpecification:
                 raise ValueError(
                     "tags must contain only non-empty strings"
                 )
+
+    def _validate_research_specification(self) -> None:
+        if (
+            self.research_specification is not None
+            and not isinstance(
+                self.research_specification,
+                ResearchSpecification,
+            )
+        ):
+            raise TypeError(
+                "research_specification must be a "
+                "ResearchSpecification or None"
+            )

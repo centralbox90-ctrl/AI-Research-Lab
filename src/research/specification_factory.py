@@ -158,6 +158,8 @@ def create_research_specification(
     output: str | object = _UNSET,
     profile: str | None | object = _UNSET,
     observation_type: str | None | object = _UNSET,
+    signal_rule_id: str | object = _UNSET,
+
     calculation_parameters: (
         Mapping[str, object] | None
     ) = None,
@@ -220,6 +222,15 @@ def create_research_specification(
         ),
     )
 
+    selected_signal_rule_id = _select_option(
+        requested=signal_rule_id,
+        available=tuple(
+            research_space.signal_rule_ids
+        ),
+        option_name="signal_rule_id",
+        error_type=ResearchSpecificationError,
+    )
+    
     resolved_calculation_parameters = (
         _resolve_parameters(
             supplied=calculation_parameters,
@@ -251,6 +262,9 @@ def create_research_specification(
         profile=selected_profile,
         observation_type=(
             selected_observation_type
+        ),
+        signal_rule_id=(
+            selected_signal_rule_id
         ),
         calculation_parameters=(
             resolved_calculation_parameters

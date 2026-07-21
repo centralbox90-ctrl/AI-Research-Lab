@@ -41,8 +41,14 @@ class IndicatorResearchSpace:
     """
     Декларативное описание допустимого исследовательского пространства.
 
-    Модель ничего не вычисляет, не создаёт эксперименты и не выполняет
-    наблюдения. Она только публикует возможности индикатора.
+    Модель не вычисляет индикаторы и не выполняет исследования.
+    Она только объявляет возможности индикатора:
+        - доступные outputs
+        - параметры расчёта
+        - параметры наблюдения
+        - типы наблюдений
+        - профили исследования
+        - правила генерации сигналов
     """
 
     outputs: tuple[IndicatorOutput, ...]
@@ -50,22 +56,32 @@ class IndicatorResearchSpace:
     observation_parameters: ParameterSpaces
     observation_types: tuple[str, ...]
     research_profiles: tuple[str, ...]
+    signal_rule_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         outputs = tuple(self.outputs)
+
         calculation_parameters = dict(
             self.calculation_parameters
         )
+
         observation_parameters = dict(
             self.observation_parameters
         )
+
         observation_types = self._normalize_names(
             self.observation_types,
             field_name="observation type",
         )
+
         research_profiles = self._normalize_names(
             self.research_profiles,
             field_name="research profile",
+        )
+
+        signal_rule_ids = self._normalize_names(
+            self.signal_rule_ids,
+            field_name="signal rule",
         )
 
         if not outputs:
@@ -74,15 +90,20 @@ class IndicatorResearchSpace:
                 "at least one output."
             )
 
-        self._validate_unique_output_names(outputs)
+        self._validate_unique_output_names(
+            outputs
+        )
+
         self._validate_parameter_names(
             calculation_parameters,
             field_name="calculation parameter",
         )
+
         self._validate_parameter_names(
             observation_parameters,
             field_name="observation parameter",
         )
+
         self._validate_disjoint_parameter_names(
             calculation_parameters,
             observation_parameters,
@@ -93,6 +114,7 @@ class IndicatorResearchSpace:
             "outputs",
             outputs,
         )
+
         object.__setattr__(
             self,
             "calculation_parameters",
@@ -100,6 +122,7 @@ class IndicatorResearchSpace:
                 calculation_parameters
             ),
         )
+
         object.__setattr__(
             self,
             "observation_parameters",
@@ -107,15 +130,23 @@ class IndicatorResearchSpace:
                 observation_parameters
             ),
         )
+
         object.__setattr__(
             self,
             "observation_types",
             observation_types,
         )
+
         object.__setattr__(
             self,
             "research_profiles",
             research_profiles,
+        )
+
+        object.__setattr__(
+            self,
+            "signal_rule_ids",
+            signal_rule_ids,
         )
 
     @staticmethod
@@ -221,6 +252,7 @@ class IndicatorResearchSpace:
             duplicate_names = ", ".join(
                 sorted(duplicates)
             )
+
             raise ValueError(
                 "Calculation and observation parameter "
                 "names must be distinct. "

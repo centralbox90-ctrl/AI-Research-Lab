@@ -1,14 +1,5 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
-
-from src.core.state import (
-    IndicatorState,
-    FeatureState,
-    AIState,
-    TradeState
-)
-
-
 
 @dataclass
 class BarIdentity:
@@ -62,21 +53,4 @@ class MarketSnapshot:
     market: MarketData
 
 
-    indicators: IndicatorState = field(
-        default_factory=IndicatorState
-    )
-
-
-    features: FeatureState = field(
-        default_factory=FeatureState
-    )
-
-
-    ai: AIState = field(
-        default_factory=AIState
-    )
-
-
-    trade: TradeState = field(
-        default_factory=TradeState
-    )
+    

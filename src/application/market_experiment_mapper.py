@@ -196,6 +196,9 @@ class MarketExperimentMapper:
             "max_holding_bars": specification.max_holding_bars,
             "commission_percent": specification.commission_percent,
             "slippage_percent": specification.slippage_percent,
+            "research_specification": (
+                specification.research_specification
+            ),
             "strategy_parameters": dict(
                 specification.strategy_parameters,
             ),

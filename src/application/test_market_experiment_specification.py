@@ -31,7 +31,9 @@ def build_specification(
             "The experiment produces positive net profit with "
             "a non-zero number of trades."
         ),
-        "experiment_title": "Williams BTCUSDT historical backtest",
+        "experiment_title": (
+            "Williams BTCUSDT historical backtest"
+        ),
         "experiment_description": (
             "Run the registered Williams entry and exit rules on "
             "historical BTCUSDT data."
@@ -59,6 +61,7 @@ def build_specification(
         "max_holding_bars": 24,
         "commission_percent": 0.1,
         "slippage_percent": 0.05,
+        "research_specification": None,
         "strategy_parameters": {
             "williams_period": 14,
             "oversold_level": -80,
@@ -72,7 +75,9 @@ def build_specification(
 
     values.update(overrides)
 
-    return MarketExperimentSpecification(**values)
+    return MarketExperimentSpecification(
+        **values,
+    )
 
 
 def test_market_experiment_specification_accepts_valid_contract() -> None:
@@ -81,10 +86,14 @@ def test_market_experiment_specification_accepts_valid_contract() -> None:
     assert specification.executor_type == "market_backtest"
     assert specification.symbol == "BTCUSDT"
     assert specification.timeframe == "1h"
-    assert specification.direction is MarketPositionDirection.LONG
+    assert (
+        specification.direction
+        is MarketPositionDirection.LONG
+    )
     assert specification.stop_loss_percent == 1.0
     assert specification.take_profit_percent == 2.0
     assert specification.max_holding_bars == 24
+    assert specification.research_specification is None
     assert specification.strategy_parameters == {
         "williams_period": 14,
         "oversold_level": -80,
@@ -96,7 +105,9 @@ def test_market_experiment_specification_rejects_unknown_executor() -> None:
         ValueError,
         match="executor_type must be 'market_backtest'",
     ):
-        build_specification(executor_type="arbitrary_python")
+        build_specification(
+            executor_type="arbitrary_python",
+        )
 
 
 def test_market_experiment_specification_rejects_empty_required_text() -> None:
@@ -104,7 +115,9 @@ def test_market_experiment_specification_rejects_empty_required_text() -> None:
         ValueError,
         match="entry_rule must be a non-empty string",
     ):
-        build_specification(entry_rule="   ")
+        build_specification(
+            entry_rule="   ",
+        )
 
 
 def test_market_experiment_specification_rejects_invalid_time_range() -> None:
@@ -126,7 +139,11 @@ def test_market_experiment_specification_rejects_invalid_time_range() -> None:
 
 
 @pytest.mark.parametrize(
-    ("field_name", "invalid_value", "expected_message"),
+    (
+        "field_name",
+        "invalid_value",
+        "expected_message",
+    ),
     [
         (
             "stop_loss_percent",
@@ -155,7 +172,9 @@ def test_market_experiment_specification_rejects_invalid_risk_parameters(
         match=expected_message,
     ):
         build_specification(
-            **{field_name: invalid_value},
+            **{
+                field_name: invalid_value,
+            },
         )
 
 
@@ -174,7 +193,9 @@ def test_market_experiment_specification_rejects_negative_costs(
         match=f"{field_name} must not be negative",
     ):
         build_specification(
-            **{field_name: -0.01},
+            **{
+                field_name: -0.01,
+            },
         )
 
 
@@ -206,5 +227,22 @@ def test_market_experiment_specification_rejects_empty_tag() -> None:
         match="tags must contain only non-empty strings",
     ):
         build_specification(
-            tags=("btc", ""),
+            tags=(
+                "btc",
+                "",
+            ),
+        )
+
+
+def test_market_experiment_specification_rejects_invalid_research_specification(
+) -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "research_specification must be a "
+            "ResearchSpecification or None"
+        ),
+    ):
+        build_specification(
+            research_specification=object(),
         )
