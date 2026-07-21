@@ -18,7 +18,6 @@ from src.research import (
     ExperimentResult,
 )
 
-
 class PreparedMarketBacktestExecutor:
     """
     Executes one market experiment using an already loaded dataset.
@@ -47,14 +46,12 @@ class PreparedMarketBacktestExecutor:
         self,
         experiment: Experiment,
     ) -> ExperimentResult:
-        execution_data = self._build_execution_data()
-
-        prepared_data = self.signal_provider.generate(
-            data=execution_data,
+        signaled_data = self.signal_provider.generate(
+            data=self.market_data,
             specification=self.specification,
         )
 
-        policy = ExecutionPolicy(
+        execution_policy = ExecutionPolicy(
             stop_loss_percent=(
                 self.specification.stop_loss_percent
             ),
@@ -64,33 +61,31 @@ class PreparedMarketBacktestExecutor:
             max_holding_bars=(
                 self.specification.max_holding_bars
             ),
-            commission_percent=(
-                self.specification.commission_percent
-            ),
-            slippage_percent=(
-                self.specification.slippage_percent
-            ),
         )
 
         trades = BacktestEngine().run(
-            data=prepared_data,
+            data=signaled_data,
             symbol=self.specification.symbol,
             timeframe=self.specification.timeframe,
-            execution_policy=policy,
+            execution_policy=execution_policy,
         )
 
         metrics = Statistics(trades).calculate()
 
         success = bool(
-            metrics["total_trades"] > 0
-            and metrics["net_profit"] > 0
+            metrics["net_profit"] > 0
         )
 
-        conclusion = (
-            "Hypothesis supported"
-            if success
-            else "Hypothesis not supported"
-        )
+        if success:
+            conclusion = (
+                "The experiment produced a positive "
+                "net profit."
+            )
+        else:
+            conclusion = (
+                "The experiment did not produce a positive "
+                "net profit."
+            )
 
         return ExperimentResult(
             experiment_id=experiment.id,
@@ -109,58 +104,5 @@ class PreparedMarketBacktestExecutor:
             conclusion=conclusion,
         )
 
-    def _build_execution_data(self) -> pd.DataFrame:
-        """
-        Build the temporary legacy execution view required by the
-        current BacktestEngine.
-
-        ResearchContext retains the canonical dataset. This mapping
-        exists only at the legacy backtest boundary.
-        """
-
-        canonical_columns = {
-            "timestamp",
-            "open",
-            "high",
-            "low",
-            "close",
-            "tick_volume",
-        }
-
-        if canonical_columns.issubset(
-            self.market_data.columns
-        ):
-            timestamps = pd.to_datetime(
-                self.market_data["timestamp"],
-                unit="ns",
-                utc=True,
-            )
-
-            execution_data = pd.DataFrame(
-                {
-                    "Open": self.market_data[
-                        "open"
-                    ].to_numpy(copy=True),
-                    "High": self.market_data[
-                        "high"
-                    ].to_numpy(copy=True),
-                    "Low": self.market_data[
-                        "low"
-                    ].to_numpy(copy=True),
-                    "Close": self.market_data[
-                        "close"
-                    ].to_numpy(copy=True),
-                    "Volume": self.market_data[
-                        "tick_volume"
-                    ].to_numpy(copy=True),
-                },
-                index=pd.DatetimeIndex(timestamps),
-            )
-
-            execution_data.attrs.update(
-                self.market_data.attrs
-            )
-
-            return execution_data
-
-        return self.market_data
+        
+           

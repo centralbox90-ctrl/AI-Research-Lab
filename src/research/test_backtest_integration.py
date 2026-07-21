@@ -23,9 +23,14 @@ def test_research_engine_runs_backtest_experiment() -> None:
     def data_provider(current_experiment: Experiment) -> pd.DataFrame:
         return pd.DataFrame(
             {
-                "Close": [100.0, 105.0, 110.0],
-                "High": [101.0, 106.0, 111.0],
-                "Low": [99.0, 104.0, 109.0],
+                "timestamp": pd.date_range(
+                    "2026-01-01",
+                    periods=3,
+                    freq="h",
+                ),
+                "close": [100.0, 105.0, 110.0],
+                "high": [101.0, 106.0, 111.0],
+                "low": [99.0, 104.0, 109.0],
                 "AI_prediction": [1, 1, 0],
             }
         )

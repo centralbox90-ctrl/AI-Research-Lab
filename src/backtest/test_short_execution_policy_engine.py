@@ -9,17 +9,22 @@ from src.backtest import (
 def test_short_position_take_profit_exit() -> None:
     data = pd.DataFrame(
         {
-            "Close": [
+            "timestamp": pd.date_range(
+                "2026-01-01",
+                periods=3,
+                freq="h",
+            ),
+            "close": [
                 100.0,
                 97.0,
                 97.0,
             ],
-            "High": [
+            "high": [
                 100.0,
                 98.0,
                 97.0,
             ],
-            "Low": [
+            "low": [
                 100.0,
                 96.0,
                 97.0,
@@ -58,15 +63,20 @@ def test_short_position_take_profit_exit() -> None:
 def test_short_position_stop_loss_exit() -> None:
     data = pd.DataFrame(
         {
-            "Close": [
+            "timestamp": pd.date_range(
+                "2026-01-01",
+                periods=2,
+                freq="h",
+            ),
+            "close": [
                 100.0,
                 103.0,
             ],
-            "High": [
+            "high": [
                 100.0,
                 104.0,
             ],
-            "Low": [
+            "low": [
                 100.0,
                 102.0,
             ],
@@ -103,19 +113,24 @@ def test_short_position_stop_loss_exit() -> None:
 def test_short_position_max_holding_exit() -> None:
     data = pd.DataFrame(
         {
-            "Close": [
+            "timestamp": pd.date_range(
+                "2026-01-01",
+                periods=4,
+                freq="h",
+            ),
+            "close": [
                 100.0,
                 99.0,
                 98.0,
                 97.0,
             ],
-            "High": [
+            "high": [
                 100.0,
                 100.0,
                 99.0,
                 98.0,
             ],
-            "Low": [
+            "low": [
                 100.0,
                 98.0,
                 97.0,

@@ -10,15 +10,20 @@ from src.backtest import (
 def test_short_stop_loss_has_priority_over_take_profit() -> None:
     data = pd.DataFrame(
         {
-            "Close": [
+            "timestamp": pd.date_range(
+                "2026-01-01",
+                periods=2,
+                freq="h",
+            ),
+            "close": [
                 100.0,
                 100.0,
             ],
-            "High": [
+            "high": [
                 100.0,
                 103.0,
             ],
-            "Low": [
+            "low": [
                 100.0,
                 97.0,
             ],
@@ -50,15 +55,20 @@ def test_short_stop_loss_has_priority_over_take_profit() -> None:
 def test_open_position_closes_at_end_of_data() -> None:
     data = pd.DataFrame(
         {
-            "Close": [
+            "timestamp": pd.date_range(
+                "2026-01-01",
+                periods=2,
+                freq="h",
+            ),
+            "close": [
                 100.0,
                 101.0,
             ],
-            "High": [
+            "high": [
                 100.0,
                 101.0,
             ],
-            "Low": [
+            "low": [
                 100.0,
                 100.0,
             ],

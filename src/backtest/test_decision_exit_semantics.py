@@ -10,9 +10,10 @@ from src.backtest import (
 def test_zero_signal_closes_long_position() -> None:
     data = pd.DataFrame(
         {
-            "Close": [100.0, 101.0],
-            "High": [100.0, 101.0],
-            "Low": [100.0, 100.0],
+            "timestamp": pd.to_datetime(["2026-01-01 00:00:00", "2026-01-01 01:00:00"]),
+            "close": [100.0, 101.0],
+            "high": [100.0, 101.0],
+            "low": [100.0, 100.0],
             "AI_prediction": [1, 0],
         }
     )
@@ -36,9 +37,16 @@ def test_zero_signal_closes_long_position() -> None:
 def test_entry_bar_is_not_counted_as_held_bar() -> None:
     data = pd.DataFrame(
         {
-            "Close": [100.0, 101.0, 102.0],
-            "High": [100.0, 101.0, 102.0],
-            "Low": [100.0, 100.0, 101.0],
+            "timestamp": pd.to_datetime(
+                [
+                    "2026-01-01 00:00:00",
+                    "2026-01-01 01:00:00",
+                    "2026-01-01 02:00:00",
+                ]
+            ),
+            "close": [100.0, 101.0, 102.0],
+            "high": [100.0, 101.0, 102.0],
+            "low": [100.0, 100.0, 101.0],
             "AI_prediction": [1, 1, 1],
         }
     )

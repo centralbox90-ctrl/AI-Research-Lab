@@ -1,4 +1,4 @@
-﻿from src.backtest.execution_model import ExecutionModel
+from src.backtest.execution_model import ExecutionModel
 from src.backtest.execution_policy import ExecutionPolicy
 from src.backtest.execution_types import (
     DecisionAction,
@@ -51,8 +51,9 @@ class BacktestEngine:
 
         position: Position | None = None
 
-        for index, row in data.iterrows():
+        for _, row in data.iterrows():
 
+            timestamp = row["timestamp"]
             signal = int(row["AI_prediction"])
 
             action = map_legacy_signal_to_action(
@@ -64,9 +65,9 @@ class BacktestEngine:
                 ),
             )
 
-            close_price = float(row["Close"])
-            high_price = float(row["High"])
-            low_price = float(row["Low"])
+            close_price = float(row["close"])
+            high_price = float(row["high"])
+            low_price = float(row["low"])
 
             if position is not None:
 
@@ -77,7 +78,7 @@ class BacktestEngine:
 
                 trade = self._check_exit(
                     position=position,
-                    index=index,
+                    index=timestamp,
                     close_price=close_price,
                     high_price=high_price,
                     low_price=low_price,
@@ -103,7 +104,7 @@ class BacktestEngine:
                         symbol=symbol,
                         timeframe=timeframe,
                         side=PositionSide.LONG,
-                        entry_time=index,
+                        entry_time=timestamp,
                         entry_price=entry_price,
                         entry_signal=signal,
                     )
@@ -118,7 +119,7 @@ class BacktestEngine:
                         symbol=symbol,
                         timeframe=timeframe,
                         side=PositionSide.SHORT,
-                        entry_time=index,
+                        entry_time=timestamp,
                         entry_price=entry_price,
                         entry_signal=signal,
                     )
@@ -128,9 +129,9 @@ class BacktestEngine:
             self.trades.append(
                 self._create_trade(
                     position=position,
-                    exit_time=data.index[-1],
+                    exit_time=data.iloc[-1]["timestamp"],
                     requested_exit_price=float(
-                        data.iloc[-1]["Close"]
+                        data.iloc[-1]["close"]
                     ),
                     reason=ExitReason.END_OF_DATA,
                     execution_model=execution_model,

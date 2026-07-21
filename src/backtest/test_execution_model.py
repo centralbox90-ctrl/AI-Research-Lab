@@ -1,4 +1,4 @@
-﻿import pytest
+import pytest
 
 from src.backtest.execution_model import ExecutionModel
 from src.backtest.execution_types import PositionSide
@@ -63,3 +63,4 @@ def test_zero_slippage_preserves_price() -> None:
         price=100.0,
         side=PositionSide.LONG,
     ) == 100.0
+

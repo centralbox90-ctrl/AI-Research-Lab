@@ -89,7 +89,7 @@ class MarketResearchCampaignSessionFactory:
 
             executor = PreparedMarketBacktestExecutor(
                 specification=specification,
-                market_data=context.market_data,
+                market_data=dataset,
                 signal_provider=self._signal_provider,
             )
 

@@ -21,29 +21,53 @@ class FakeMarketDataProvider:
 
         return pd.DataFrame(
             {
-                "Close": [
+                "timestamp": [
+                    datetime(
+                        2024,
+                        1,
+                        1,
+                        tzinfo=timezone.utc,
+                    ),
+                    datetime(
+                        2024,
+                        1,
+                        2,
+                        tzinfo=timezone.utc,
+                    ),
+                    datetime(
+                        2024,
+                        1,
+                        3,
+                        tzinfo=timezone.utc,
+                    ),
+                ],
+                "open": [
+                    100.0,
+                    101.0,
+                    103.0,
+                ],
+                "high": [
                     100.0,
                     103.0,
                     103.0,
                 ],
-                "High": [
-                    100.0,
-                    103.0,
-                    103.0,
-                ],
-                "Low": [
+                "low": [
                     100.0,
                     102.0,
                     103.0,
                 ],
-                "AI_prediction": [
-                    1,
-                    1,
-                    0,
+                "close": [
+                    100.0,
+                    103.0,
+                    103.0,
+                ],
+                "tick_volume": [
+                    100,
+                    120,
+                    110,
                 ],
             }
         )
-
 
 class FakeSignalProvider:
 
@@ -52,7 +76,10 @@ class FakeSignalProvider:
         data,
         specification,
     ):
-        return data
+        result = data.copy()
+        result["AI_prediction"] = [1, 1, 0]
+
+        return result
 
 
 def build_specification():

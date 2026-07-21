@@ -19,7 +19,6 @@ from src.research import (
     ExperimentResult,
 )
 
-
 class MarketBacktestExecutor:
     """
     Executes one market experiment through application boundaries.

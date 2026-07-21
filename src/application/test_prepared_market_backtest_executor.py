@@ -15,26 +15,27 @@ from src.research import Experiment
 
 class FakeSignalProvider:
     def __init__(self) -> None:
-        self.received_data = None
+        self.received_data: pd.DataFrame | None = None
         self.received_specification = None
 
     def generate(
         self,
-        data,
-        specification,
-    ):
+        data: pd.DataFrame,
+        specification: MarketExperimentSpecification,
+    ) -> pd.DataFrame:
         self.received_data = data
         self.received_specification = specification
+        
+        result = data.copy()
+        result["AI_prediction"] = 0
 
-        prepared = data.copy()
+        if len(result) >= 1:
+            result.loc[result.index[0], "AI_prediction"] = 1
 
-        prepared["AI_prediction"] = [
-            1,
-            1,
-            0,
-        ]
+        if len(result) >= 2:
+            result.loc[result.index[1], "AI_prediction"] = 1
 
-        return prepared
+        return result
 
 
 def build_specification() -> MarketExperimentSpecification:
@@ -80,21 +81,18 @@ def build_specification() -> MarketExperimentSpecification:
 def build_market_data() -> pd.DataFrame:
     return pd.DataFrame(
         {
-            "Close": [
-                100.0,
-                103.0,
-                103.0,
-            ],
-            "High": [
-                100.0,
-                103.0,
-                103.0,
-            ],
-            "Low": [
-                100.0,
-                102.0,
-                103.0,
-            ],
+            "timestamp": pd.to_datetime(
+                [
+                    "2024-01-01",
+                    "2024-01-02",
+                    "2024-01-03",
+                ]
+            ),
+            "open": [100.0, 101.0, 103.0],
+            "high": [100.0, 103.0, 103.0],
+            "low": [100.0, 102.0, 103.0],
+            "close": [100.0, 103.0, 103.0],
+            "tick_volume": [100, 120, 110],
         }
     )
 

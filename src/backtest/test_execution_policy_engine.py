@@ -9,17 +9,22 @@ from src.backtest import (
 def test_backtest_engine_accepts_execution_policy_argument() -> None:
     data = pd.DataFrame(
         {
-            "Close": [
+            "timestamp": pd.date_range(
+                "2026-01-01",
+                periods=3,
+                freq="h",
+            ),
+            "close": [
                 100.0,
                 105.0,
                 110.0,
             ],
-            "High": [
+            "high": [
                 101.0,
                 106.0,
                 111.0,
             ],
-            "Low": [
+            "low": [
                 99.0,
                 104.0,
                 109.0,
@@ -56,19 +61,24 @@ def test_backtest_engine_accepts_execution_policy_argument() -> None:
 def test_execution_policy_controls_take_profit_exit() -> None:
     data = pd.DataFrame(
         {
-            "Close": [
+            "timestamp": pd.date_range(
+                "2026-01-01",
+                periods=4,
+                freq="h",
+            ),
+            "close": [
                 100.0,
                 101.0,
                 103.0,
                 103.0,
             ],
-            "High": [
+            "high": [
                 100.0,
                 101.0,
                 103.0,
                 103.0,
             ],
-            "Low": [
+            "low": [
                 100.0,
                 100.0,
                 102.0,
@@ -107,15 +117,20 @@ def test_execution_policy_controls_take_profit_exit() -> None:
 def test_execution_policy_stop_loss_has_priority_over_take_profit() -> None:
     data = pd.DataFrame(
         {
-            "Close": [
+            "timestamp": pd.date_range(
+                "2026-01-01",
+                periods=2,
+                freq="h",
+            ),
+            "close": [
                 100.0,
                 100.0,
             ],
-            "High": [
+            "high": [
                 103.0,
                 103.0,
             ],
-            "Low": [
+            "low": [
                 97.0,
                 97.0,
             ],
@@ -149,19 +164,24 @@ def test_execution_policy_stop_loss_has_priority_over_take_profit() -> None:
 def test_execution_policy_controls_max_holding_exit() -> None:
     data = pd.DataFrame(
         {
-            "Close": [
+            "timestamp": pd.date_range(
+                "2026-01-01",
+                periods=4,
+                freq="h",
+            ),
+            "close": [
                 100.0,
                 101.0,
                 102.0,
                 103.0,
             ],
-            "High": [
+            "high": [
                 100.0,
                 101.0,
                 102.0,
                 103.0,
             ],
-            "Low": [
+            "low": [
                 100.0,
                 99.0,
                 100.0,
