@@ -373,6 +373,20 @@ def test_accepts_empty_canonical_levels() -> None:
     assert profile.canonical_levels == ()
 
 
+def test_accepts_empty_directions() -> None:
+    profile = LevelCrossResearchProfile(
+        level_space=NumericParameterSpace(
+            minimum=-95.0,
+            maximum=-5.0,
+            step=5.0,
+        ),
+        canonical_levels=(-80.0,),
+        directions=(),
+    )
+
+    assert profile.directions == ()
+
+
 def test_descriptor_parameter_spaces_are_immutable() -> None:
     descriptor = IndicatorDescriptor(
         id="williams_r",
