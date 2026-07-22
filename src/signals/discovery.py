@@ -39,6 +39,7 @@ def discover_signal_rules(
     )
 
     rules: list[SignalRuleDescriptor] = []
+    discovered_rule_ids: set[str] = set()
 
     for module_name in _iter_module_names(
         package
