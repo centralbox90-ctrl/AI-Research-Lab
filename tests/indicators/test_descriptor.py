@@ -286,6 +286,18 @@ def test_rejects_unsupported_research_space_type() -> None:
         )
 
 
+def test_rejects_zero_numeric_parameter_step() -> None:
+    with pytest.raises(
+        ValueError,
+        match="step must be greater than zero",
+    ):
+        NumericParameterSpace(
+            minimum=0.0,
+            maximum=100.0,
+            step=0.0,
+        )
+
+
 def test_rejects_negative_numeric_parameter_step() -> None:
     with pytest.raises(
         ValueError,
