@@ -355,6 +355,18 @@ def test_rejects_zero_numeric_parameter_step() -> None:
         )
 
 
+def test_rejects_zero_integer_parameter_step() -> None:
+    with pytest.raises(
+        ValueError,
+        match=r"step must be greater than zero\.",
+    ):
+        IntegerParameterSpace(
+            minimum=5,
+            maximum=50,
+            step=0,
+        )
+
+
 def test_rejects_non_integer_coarse_value() -> None:
     with pytest.raises(
         TypeError,
