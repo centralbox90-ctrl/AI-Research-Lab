@@ -341,6 +341,25 @@ def test_rejects_invalid_direction() -> None:
         )
 
 
+def test_rejects_duplicate_directions() -> None:
+    with pytest.raises(
+        ValueError,
+        match="directions must not contain duplicates",
+    ):
+        LevelCrossResearchProfile(
+            level_space=NumericParameterSpace(
+                minimum=-95.0,
+                maximum=-5.0,
+                step=5.0,
+            ),
+            canonical_levels=(-80.0,),
+            directions=(
+                "cross_above",
+                "cross_above",
+            ),
+        )
+
+
 def test_descriptor_parameter_spaces_are_immutable() -> None:
     descriptor = IndicatorDescriptor(
         id="williams_r",
