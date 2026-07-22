@@ -286,6 +286,22 @@ def test_rejects_unsupported_research_space_type() -> None:
         )
 
 
+def test_rejects_duplicate_numeric_coarse_values() -> None:
+    with pytest.raises(
+        ValueError,
+        match="coarse values must not contain duplicates",
+    ):
+        NumericParameterSpace(
+            minimum=0.0,
+            maximum=100.0,
+            step=1.0,
+            coarse_values=(
+                25.0,
+                25.0,
+            ),
+        )
+
+
 def test_rejects_numeric_coarse_value_outside_bounds() -> None:
     with pytest.raises(
         ValueError,
