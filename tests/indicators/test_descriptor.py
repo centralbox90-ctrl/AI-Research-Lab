@@ -189,6 +189,63 @@ def test_rejects_unsupported_parameter_space_type() -> None:
         )
 
 
+def test_rejects_default_without_matching_parameter_space() -> None:
+    with pytest.raises(
+        ValueError,
+        match=(
+            "default parameters do not have matching "
+            "parameter spaces: smoothing"
+        ),
+    ):
+        IndicatorDescriptor(
+            id="williams_r",
+            symbol="WILLR",
+            name="Williams %R",
+            version=1,
+            calculator=stub_calculator,
+            default_parameters={
+                "period": 14,
+                "smoothing": 3,
+            },
+            parameter_spaces={
+                "period": IntegerParameterSpace(
+                    minimum=5,
+                    maximum=50,
+                    step=1,
+                    default=14,
+                ),
+            },
+        )
+
+
+def test_rejects_default_that_differs_from_parameter_space() -> None:
+    with pytest.raises(
+        ValueError,
+        match=(
+            "default parameter 'period' does not match "
+            "its parameter space default"
+        ),
+    ):
+        IndicatorDescriptor(
+            id="williams_r",
+            symbol="WILLR",
+            name="Williams %R",
+            version=1,
+            calculator=stub_calculator,
+            default_parameters={
+                "period": 20,
+            },
+            parameter_spaces={
+                "period": IntegerParameterSpace(
+                    minimum=5,
+                    maximum=50,
+                    step=1,
+                    default=14,
+                ),
+            },
+        )
+
+
 def test_rejects_canonical_level_outside_space() -> None:
     with pytest.raises(
         ValueError,
