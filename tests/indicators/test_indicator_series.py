@@ -215,3 +215,25 @@ def test_indicator_series_normalizes_source_reference() -> None:
 
     assert series.source_data_ref == "dataset:eurusd-h1-v1"
 
+def test_indicator_series_copies_metadata() -> None:
+    metadata = {
+        "implementation": "native",
+    }
+
+    series = IndicatorSeries.create(
+        specification=make_specification(),
+        timestamps=make_timestamps(1),
+        values=[
+            -50.0,
+        ],
+        warmup_bars=0,
+        metadata=metadata,
+    )
+
+    metadata["implementation"] = "modified"
+    metadata["new_key"] = "value"
+
+    assert series.metadata == {
+        "implementation": "native",
+    }
+
