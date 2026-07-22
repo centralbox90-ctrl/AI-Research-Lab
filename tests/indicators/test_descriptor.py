@@ -355,6 +355,19 @@ def test_rejects_zero_numeric_parameter_step() -> None:
         )
 
 
+def test_rejects_integer_default_outside_bounds() -> None:
+    with pytest.raises(
+        ValueError,
+        match=r"default must be within the parameter space\.",
+    ):
+        IntegerParameterSpace(
+            minimum=5,
+            maximum=50,
+            step=1,
+            default=100,
+        )
+
+
 def test_rejects_inverted_integer_parameter_bounds() -> None:
     with pytest.raises(
         ValueError,
