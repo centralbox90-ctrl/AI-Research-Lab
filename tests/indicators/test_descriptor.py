@@ -303,6 +303,24 @@ def test_rejects_canonical_level_outside_space() -> None:
         )
 
 
+def test_rejects_duplicate_canonical_levels() -> None:
+    with pytest.raises(
+        ValueError,
+        match="canonical levels must not contain duplicates",
+    ):
+        LevelCrossResearchProfile(
+            level_space=NumericParameterSpace(
+                minimum=-95.0,
+                maximum=-5.0,
+                step=5.0,
+            ),
+            canonical_levels=(
+                -80.0,
+                -80.0,
+            ),
+        )
+
+
 def test_rejects_invalid_direction() -> None:
     with pytest.raises(
         ValueError,
