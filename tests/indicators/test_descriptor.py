@@ -349,6 +349,38 @@ def test_descriptor_parameter_spaces_are_immutable() -> None:
         )
 
 
+def test_descriptor_research_profiles_are_immutable() -> None:
+    descriptor = IndicatorDescriptor(
+        id="williams_r",
+        symbol="WILLR",
+        name="Williams %R",
+        version=1,
+        calculator=stub_calculator,
+        research_profiles=(
+            LevelCrossResearchProfile(
+                level_space=NumericParameterSpace(
+                    minimum=-95.0,
+                    maximum=-5.0,
+                    step=5.0,
+                ),
+                canonical_levels=(-80.0,),
+            ),
+        ),
+    )
+
+    with pytest.raises(AttributeError):
+        descriptor.research_profiles += (
+            LevelCrossResearchProfile(
+                level_space=NumericParameterSpace(
+                    minimum=-95.0,
+                    maximum=-5.0,
+                    step=5.0,
+                ),
+                canonical_levels=(-20.0,),
+            ),
+        )
+
+
 def test_descriptor_parameters_are_immutable() -> None:
     descriptor = IndicatorDescriptor(
         id="williams_r",
