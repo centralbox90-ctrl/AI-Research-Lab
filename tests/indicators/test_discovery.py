@@ -307,3 +307,12 @@ INDICATOR = IndicatorDescriptor(
         "alpha",
         "zeta",
     )
+
+
+def test_discovers_indicator_plugin() -> None:
+    indicators = discover_indicators()
+
+    assert indicators
+    assert all(indicator.id for indicator in indicators)
+    assert all(indicator.symbol for indicator in indicators)
+    assert all(indicator.name for indicator in indicators)
