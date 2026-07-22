@@ -169,3 +169,20 @@ def test_indicator_series_rejects_blank_source_reference() -> None:
             warmup_bars=0,
             source_data_ref=" ",
         )
+
+
+def test_indicator_series_preserves_specification_identity() -> None:
+    specification = make_specification()
+
+    series = IndicatorSeries.create(
+        specification=specification,
+        timestamps=make_timestamps(3),
+        values=[
+            None,
+            -75.0,
+            -60.0,
+        ],
+        warmup_bars=1,
+    )
+
+    assert series.specification is specification
