@@ -434,3 +434,25 @@ INDICATOR = IndicatorDescriptor(
     assert len(indicators_after_addition) == (
         len(initial_indicators) + 1
     )
+
+
+def test_rsi_plugin_is_fully_usable_after_discovery() -> None:
+    indicators = discover_indicators()
+
+    indicator = next(
+        i
+        for i in indicators
+        if i.id == "rsi"
+    )
+
+    assert indicator.id == "rsi"
+    assert indicator.symbol == "RSI"
+    assert indicator.name == "Relative Strength Index"
+
+    assert callable(indicator.calculator)
+
+    assert indicator.default_parameters == {
+        "period": 14,
+    }
+
+    assert indicator.research_space is not None
