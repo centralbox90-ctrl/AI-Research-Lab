@@ -132,3 +132,27 @@ def test_equal_indicator_specifications_compare_equal() -> None:
     )
 
     assert first == second
+
+
+
+
+
+
+def test_different_parameters_make_specifications_unequal() -> None:
+    first = IndicatorSpecification(
+        indicator_type="williams_r",
+        version=1,
+        parameters={
+            "period": 14,
+        },
+    )
+
+    second = IndicatorSpecification(
+        indicator_type="williams_r",
+        version=1,
+        parameters={
+            "period": 20,
+        },
+    )
+
+    assert first != second
