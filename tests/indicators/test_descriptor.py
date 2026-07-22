@@ -355,6 +355,18 @@ def test_rejects_zero_numeric_parameter_step() -> None:
         )
 
 
+def test_rejects_non_integer_minimum() -> None:
+    with pytest.raises(
+        TypeError,
+        match="minimum must be an integer",
+    ):
+        IntegerParameterSpace(
+            minimum=5.5,
+            maximum=50,
+            step=1,
+        )
+
+
 def test_rejects_negative_numeric_parameter_step() -> None:
     with pytest.raises(
         ValueError,
