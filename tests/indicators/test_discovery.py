@@ -179,3 +179,21 @@ def test_rejects_missing_package() -> None:
         discover_indicators(
             "package_that_does_not_exist",
         )
+
+def test_each_production_module_is_one_discoverable_indicator() -> None:
+    implementations_path = Path(
+        "src/indicators/implementations"
+    )
+
+    module_names = {
+        path.stem
+        for path in implementations_path.glob("*.py")
+        if path.name != "__init__.py"
+    }
+
+    discovered_indicator_ids = {
+        indicator.id
+        for indicator in discover_indicators()
+    }
+
+    assert discovered_indicator_ids == module_names
