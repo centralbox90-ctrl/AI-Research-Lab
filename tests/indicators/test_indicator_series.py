@@ -202,3 +202,16 @@ def test_indicator_series_create_preserves_specification_identity() -> None:
 
     assert series.specification is specification
 
+def test_indicator_series_normalizes_source_reference() -> None:
+    series = IndicatorSeries.create(
+        specification=make_specification(),
+        timestamps=make_timestamps(1),
+        values=[
+            -50.0,
+        ],
+        warmup_bars=0,
+        source_data_ref="  dataset:eurusd-h1-v1  ",
+    )
+
+    assert series.source_data_ref == "dataset:eurusd-h1-v1"
+
