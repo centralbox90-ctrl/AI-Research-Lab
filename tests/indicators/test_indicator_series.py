@@ -266,3 +266,18 @@ def test_indicator_series_normalizes_sequences_to_tuples() -> None:
     assert isinstance(series.timestamps, tuple)
     assert isinstance(series.values, tuple)
 
+def test_indicator_series_value_at_supports_negative_index() -> None:
+    series = IndicatorSeries.create(
+        specification=make_specification(),
+        timestamps=make_timestamps(3),
+        values=[
+            None,
+            -70.0,
+            -55.0,
+        ],
+        warmup_bars=1,
+    )
+
+    assert series.value_at(-1) == -55.0
+    assert series.value_at(-2) == -70.0
+
