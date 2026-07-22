@@ -172,6 +172,23 @@ def test_rejects_non_callable_calculator() -> None:
         )
 
 
+def test_rejects_unsupported_parameter_space_type() -> None:
+    with pytest.raises(
+        TypeError,
+        match="unsupported type",
+    ):
+        IndicatorDescriptor(
+            id="williams_r",
+            symbol="WILLR",
+            name="Williams %R",
+            version=1,
+            calculator=stub_calculator,
+            parameter_spaces={
+                "period": object(),
+            },
+        )
+
+
 def test_rejects_canonical_level_outside_space() -> None:
     with pytest.raises(
         ValueError,
