@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import importlib
 import pkgutil
@@ -24,9 +24,9 @@ def discover_indicators(
     Каждый plugin должен экспортировать переменную INDICATOR.
     Discovery ничего не регистрирует и не создаёт глобальный catalog.
     """
-
     package = _import_package(package_name)
     indicators: list[IndicatorDescriptor] = []
+    indicator_modules: dict[str, str] = {}
 
     for module_name in _iter_module_names(package):
         module = importlib.import_module(module_name)
@@ -48,6 +48,15 @@ def discover_indicators(
                 f"got {type(indicator).__name__}."
             )
 
+        existing_module = indicator_modules.get(indicator.id)
+
+        if existing_module is not None:
+            raise IndicatorDiscoveryError(
+                f"Duplicate indicator id '{indicator.id}' exported by "
+                f"modules '{existing_module}' and '{module_name}'."
+            )
+
+        indicator_modules[indicator.id] = module_name
         indicators.append(indicator)
 
     return tuple(indicators)

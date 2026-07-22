@@ -197,3 +197,55 @@ def test_each_production_module_is_one_discoverable_indicator() -> None:
     }
 
     assert discovered_indicator_ids == module_names
+
+def test_rejects_duplicate_indicator_ids(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    package_name = "temporary_indicators_with_duplicate_ids"
+    package_path = create_package(
+        tmp_path,
+        package_name,
+    )
+
+    plugin_code = """
+from src.indicators.descriptor import IndicatorDescriptor
+
+
+def calculator(data, specification):
+    raise NotImplementedError
+
+
+INDICATOR = IndicatorDescriptor(
+    id="duplicate",
+    symbol="{symbol}",
+    name="{name}",
+    version=1,
+    calculator=calculator,
+)
+"""
+
+    package_path.joinpath("first.py").write_text(
+        plugin_code.format(
+            symbol="FIRST",
+            name="First",
+        ),
+        encoding="utf-8",
+    )
+
+    package_path.joinpath("second.py").write_text(
+        plugin_code.format(
+            symbol="SECOND",
+            name="Second",
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.syspath_prepend(str(tmp_path))
+    clear_modules(package_name)
+
+    with pytest.raises(
+        IndicatorDiscoveryError,
+        match="Duplicate indicator id 'duplicate'",
+    ):
+        discover_indicators(package_name)
