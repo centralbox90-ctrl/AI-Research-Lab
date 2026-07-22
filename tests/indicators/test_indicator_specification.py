@@ -77,3 +77,58 @@ def test_indicator_specification_parameters_are_read_only() -> None:
 
     with pytest.raises(TypeError):
         specification.parameters["period"] = 20
+
+
+def test_indicator_specification_uses_empty_parameters_by_default() -> None:
+    specification = IndicatorSpecification(
+        indicator_type="williams_r",
+        version=1,
+    )
+
+    assert specification.parameters == {}
+
+    with pytest.raises(TypeError):
+        specification.parameters["period"] = 14
+
+
+@pytest.mark.parametrize(
+    ("attribute", "value"),
+    (
+        ("indicator_type", "rsi"),
+        ("version", 2),
+        ("parameters", {"period": 20}),
+    ),
+)
+def test_indicator_specification_is_immutable(
+    attribute: str,
+    value: object,
+) -> None:
+    specification = IndicatorSpecification(
+        indicator_type="williams_r",
+        version=1,
+        parameters={
+            "period": 14,
+        },
+    )
+
+    with pytest.raises(AttributeError):
+        setattr(specification, attribute, value)
+
+
+def test_equal_indicator_specifications_compare_equal() -> None:
+    first = IndicatorSpecification(
+        indicator_type="williams_r",
+        version=1,
+        parameters={
+            "period": 14,
+        },
+    )
+    second = IndicatorSpecification(
+        indicator_type="williams_r",
+        version=1,
+        parameters={
+            "period": 14,
+        },
+    )
+
+    assert first == second
