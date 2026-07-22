@@ -387,6 +387,26 @@ def test_accepts_empty_directions() -> None:
     assert profile.directions == ()
 
 
+def test_normalizes_profile_collections_to_tuples() -> None:
+    profile = LevelCrossResearchProfile(
+        level_space=NumericParameterSpace(
+            minimum=-95.0,
+            maximum=-5.0,
+            step=5.0,
+        ),
+        canonical_levels=[-80.0, -20.0],
+        directions=["cross_above", "cross_below"],
+    )
+
+    assert profile.canonical_levels == (-80.0, -20.0)
+    assert isinstance(profile.canonical_levels, tuple)
+    assert profile.directions == (
+        "cross_above",
+        "cross_below",
+    )
+    assert isinstance(profile.directions, tuple)
+
+
 def test_descriptor_parameter_spaces_are_immutable() -> None:
     descriptor = IndicatorDescriptor(
         id="williams_r",
