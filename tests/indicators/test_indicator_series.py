@@ -237,3 +237,18 @@ def test_indicator_series_copies_metadata() -> None:
         "implementation": "native",
     }
 
+def test_indicator_series_defaults_to_empty_metadata() -> None:
+    series = IndicatorSeries.create(
+        specification=make_specification(),
+        timestamps=make_timestamps(1),
+        values=[
+            -50.0,
+        ],
+        warmup_bars=0,
+    )
+
+    assert series.metadata == {}
+
+    with pytest.raises(TypeError):
+        series.metadata["key"] = "value"
+
