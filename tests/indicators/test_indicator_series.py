@@ -186,3 +186,19 @@ def test_indicator_series_preserves_specification_identity() -> None:
     )
 
     assert series.specification is specification
+
+def test_indicator_series_create_preserves_specification_identity() -> None:
+    specification = make_specification()
+
+    series = IndicatorSeries.create(
+        specification=specification,
+        timestamps=make_timestamps(2),
+        values=[
+            None,
+            -70.0,
+        ],
+        warmup_bars=1,
+    )
+
+    assert series.specification is specification
+
