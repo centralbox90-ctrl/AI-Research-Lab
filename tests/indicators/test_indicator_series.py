@@ -252,3 +252,17 @@ def test_indicator_series_defaults_to_empty_metadata() -> None:
     with pytest.raises(TypeError):
         series.metadata["key"] = "value"
 
+def test_indicator_series_normalizes_sequences_to_tuples() -> None:
+    series = IndicatorSeries.create(
+        specification=make_specification(),
+        timestamps=make_timestamps(2),
+        values=[
+            None,
+            -70.0,
+        ],
+        warmup_bars=1,
+    )
+
+    assert isinstance(series.timestamps, tuple)
+    assert isinstance(series.values, tuple)
+
