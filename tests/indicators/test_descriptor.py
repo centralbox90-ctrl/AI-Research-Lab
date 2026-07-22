@@ -189,6 +189,28 @@ def test_rejects_unsupported_parameter_space_type() -> None:
         )
 
 
+def test_rejects_empty_parameter_space_name() -> None:
+    with pytest.raises(
+        ValueError,
+        match="parameter space name must not be empty",
+    ):
+        IndicatorDescriptor(
+            id="williams_r",
+            symbol="WILLR",
+            name="Williams %R",
+            version=1,
+            calculator=stub_calculator,
+            parameter_spaces={
+                "   ": IntegerParameterSpace(
+                    minimum=5,
+                    maximum=50,
+                    step=1,
+                    default=14,
+                ),
+            },
+        )
+
+
 def test_rejects_default_without_matching_parameter_space() -> None:
     with pytest.raises(
         ValueError,
