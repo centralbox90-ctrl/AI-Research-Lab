@@ -158,6 +158,20 @@ def test_rejects_boolean_version() -> None:
         )
 
 
+def test_rejects_non_callable_calculator() -> None:
+    with pytest.raises(
+        TypeError,
+        match="calculator must be callable",
+    ):
+        IndicatorDescriptor(
+            id="williams_r",
+            symbol="WILLR",
+            name="Williams %R",
+            version=1,
+            calculator=object(),
+        )
+
+
 def test_rejects_canonical_level_outside_space() -> None:
     with pytest.raises(
         ValueError,
