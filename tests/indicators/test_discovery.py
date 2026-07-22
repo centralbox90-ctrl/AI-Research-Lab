@@ -359,3 +359,78 @@ def test_discovers_indicator_plugin() -> None:
     assert all(indicator.id for indicator in indicators)
     assert all(indicator.symbol for indicator in indicators)
     assert all(indicator.name for indicator in indicators)
+def test_new_plugin_is_discovered_without_infrastructure_changes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    package_name = "temporary_indicators_with_new_plugin"
+    package_path = create_package(
+        tmp_path,
+        package_name,
+    )
+
+    plugin_code = """
+from src.indicators.descriptor import IndicatorDescriptor
+
+
+def calculator(data, specification):
+    raise NotImplementedError
+
+
+INDICATOR = IndicatorDescriptor(
+    id="{indicator_id}",
+    symbol="{symbol}",
+    name="{name}",
+    version=1,
+    calculator=calculator,
+)
+"""
+
+    for module_name in ("first", "second"):
+        package_path.joinpath(f"{module_name}.py").write_text(
+            plugin_code.format(
+                indicator_id=module_name,
+                symbol=module_name.upper(),
+                name=module_name.title(),
+            ),
+            encoding="utf-8",
+        )
+
+    monkeypatch.syspath_prepend(str(tmp_path))
+    clear_modules(package_name)
+
+    initial_indicators = discover_indicators(package_name)
+
+    package_path.joinpath("third.py").write_text(
+        plugin_code.format(
+            indicator_id="third",
+            symbol="THIRD",
+            name="Third",
+        ),
+        encoding="utf-8",
+    )
+
+    clear_modules(package_name)
+
+    indicators_after_addition = discover_indicators(package_name)
+
+    assert tuple(
+        indicator.id
+        for indicator in initial_indicators
+    ) == (
+        "first",
+        "second",
+    )
+
+    assert tuple(
+        indicator.id
+        for indicator in indicators_after_addition
+    ) == (
+        "first",
+        "second",
+        "third",
+    )
+
+    assert len(indicators_after_addition) == (
+        len(initial_indicators) + 1
+    )
