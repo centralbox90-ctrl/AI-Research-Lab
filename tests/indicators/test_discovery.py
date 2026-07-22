@@ -309,6 +309,49 @@ INDICATOR = IndicatorDescriptor(
     )
 
 
+
+def test_discovery_returns_unique_indicator_ids() -> None:
+    indicators = discover_indicators()
+
+    ids = [indicator.id for indicator in indicators]
+
+    assert len(ids) == len(set(ids))
+
+
+def test_discovery_returns_unique_symbols() -> None:
+    indicators = discover_indicators()
+
+    symbols = [indicator.symbol for indicator in indicators]
+
+    assert len(symbols) == len(set(symbols))
+
+
+def test_discovery_returns_indicator_descriptors() -> None:
+    from src.indicators.descriptor import IndicatorDescriptor
+
+    indicators = discover_indicators()
+
+    assert all(
+        isinstance(indicator, IndicatorDescriptor)
+        for indicator in indicators
+    )
+
+
+def test_discovery_returns_immutable_descriptors() -> None:
+    indicators = discover_indicators()
+
+    for indicator in indicators:
+        with pytest.raises(AttributeError):
+            indicator.id = "modified"
+
+
+def test_discovery_returns_deterministic_order() -> None:
+    first = discover_indicators()
+    second = discover_indicators()
+
+    assert [i.id for i in first] == [i.id for i in second]
+
+
 def test_discovers_indicator_plugin() -> None:
     indicators = discover_indicators()
 
