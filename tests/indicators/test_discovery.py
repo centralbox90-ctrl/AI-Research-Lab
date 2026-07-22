@@ -249,3 +249,61 @@ INDICATOR = IndicatorDescriptor(
         match="Duplicate indicator id 'duplicate'",
     ):
         discover_indicators(package_name)
+
+def test_discovers_indicators_in_module_name_order(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    package_name = "temporary_indicators_with_order"
+    package_path = create_package(
+        tmp_path,
+        package_name,
+    )
+
+    plugin_code = """
+from src.indicators.descriptor import IndicatorDescriptor
+
+
+def calculator(data, specification):
+    raise NotImplementedError
+
+
+INDICATOR = IndicatorDescriptor(
+    id="{indicator_id}",
+    symbol="{symbol}",
+    name="{name}",
+    version=1,
+    calculator=calculator,
+)
+"""
+
+    package_path.joinpath("zeta.py").write_text(
+        plugin_code.format(
+            indicator_id="zeta",
+            symbol="ZETA",
+            name="Zeta",
+        ),
+        encoding="utf-8",
+    )
+
+    package_path.joinpath("alpha.py").write_text(
+        plugin_code.format(
+            indicator_id="alpha",
+            symbol="ALPHA",
+            name="Alpha",
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.syspath_prepend(str(tmp_path))
+    clear_modules(package_name)
+
+    indicators = discover_indicators(package_name)
+
+    assert tuple(
+        indicator.id
+        for indicator in indicators
+    ) == (
+        "alpha",
+        "zeta",
+    )
