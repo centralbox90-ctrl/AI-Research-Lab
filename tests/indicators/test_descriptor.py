@@ -87,6 +87,46 @@ def test_creates_indicator_descriptor() -> None:
     )
 
 
+def test_normalizes_descriptor_metadata() -> None:
+    descriptor = IndicatorDescriptor(
+        id="  williams_r  ",
+        symbol="  WILLR  ",
+        name="  Williams %R  ",
+        version=1,
+        calculator=stub_calculator,
+    )
+
+    assert descriptor.id == "williams_r"
+    assert descriptor.symbol == "WILLR"
+    assert descriptor.name == "Williams %R"
+
+
+@pytest.mark.parametrize(
+    ("field_name", "field_value", "error_message"),
+    (
+        ("id", "   ", "id must not be empty"),
+        ("symbol", "   ", "symbol must not be empty"),
+        ("name", "   ", "name must not be empty"),
+    ),
+)
+def test_rejects_empty_descriptor_metadata(
+    field_name: str,
+    field_value: str,
+    error_message: str,
+) -> None:
+    arguments = {
+        "id": "williams_r",
+        "symbol": "WILLR",
+        "name": "Williams %R",
+        "version": 1,
+        "calculator": stub_calculator,
+    }
+    arguments[field_name] = field_value
+
+    with pytest.raises(ValueError, match=error_message):
+        IndicatorDescriptor(**arguments)
+
+
 def test_rejects_canonical_level_outside_space() -> None:
     with pytest.raises(
         ValueError,
