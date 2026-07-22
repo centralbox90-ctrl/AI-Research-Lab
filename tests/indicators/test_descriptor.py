@@ -268,6 +268,24 @@ def test_rejects_default_that_differs_from_parameter_space() -> None:
         )
 
 
+def test_rejects_unsupported_research_space_type() -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "research_space must be an "
+            "IndicatorResearchSpace or None"
+        ),
+    ):
+        IndicatorDescriptor(
+            id="williams_r",
+            symbol="WILLR",
+            name="Williams %R",
+            version=1,
+            calculator=stub_calculator,
+            research_space=object(),
+        )
+
+
 def test_rejects_canonical_level_outside_space() -> None:
     with pytest.raises(
         ValueError,
