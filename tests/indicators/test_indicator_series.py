@@ -281,3 +281,20 @@ def test_indicator_series_value_at_supports_negative_index() -> None:
     assert series.value_at(-1) == -55.0
     assert series.value_at(-2) == -70.0
 
+def test_indicator_series_timestamp_at_supports_negative_index() -> None:
+    timestamps = make_timestamps(3)
+
+    series = IndicatorSeries.create(
+        specification=make_specification(),
+        timestamps=timestamps,
+        values=[
+            None,
+            -70.0,
+            -55.0,
+        ],
+        warmup_bars=1,
+    )
+
+    assert series.timestamp_at(-1) == timestamps[-1]
+    assert series.timestamp_at(-2) == timestamps[-2]
+
