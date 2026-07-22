@@ -305,6 +305,32 @@ def test_rejects_invalid_direction() -> None:
         )
 
 
+def test_descriptor_parameter_spaces_are_immutable() -> None:
+    descriptor = IndicatorDescriptor(
+        id="williams_r",
+        symbol="WILLR",
+        name="Williams %R",
+        version=1,
+        calculator=stub_calculator,
+        parameter_spaces={
+            "period": IntegerParameterSpace(
+                minimum=5,
+                maximum=50,
+                step=1,
+                default=14,
+            ),
+        },
+    )
+
+    with pytest.raises(TypeError):
+        descriptor.parameter_spaces["period"] = IntegerParameterSpace(
+            minimum=10,
+            maximum=100,
+            step=1,
+            default=20,
+        )
+
+
 def test_descriptor_parameters_are_immutable() -> None:
     descriptor = IndicatorDescriptor(
         id="williams_r",
