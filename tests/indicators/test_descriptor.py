@@ -127,6 +127,37 @@ def test_rejects_empty_descriptor_metadata(
         IndicatorDescriptor(**arguments)
 
 
+@pytest.mark.parametrize("version", [0, -1])
+def test_rejects_non_positive_version(
+    version: int,
+) -> None:
+    with pytest.raises(
+        ValueError,
+        match="version must be greater than zero",
+    ):
+        IndicatorDescriptor(
+            id="williams_r",
+            symbol="WILLR",
+            name="Williams %R",
+            version=version,
+            calculator=stub_calculator,
+        )
+
+
+def test_rejects_boolean_version() -> None:
+    with pytest.raises(
+        TypeError,
+        match="version must be an integer",
+    ):
+        IndicatorDescriptor(
+            id="williams_r",
+            symbol="WILLR",
+            name="Williams %R",
+            version=True,
+            calculator=stub_calculator,
+        )
+
+
 def test_rejects_canonical_level_outside_space() -> None:
     with pytest.raises(
         ValueError,
