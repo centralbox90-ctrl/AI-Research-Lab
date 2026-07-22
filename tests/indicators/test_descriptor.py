@@ -355,6 +355,22 @@ def test_rejects_zero_numeric_parameter_step() -> None:
         )
 
 
+def test_rejects_non_integer_coarse_value() -> None:
+    with pytest.raises(
+        TypeError,
+        match=r"coarse value must be an integer\.",
+    ):
+        IntegerParameterSpace(
+            minimum=5,
+            maximum=50,
+            step=1,
+            coarse_values=(
+                10,
+                20.5,
+            ),
+        )
+
+
 def test_rejects_non_integer_default() -> None:
     with pytest.raises(
         TypeError,
