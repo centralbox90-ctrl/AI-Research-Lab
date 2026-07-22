@@ -28,7 +28,7 @@ def discover_indicators(
     indicators: list[IndicatorDescriptor] = []
     indicator_modules: dict[str, str] = {}
 
-    for module_name in _iter_module_names(package):
+    for module_name in sorted(_iter_module_names(package)):
         module = importlib.import_module(module_name)
 
         if not hasattr(module, "INDICATOR"):
