@@ -355,6 +355,72 @@ def test_rejects_zero_numeric_parameter_step() -> None:
         )
 
 
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    (
+        ({"minimum": True}, r"minimum must be an integer\."),
+        ({"maximum": True}, r"maximum must be an integer\."),
+        ({"step": True}, r"step must be an integer\."),
+        ({"default": True}, r"default must be an integer\."),
+        (
+            {"coarse_values": (10, True)},
+            r"coarse value must be an integer\.",
+        ),
+    ),
+)
+def test_rejects_boolean_integer_parameter_values(
+    overrides: dict[str, object],
+    message: str,
+) -> None:
+    parameters = {
+        "minimum": 5,
+        "maximum": 50,
+        "step": 1,
+    }
+    parameters.update(overrides)
+
+    with pytest.raises(TypeError, match=message):
+        IntegerParameterSpace(**parameters)
+
+
+def test_normalizes_integer_coarse_values_to_tuple() -> None:
+    space = IntegerParameterSpace(
+        minimum=5,
+        maximum=50,
+        step=1,
+        coarse_values=[10, 20, 30],
+    )
+
+    assert space.coarse_values == (10, 20, 30)
+    assert isinstance(space.coarse_values, tuple)
+
+
+def test_rejects_duplicate_integer_coarse_values() -> None:
+    with pytest.raises(
+        ValueError,
+        match=r"coarse values must not contain duplicates\.",
+    ):
+        IntegerParameterSpace(
+            minimum=5,
+            maximum=50,
+            step=1,
+            coarse_values=(10, 20, 20),
+        )
+
+
+def test_rejects_integer_coarse_value_outside_bounds() -> None:
+    with pytest.raises(
+        ValueError,
+        match=r"coarse value must be within the parameter space\.",
+    ):
+        IntegerParameterSpace(
+            minimum=5,
+            maximum=50,
+            step=1,
+            coarse_values=(10, 51),
+        )
+
+
 def test_rejects_integer_default_outside_bounds() -> None:
     with pytest.raises(
         ValueError,
