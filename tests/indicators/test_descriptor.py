@@ -286,6 +286,18 @@ def test_rejects_unsupported_research_space_type() -> None:
         )
 
 
+def test_rejects_inverted_numeric_parameter_bounds() -> None:
+    with pytest.raises(
+        ValueError,
+        match="minimum must be less than or equal to maximum",
+    ):
+        NumericParameterSpace(
+            minimum=100.0,
+            maximum=0.0,
+            step=1.0,
+        )
+
+
 def test_rejects_zero_numeric_parameter_step() -> None:
     with pytest.raises(
         ValueError,
