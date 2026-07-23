@@ -9,6 +9,9 @@ from src.application.market_dataset_quality import (
 from src.research.comparative_analysis import (
     ComparativeAnalysis,
 )
+from src.research.comparative_evaluation_plan import (
+    ComparativeEvaluationPlan,
+)
 from src.research.comparative_statistical_evaluation import (
     ComparativeStatisticalEvaluation,
 )
@@ -31,6 +34,9 @@ class IndicatorComparativeResearchResult:
     dataset_fingerprint: MarketDatasetFingerprint
     data_quality_report: DataQualityReport
     analysis: ComparativeAnalysis
+    evaluation_plan: ComparativeEvaluationPlan = (
+        ComparativeEvaluationPlan()
+    )
     statistical_evaluations: tuple[
         ComparativeStatisticalEvaluation,
         ...,
@@ -96,6 +102,15 @@ class IndicatorComparativeResearchResult:
         ):
             raise TypeError(
                 "analysis must be a ComparativeAnalysis"
+            )
+
+        if not isinstance(
+            self.evaluation_plan,
+            ComparativeEvaluationPlan,
+        ):
+            raise TypeError(
+                "evaluation_plan must be a "
+                "ComparativeEvaluationPlan"
             )
 
         statistical_evaluations = (
@@ -246,6 +261,10 @@ class IndicatorComparativeResearchResult:
                 evaluation_by_horizon
             )
         )
+
+    @property
+    def evaluation_plan_fingerprint(self) -> str:
+        return self.evaluation_plan.fingerprint
 
     @property
     def research_fingerprint(self) -> str:

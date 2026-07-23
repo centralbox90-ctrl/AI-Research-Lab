@@ -12,6 +12,9 @@ from src.indicators.implementations.rsi import INDICATOR
 from src.research.comparative_analysis import (
     ComparativeAnalysis,
 )
+from src.research.comparative_evaluation_plan import (
+    ComparativeEvaluationPlan,
+)
 from src.research.comparative_statistical_evaluation import (
     ComparativeStatisticalEvaluation,
 )
@@ -93,6 +96,13 @@ def test_builds_reproducible_comparative_result(
     )
     assert result.dataset_id == "dataset-fingerprint"
     assert result.data_quality_report.row_count == 100
+    assert isinstance(
+        result.evaluation_plan,
+        ComparativeEvaluationPlan,
+    )
+    assert result.evaluation_plan_fingerprint == (
+        result.evaluation_plan.fingerprint
+    )
 
 
 def test_is_immutable() -> None:
@@ -155,6 +165,13 @@ def test_is_immutable() -> None:
             object(),
             TypeError,
             "analysis must be a ComparativeAnalysis",
+        ),
+        (
+            "evaluation_plan",
+            object(),
+            TypeError,
+            "evaluation_plan must be a "
+            "ComparativeEvaluationPlan",
         ),
     ),
 )
@@ -411,3 +428,19 @@ def test_rejects_mismatched_statistical_evaluation(
                 ),
             ),
         )
+
+def test_preserves_explicit_evaluation_plan(
+) -> None:
+    plan = ComparativeEvaluationPlan(
+        block_length=12,
+        random_seed=17,
+    )
+
+    result = build_result(
+        evaluation_plan=plan,
+    )
+
+    assert result.evaluation_plan is plan
+    assert result.evaluation_plan_fingerprint == (
+        plan.fingerprint
+    )
