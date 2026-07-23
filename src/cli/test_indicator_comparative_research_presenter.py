@@ -14,6 +14,9 @@ from src.cli.indicator_comparative_research_presenter import (
 from src.research.comparative_analysis import (
     ComparativeAnalysis,
 )
+from src.research.comparative_statistical_evaluation import (
+    ComparativeStatisticalEvaluation,
+)
 from src.research.event_study_result import (
     EventStudyResult,
 )
@@ -151,6 +154,28 @@ def build_result(
             monotonic_timestamp=True,
         ),
         analysis=analysis,
+        statistical_evaluations=(
+            ComparativeStatisticalEvaluation(
+                research_fingerprint=(
+                    research_specification.fingerprint
+                ),
+                dataset_id="dataset-id",
+                horizon=1,
+                candidate_sample_size=1,
+                baseline_sample_size=1,
+                effect_estimate=0.05,
+                confidence_interval_lower=0.01,
+                confidence_interval_upper=0.09,
+                confidence_level=0.95,
+                method="moving_block_bootstrap",
+                resample_count=2_000,
+                block_length=1,
+                random_seed=0,
+                warnings=(
+                    "candidate sample size is below 30",
+                ),
+            ),
+        ),
     )
 
 
@@ -206,6 +231,32 @@ def test_presents_json_compatible_result(
     ]["comparisons"][0][
         "mean_return_difference"
     ] == pytest.approx(0.05)
+
+    statistical_evaluation = serialized[
+        "analysis"
+    ]["statistical_evaluations"][0]
+
+    assert statistical_evaluation["horizon"] == 1
+    assert statistical_evaluation[
+        "effect_estimate"
+    ] == pytest.approx(0.05)
+    assert statistical_evaluation[
+        "confidence_interval_lower"
+    ] == pytest.approx(0.01)
+    assert statistical_evaluation[
+        "confidence_interval_upper"
+    ] == pytest.approx(0.09)
+    assert statistical_evaluation[
+        "method"
+    ] == "moving_block_bootstrap"
+    assert statistical_evaluation[
+        "excludes_zero"
+    ] is True
+    assert statistical_evaluation[
+        "warnings"
+    ] == [
+        "candidate sample size is below 30",
+    ]
 
 
 def test_rejects_invalid_result() -> None:

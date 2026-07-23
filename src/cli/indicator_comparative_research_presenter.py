@@ -87,6 +87,17 @@ def present_indicator_comparative_research_result(
                 asdict(comparison)
                 for comparison in analysis.comparisons
             ],
+            "statistical_evaluations": [
+                {
+                    **asdict(evaluation),
+                    "excludes_zero": (
+                        evaluation.excludes_zero
+                    ),
+                }
+                for evaluation in (
+                    result.statistical_evaluations
+                )
+            ],
         },
     }
 
