@@ -129,6 +129,7 @@ def build_result(
     )
 
     evaluation_plan = ComparativeEvaluationPlan(
+        block_length=1,
         random_seed=7,
     )
 
@@ -190,6 +191,7 @@ def build_result(
 def test_presents_json_compatible_result(
 ) -> None:
     expected_plan = ComparativeEvaluationPlan(
+        block_length=1,
         random_seed=7,
     )
     payload = (

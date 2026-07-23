@@ -254,8 +254,8 @@ def build_statistical_evaluation(
         "confidence_level": 0.95,
         "method": "moving_block_bootstrap",
         "resample_count": 2_000,
-        "block_length": 5,
-        "random_seed": 17,
+        "block_length": 24,
+        "random_seed": 0,
     }
     arguments.update(overrides)
 
@@ -428,6 +428,67 @@ def test_rejects_mismatched_statistical_evaluation(
                 ),
             ),
         )
+
+@pytest.mark.parametrize(
+    (
+        "field_name",
+        "invalid_value",
+        "message",
+    ),
+    [
+        (
+            "method",
+            "stationary_bootstrap",
+            "statistical evaluation method "
+            "must match the evaluation plan",
+        ),
+        (
+            "confidence_level",
+            0.9,
+            "statistical evaluation confidence "
+            "level must match the evaluation plan",
+        ),
+        (
+            "resample_count",
+            100,
+            "statistical evaluation resample "
+            "count must match the evaluation plan",
+        ),
+        (
+            "block_length",
+            12,
+            "statistical evaluation block "
+            "length must match the evaluation plan",
+        ),
+        (
+            "random_seed",
+            7,
+            "statistical evaluation random "
+            "seed must match the evaluation plan",
+        ),
+    ],
+)
+def test_rejects_statistical_plan_mismatch(
+    field_name: str,
+    invalid_value: object,
+    message: str,
+) -> None:
+    analysis = build_analysis_with_comparisons(1)
+
+    with pytest.raises(
+        ValueError,
+        match=message,
+    ):
+        build_result(
+            analysis=analysis,
+            statistical_evaluations=(
+                build_statistical_evaluation(
+                    1,
+                    **{field_name: invalid_value},
+                ),
+            ),
+        )
+
 
 def test_preserves_explicit_evaluation_plan(
 ) -> None:

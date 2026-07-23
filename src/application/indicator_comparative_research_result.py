@@ -255,6 +255,53 @@ class IndicatorComparativeResearchResult:
                     "must match the comparison"
                 )
 
+            if (
+                evaluation.method
+                != self.evaluation_plan.method
+            ):
+                raise ValueError(
+                    "statistical evaluation method "
+                    "must match the evaluation plan"
+                )
+
+            if not isclose(
+                evaluation.confidence_level,
+                self.evaluation_plan.confidence_level,
+                rel_tol=1e-12,
+                abs_tol=1e-15,
+            ):
+                raise ValueError(
+                    "statistical evaluation confidence "
+                    "level must match the evaluation plan"
+                )
+
+            if (
+                evaluation.resample_count
+                != self.evaluation_plan.resample_count
+            ):
+                raise ValueError(
+                    "statistical evaluation resample "
+                    "count must match the evaluation plan"
+                )
+
+            if (
+                evaluation.block_length
+                != self.evaluation_plan.block_length
+            ):
+                raise ValueError(
+                    "statistical evaluation block "
+                    "length must match the evaluation plan"
+                )
+
+            if (
+                evaluation.random_seed
+                != self.evaluation_plan.random_seed
+            ):
+                raise ValueError(
+                    "statistical evaluation random "
+                    "seed must match the evaluation plan"
+                )
+
         return tuple(
             evaluation_by_horizon[horizon]
             for horizon in sorted(
