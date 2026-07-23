@@ -1,5 +1,8 @@
 import pandas as pd
 
+from src.application.indicator_comparative_research_application import (
+    IndicatorComparativeResearchApplication,
+)
 from src.application.canonical_market_dataset import (
     CanonicalMarketDataset,
 )
@@ -13,6 +16,7 @@ from src.application.indicator_comparative_research_service import (
     IndicatorComparativeResearchService,
 )
 from src.cli.indicator_comparative_research_composition_root import (
+    build_default_indicator_comparative_research_application,
     build_default_indicator_comparative_research_service,
 )
 from src.indicators.implementations.rsi import INDICATOR
@@ -71,6 +75,27 @@ def build_dataset(
                 canonical
             )
         ),
+    )
+
+
+class StubDatasetProvider:
+    def load(self, specification: object) -> object:
+        raise AssertionError(
+            "load must not run during composition"
+        )
+
+
+def test_builds_default_comparative_research_application(
+) -> None:
+    application = (
+        build_default_indicator_comparative_research_application(
+            data_provider=StubDatasetProvider(),
+        )
+    )
+
+    assert isinstance(
+        application,
+        IndicatorComparativeResearchApplication,
     )
 
 
