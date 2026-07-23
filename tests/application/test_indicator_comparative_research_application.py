@@ -30,6 +30,9 @@ from src.indicators.implementations.rsi import INDICATOR
 from src.research.comparative_analysis import (
     ComparativeAnalysis,
 )
+from src.research.comparative_evaluation_plan import (
+    ComparativeEvaluationPlan,
+)
 from src.research.market_dataset_fingerprint import (
     MarketDatasetFingerprint,
 )
@@ -85,6 +88,7 @@ class StubStatisticalEvaluator:
         analysis: object,
         research_fingerprint: str,
         dataset_id: str,
+        plan: ComparativeEvaluationPlan,
     ) -> tuple[object, ...]:
         self.calls.append(
             {
@@ -93,6 +97,7 @@ class StubStatisticalEvaluator:
                     research_fingerprint
                 ),
                 "dataset_id": dataset_id,
+                "plan": plan,
             }
         )
 
@@ -207,6 +212,12 @@ def build_application(
     statistical_evaluator = (
         StubStatisticalEvaluator()
     )
+    evaluation_plan = ComparativeEvaluationPlan(
+        confidence_level=0.9,
+        resample_count=100,
+        block_length=1,
+        random_seed=7,
+    )
     application = IndicatorComparativeResearchApplication(
         data_provider=provider,
         indicator_catalog=(
@@ -215,6 +226,7 @@ def build_application(
             else IndicatorCatalog((INDICATOR,))
         ),
         research_service=service,
+        evaluation_plan=evaluation_plan,
         statistical_evaluator=(
             statistical_evaluator
         ),
@@ -270,7 +282,12 @@ def test_runs_default_comparative_indicator_research(
     assert len(statistical_evaluator.calls) == 1
     assert result.statistical_evaluations == ()
 
+    assert result.evaluation_plan.random_seed == 7
+
     statistical_call = statistical_evaluator.calls[0]
+    assert statistical_call["plan"] is (
+        result.evaluation_plan
+    )
     assert statistical_call["analysis"] is (
         expected_analysis
     )
