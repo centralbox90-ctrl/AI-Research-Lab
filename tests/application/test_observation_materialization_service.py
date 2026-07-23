@@ -141,6 +141,35 @@ def test_materializes_nonzero_observations(
     )
 
 
+def test_uses_canonical_timestamp_column(
+) -> None:
+    data = build_data()
+    timestamps = pd.date_range(
+        "2026-02-01",
+        periods=len(data),
+        freq="h",
+        tz="UTC",
+    )
+    data["timestamp"] = timestamps.asi8
+
+    observations = (
+        ObservationMaterializationService()
+        .materialize(
+            data=data,
+            result=build_result(),
+            symbol="EURUSD",
+            timeframe="H1",
+        )
+    )
+
+    assert observations[0].timestamp == (
+        timestamps[0].to_pydatetime()
+    )
+    assert observations[1].timestamp == (
+        timestamps[2].to_pydatetime()
+    )
+
+
 def test_returns_empty_tuple_without_events(
 ) -> None:
     observations = (

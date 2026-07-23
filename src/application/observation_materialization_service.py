@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 import pandas as pd
 
 from src.application.indicator_research_result import (
@@ -82,10 +84,10 @@ class ObservationMaterializationService:
                 definition_id=definition_id,
                 symbol=symbol,
                 timeframe=timeframe,
-                timestamp=(
-                    result.series.timestamp_at(
-                        bar_index
-                    )
+                timestamp=self._resolve_timestamp(
+                    data=data,
+                    result=result,
+                    bar_index=bar_index,
                 ),
                 bar_index=bar_index,
                 price=data.iloc[
@@ -116,6 +118,25 @@ class ObservationMaterializationService:
             ) in enumerate(result.observations)
             if observation_signal != 0
         )
+
+    @staticmethod
+    def _resolve_timestamp(
+        *,
+        data: pd.DataFrame,
+        result: IndicatorResearchResult,
+        bar_index: int,
+    ) -> datetime:
+        if "timestamp" not in data.columns:
+            return result.series.timestamp_at(
+                bar_index
+            )
+
+        timestamp = pd.to_datetime(
+            data.iloc[bar_index]["timestamp"],
+            utc=True,
+        )
+
+        return timestamp.to_pydatetime()
 
     @staticmethod
     def _normalize_text(
