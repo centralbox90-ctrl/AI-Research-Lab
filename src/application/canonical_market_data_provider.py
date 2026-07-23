@@ -54,7 +54,7 @@ class CanonicalMarketDataProvider:
     def load(
         self,
         specification: MarketExperimentSpecification,
-    ) -> pd.DataFrame:
+    ) -> CanonicalMarketDataset:
         source_data = self._provider.load(specification)
 
         canonical_input = self._map_source_data(
@@ -93,7 +93,7 @@ class CanonicalMarketDataProvider:
         if provenance is not None:
             canonical.attrs["provenance"] = provenance
 
-        return canonical
+        return dataset
 
     def _map_source_data(
         self,

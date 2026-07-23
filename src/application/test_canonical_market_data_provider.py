@@ -3,6 +3,9 @@ from datetime import datetime, timezone
 import pandas as pd
 import pytest
 
+from src.application.canonical_market_dataset import (
+    CanonicalMarketDataset,
+)
 from src.application.canonical_market_data_provider import (
     CanonicalMarketDataProvider,
 )
@@ -118,8 +121,18 @@ def test_provider_returns_canonical_fingerprinted_data() -> None:
         )
     )
 
-    data = provider.load(
+    dataset = provider.load(
         build_specification()
+    )
+    data = dataset.data
+
+    assert isinstance(
+        dataset,
+        CanonicalMarketDataset,
+    )
+    assert (
+        dataset.fingerprint.dataset_fingerprint
+        == data.attrs["dataset_fingerprint"]
     )
 
     assert list(data.columns) == [
@@ -153,9 +166,10 @@ def test_provider_preserves_provenance() -> None:
         )
     )
 
-    data = provider.load(
+    dataset = provider.load(
         build_specification()
     )
+    data = dataset.data
 
     assert data.attrs["provenance"] == {
         "data_source": "stub",
@@ -206,9 +220,13 @@ def test_provider_generates_quality_metadata() -> None:
         )
     )
 
-    data = provider.load(
+    dataset = provider.load(
         build_specification()
     )
+    data = dataset.data
+
+    assert dataset.quality_report.row_count == 2
+    assert dataset.quality_report.monotonic_timestamp
 
     assert len(data) == 2
 
