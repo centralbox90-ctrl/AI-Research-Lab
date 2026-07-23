@@ -4,6 +4,9 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
+from src.application.indicator_comparative_research_design import (
+    IndicatorComparativeResearchDesign,
+)
 from src.application.indicator_comparative_research_service import (
     IndicatorComparativeResearchService,
 )
@@ -12,6 +15,10 @@ from src.application.indicator_research_result import (
 )
 from src.research.outcome_specification import (
     ForwardReturnSpecification,
+)
+from src.research.specification import (
+    IndicatorReference,
+    ResearchSpecification,
 )
 
 
@@ -73,13 +80,42 @@ class StubResearchExecutionService:
         return self.result
 
 
-def build_research_specification():
-    return SimpleNamespace(
-        fingerprint="research-fingerprint",
-        indicator=SimpleNamespace(
+def build_research_specification(
+) -> ResearchSpecification:
+    return ResearchSpecification.create(
+        indicator=IndicatorReference(
             indicator_id="williams_r",
+            indicator_version=1,
         ),
         output="williams_r",
+        profile="overbought_oversold",
+        observation_type="level_cross",
+        calculation_parameters={
+            "period": 14,
+        },
+        observation_parameters={
+            "oversold_level": -80,
+        },
+    )
+
+
+def build_design(
+    *,
+    research_specification=None,
+    horizons: tuple[int, ...] = (1,),
+    price_field: str = "close",
+) -> IndicatorComparativeResearchDesign:
+    return IndicatorComparativeResearchDesign(
+        research_specification=(
+            research_specification
+            or build_research_specification()
+        ),
+        outcome_specification=(
+            ForwardReturnSpecification(
+                horizons=horizons,
+                price_field=price_field,
+            )
+        ),
     )
 
 
@@ -150,13 +186,11 @@ def test_runs_complete_indicator_comparative_pipeline(
 
     analysis = service.run(
         data=build_data(),
-        research_specification=(
-            research_specification
-        ),
-        outcome_specification=(
-            ForwardReturnSpecification(
-                horizons=(1, 2),
-            )
+        design=build_design(
+            research_specification=(
+                research_specification
+            ),
+            horizons=(1, 2),
         ),
         symbol="EURUSD",
         timeframe="H1",
@@ -204,13 +238,8 @@ def test_preserves_materialized_observation_context(
 
     analysis = service.run(
         data=build_data(),
-        research_specification=(
-            build_research_specification()
-        ),
-        outcome_specification=(
-            ForwardReturnSpecification(
-                horizons=(1,),
-            )
+        design=build_design(
+            horizons=(1,),
         ),
         symbol="EURUSD",
         timeframe="H1",
@@ -220,7 +249,7 @@ def test_preserves_materialized_observation_context(
         analysis.candidate_result
         .observation_ids[0]
         == (
-            "research-fingerprint:"
+            f"{build_research_specification().fingerprint}:"
             "EURUSD:H1:0:1"
         )
     )
@@ -263,14 +292,9 @@ def test_uses_outcome_price_field() -> None:
 
     analysis = service.run(
         data=data,
-        research_specification=(
-            build_research_specification()
-        ),
-        outcome_specification=(
-            ForwardReturnSpecification(
-                horizons=(1,),
-                price_field="open",
-            )
+        design=build_design(
+            horizons=(1,),
+            price_field="open",
         ),
         symbol="EURUSD",
         timeframe="H1",
@@ -311,13 +335,8 @@ def test_rejects_result_without_complete_observations(
     ):
         service.run(
             data=build_data(),
-            research_specification=(
-                build_research_specification()
-            ),
-            outcome_specification=(
-                ForwardReturnSpecification(
-                    horizons=(2,),
-                )
+            design=build_design(
+                horizons=(2,),
             ),
             symbol="EURUSD",
             timeframe="H1",
@@ -337,13 +356,8 @@ def test_does_not_modify_data() -> None:
 
     service.run(
         data=data,
-        research_specification=(
-            build_research_specification()
-        ),
-        outcome_specification=(
-            ForwardReturnSpecification(
-                horizons=(1,),
-            )
+        design=build_design(
+            horizons=(1,),
         ),
         symbol="EURUSD",
         timeframe="H1",

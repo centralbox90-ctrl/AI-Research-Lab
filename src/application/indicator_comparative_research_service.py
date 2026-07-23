@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import pandas as pd
 
+from src.application.indicator_comparative_research_design import (
+    IndicatorComparativeResearchDesign,
+)
 from src.application.indicator_research_execution_service import (
     IndicatorResearchExecutionService,
 )
@@ -13,12 +16,6 @@ from src.research.comparative_analysis import (
 )
 from src.research.comparative_analysis_service import (
     ComparativeAnalysisService,
-)
-from src.research.outcome_specification import (
-    ForwardReturnSpecification,
-)
-from src.research.specification import (
-    ResearchSpecification,
 )
 
 
@@ -42,16 +39,24 @@ class IndicatorComparativeResearchService:
         self,
         *,
         data: pd.DataFrame,
-        research_specification: ResearchSpecification,
-        outcome_specification: ForwardReturnSpecification,
+        design: IndicatorComparativeResearchDesign,
         symbol: str,
         timeframe: str,
     ) -> ComparativeAnalysis:
+        if not isinstance(
+            design,
+            IndicatorComparativeResearchDesign,
+        ):
+            raise TypeError(
+                "design must be an "
+                "IndicatorComparativeResearchDesign"
+            )
+
         indicator_result = (
             self._research_execution_service.execute(
                 data=data,
                 specification=(
-                    research_specification
+                    design.research_specification
                 ),
             )
         )
@@ -64,7 +69,9 @@ class IndicatorComparativeResearchService:
                 symbol=symbol,
                 timeframe=timeframe,
                 price_field=(
-                    outcome_specification.price_field
+                    design
+                    .outcome_specification
+                    .price_field
                 ),
             )
         )
@@ -72,5 +79,7 @@ class IndicatorComparativeResearchService:
         return ComparativeAnalysisService().run(
             data=data,
             observations=observations,
-            specification=outcome_specification,
+            specification=(
+                design.outcome_specification
+            ),
         )
