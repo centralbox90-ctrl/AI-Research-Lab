@@ -75,6 +75,29 @@ class StubComparativeResearchService:
         return self.analysis
 
 
+class StubStatisticalEvaluator:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+
+    def evaluate(
+        self,
+        *,
+        analysis: object,
+        research_fingerprint: str,
+        dataset_id: str,
+    ) -> tuple[object, ...]:
+        self.calls.append(
+            {
+                "analysis": analysis,
+                "research_fingerprint": (
+                    research_fingerprint
+                ),
+                "dataset_id": dataset_id,
+            }
+        )
+
+        return ()
+
 def build_market_specification(
 ) -> MarketExperimentSpecification:
     return MarketExperimentSpecification(
@@ -171,6 +194,7 @@ def build_application(
     IndicatorComparativeResearchApplication,
     StubDatasetProvider,
     StubComparativeResearchService,
+    StubStatisticalEvaluator,
     object,
     object,
 ]:
@@ -180,6 +204,9 @@ def build_application(
     service = StubComparativeResearchService(
         analysis
     )
+    statistical_evaluator = (
+        StubStatisticalEvaluator()
+    )
     application = IndicatorComparativeResearchApplication(
         data_provider=provider,
         indicator_catalog=(
@@ -188,12 +215,16 @@ def build_application(
             else IndicatorCatalog((INDICATOR,))
         ),
         research_service=service,
+        statistical_evaluator=(
+            statistical_evaluator
+        ),
     )
 
     return (
         application,
         provider,
         service,
+        statistical_evaluator,
         dataset,
         analysis,
     )
@@ -205,6 +236,7 @@ def test_runs_default_comparative_indicator_research(
         application,
         provider,
         service,
+        statistical_evaluator,
         dataset,
         expected_analysis,
     ) = build_application()
@@ -235,6 +267,19 @@ def test_runs_default_comparative_indicator_research(
     assert result.timeframe == "H1"
     assert provider.calls == [market_specification]
     assert len(service.calls) == 1
+    assert len(statistical_evaluator.calls) == 1
+    assert result.statistical_evaluations == ()
+
+    statistical_call = statistical_evaluator.calls[0]
+    assert statistical_call["analysis"] is (
+        expected_analysis
+    )
+    assert statistical_call[
+        "research_fingerprint"
+    ] == result.research_fingerprint
+    assert statistical_call["dataset_id"] == (
+        result.dataset_id
+    )
 
     call = service.calls[0]
     assert call["dataset"] is dataset
@@ -262,7 +307,7 @@ def test_runs_default_comparative_indicator_research(
 
 def test_rejects_unknown_indicator_before_loading_data(
 ) -> None:
-    application, provider, service, _, _ = (
+    application, provider, service, statistical_evaluator, _, _ = (
         build_application(
             catalog=IndicatorCatalog(())
         )
@@ -286,6 +331,7 @@ def test_rejects_unknown_indicator_before_loading_data(
 
     assert provider.calls == []
     assert service.calls == []
+    assert statistical_evaluator.calls == []
 
 
 @pytest.mark.parametrize(
@@ -325,7 +371,7 @@ def test_rejects_invalid_arguments(
     error_type: type[Exception],
     message: str,
 ) -> None:
-    application, provider, service, _, _ = (
+    application, provider, service, statistical_evaluator, _, _ = (
         build_application()
     )
     arguments = {
@@ -349,3 +395,4 @@ def test_rejects_invalid_arguments(
 
     assert provider.calls == []
     assert service.calls == []
+    assert statistical_evaluator.calls == []

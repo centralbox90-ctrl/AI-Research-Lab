@@ -16,6 +16,9 @@ from src.application.market_experiment_specification import (
     MarketExperimentSpecification,
 )
 from src.indicators.catalog import IndicatorCatalog
+from src.research.comparative_statistical_evaluator import (
+    ComparativeStatisticalEvaluator,
+)
 from src.research.outcome_specification import (
     ForwardReturnSpecification,
 )
@@ -33,10 +36,12 @@ class IndicatorComparativeResearchApplication:
         data_provider: CanonicalMarketDatasetProvider,
         indicator_catalog: IndicatorCatalog,
         research_service: IndicatorComparativeResearchService,
+        statistical_evaluator: ComparativeStatisticalEvaluator,
     ) -> None:
         self._data_provider = data_provider
         self._indicator_catalog = indicator_catalog
         self._research_service = research_service
+        self._statistical_evaluator = statistical_evaluator
 
     def run(
         self,
@@ -101,6 +106,18 @@ class IndicatorComparativeResearchApplication:
             symbol=market_specification.symbol,
             timeframe=market_specification.timeframe,
         )
+        statistical_evaluations = (
+            self._statistical_evaluator.evaluate(
+                analysis=analysis,
+                research_fingerprint=(
+                    research_specification.fingerprint
+                ),
+                dataset_id=(
+                    dataset.fingerprint
+                    .dataset_fingerprint
+                ),
+            )
+        )
 
         return IndicatorComparativeResearchResult(
             indicator_id=descriptor.id,
@@ -116,4 +133,7 @@ class IndicatorComparativeResearchApplication:
                 dataset.quality_report
             ),
             analysis=analysis,
+            statistical_evaluations=(
+                statistical_evaluations
+            ),
         )

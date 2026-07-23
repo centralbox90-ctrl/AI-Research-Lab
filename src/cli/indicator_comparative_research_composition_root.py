@@ -20,6 +20,10 @@ from src.indicators.discovery import (
 )
 
 
+from src.research.comparative_statistical_evaluator import (
+    ComparativeStatisticalEvaluator,
+)
+
 def build_default_indicator_comparative_research_service(
 ) -> IndicatorComparativeResearchService:
     """Build the default comparative research service."""
@@ -46,6 +50,9 @@ def build_default_indicator_comparative_research_application(
             _build_indicator_comparative_research_service(
                 indicator_catalog
             )
+        ),
+        statistical_evaluator=(
+            ComparativeStatisticalEvaluator()
         ),
     )
 
