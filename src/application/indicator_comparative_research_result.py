@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import isclose
 
 from src.application.market_dataset_quality import (
     DataQualityReport,
 )
 from src.research.comparative_analysis import (
     ComparativeAnalysis,
+)
+from src.research.comparative_statistical_evaluation import (
+    ComparativeStatisticalEvaluation,
 )
 from src.research.market_dataset_fingerprint import (
     MarketDatasetFingerprint,
@@ -27,6 +31,10 @@ class IndicatorComparativeResearchResult:
     dataset_fingerprint: MarketDatasetFingerprint
     data_quality_report: DataQualityReport
     analysis: ComparativeAnalysis
+    statistical_evaluations: tuple[
+        ComparativeStatisticalEvaluation,
+        ...,
+    ] = ()
 
     def __post_init__(self) -> None:
         indicator_id = self._normalize_text(
@@ -90,6 +98,10 @@ class IndicatorComparativeResearchResult:
                 "analysis must be a ComparativeAnalysis"
             )
 
+        statistical_evaluations = (
+            self._validate_statistical_evaluations()
+        )
+
         object.__setattr__(
             self,
             "indicator_id",
@@ -104,6 +116,135 @@ class IndicatorComparativeResearchResult:
             self,
             "timeframe",
             timeframe,
+        )
+        object.__setattr__(
+            self,
+            "statistical_evaluations",
+            statistical_evaluations,
+        )
+
+    def _validate_statistical_evaluations(
+        self,
+    ) -> tuple[
+        ComparativeStatisticalEvaluation,
+        ...,
+    ]:
+        evaluations = self.statistical_evaluations
+
+        if not isinstance(evaluations, tuple):
+            raise TypeError(
+                "statistical_evaluations must be a tuple"
+            )
+
+        if not evaluations:
+            return ()
+
+        evaluation_by_horizon: dict[
+            int,
+            ComparativeStatisticalEvaluation,
+        ] = {}
+
+        for evaluation in evaluations:
+            if not isinstance(
+                evaluation,
+                ComparativeStatisticalEvaluation,
+            ):
+                raise TypeError(
+                    "each statistical evaluation must be a "
+                    "ComparativeStatisticalEvaluation"
+                )
+
+            if evaluation.horizon in evaluation_by_horizon:
+                raise ValueError(
+                    "statistical evaluations must not "
+                    "contain duplicate horizons"
+                )
+
+            evaluation_by_horizon[
+                evaluation.horizon
+            ] = evaluation
+
+        comparison_by_horizon = {
+            comparison.horizon: comparison
+            for comparison in self.analysis.comparisons
+        }
+
+        if set(evaluation_by_horizon) != set(
+            comparison_by_horizon
+        ):
+            raise ValueError(
+                "statistical evaluations must cover "
+                "all comparison horizons"
+            )
+
+        expected_research_fingerprint = (
+            self.research_specification.fingerprint
+        )
+        expected_dataset_id = (
+            self.dataset_fingerprint
+            .dataset_fingerprint
+        )
+
+        for (
+            horizon,
+            evaluation,
+        ) in evaluation_by_horizon.items():
+            comparison = comparison_by_horizon[
+                horizon
+            ]
+
+            if (
+                evaluation.research_fingerprint
+                != expected_research_fingerprint
+            ):
+                raise ValueError(
+                    "statistical evaluation research "
+                    "fingerprint must match the result"
+                )
+
+            if (
+                evaluation.dataset_id
+                != expected_dataset_id
+            ):
+                raise ValueError(
+                    "statistical evaluation dataset id "
+                    "must match the result"
+                )
+
+            if (
+                evaluation.candidate_sample_size
+                != comparison.candidate_sample_size
+            ):
+                raise ValueError(
+                    "statistical evaluation candidate "
+                    "sample size must match the comparison"
+                )
+
+            if (
+                evaluation.baseline_sample_size
+                != comparison.baseline_sample_size
+            ):
+                raise ValueError(
+                    "statistical evaluation baseline "
+                    "sample size must match the comparison"
+                )
+
+            if not isclose(
+                evaluation.effect_estimate,
+                comparison.mean_return_difference,
+                rel_tol=1e-12,
+                abs_tol=1e-15,
+            ):
+                raise ValueError(
+                    "statistical evaluation effect estimate "
+                    "must match the comparison"
+                )
+
+        return tuple(
+            evaluation_by_horizon[horizon]
+            for horizon in sorted(
+                evaluation_by_horizon
+            )
         )
 
     @property

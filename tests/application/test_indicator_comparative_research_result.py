@@ -12,6 +12,12 @@ from src.indicators.implementations.rsi import INDICATOR
 from src.research.comparative_analysis import (
     ComparativeAnalysis,
 )
+from src.research.comparative_statistical_evaluation import (
+    ComparativeStatisticalEvaluation,
+)
+from src.research.horizon_comparison import (
+    HorizonComparison,
+)
 from src.research.market_dataset_fingerprint import (
     MarketDatasetFingerprint,
 )
@@ -178,4 +184,230 @@ def test_rejects_indicator_identity_mismatch(
     ):
         build_result(
             indicator_id="williams_r"
+        )
+
+def build_analysis_with_comparisons(
+    *horizons: int,
+) -> ComparativeAnalysis:
+    analysis = object.__new__(
+        ComparativeAnalysis
+    )
+    comparisons = tuple(
+        HorizonComparison(
+            horizon=horizon,
+            candidate_sample_size=10,
+            baseline_sample_size=100,
+            mean_return_difference=(
+                horizon / 1_000.0
+            ),
+            median_return_difference=0.0,
+            positive_rate_difference=0.0,
+        )
+        for horizon in horizons
+    )
+    object.__setattr__(
+        analysis,
+        "comparisons",
+        comparisons,
+    )
+
+    return analysis
+
+
+def build_statistical_evaluation(
+    horizon: int,
+    **overrides: object,
+) -> ComparativeStatisticalEvaluation:
+    specification = (
+        create_default_research_specification(
+            INDICATOR
+        )
+    )
+    arguments: dict[str, object] = {
+        "research_fingerprint": (
+            specification.fingerprint
+        ),
+        "dataset_id": "dataset-fingerprint",
+        "horizon": horizon,
+        "candidate_sample_size": 10,
+        "baseline_sample_size": 100,
+        "effect_estimate": horizon / 1_000.0,
+        "confidence_interval_lower": -0.001,
+        "confidence_interval_upper": 0.003,
+        "confidence_level": 0.95,
+        "method": "moving_block_bootstrap",
+        "resample_count": 2_000,
+        "block_length": 5,
+        "random_seed": 17,
+    }
+    arguments.update(overrides)
+
+    return ComparativeStatisticalEvaluation(
+        **arguments,  # type: ignore[arg-type]
+    )
+
+
+def test_validates_statistical_evaluations(
+) -> None:
+    analysis = build_analysis_with_comparisons(
+        1,
+        3,
+    )
+    first = build_statistical_evaluation(1)
+    third = build_statistical_evaluation(3)
+
+    result = build_result(
+        analysis=analysis,
+        statistical_evaluations=(
+            third,
+            first,
+        ),
+    )
+
+    assert result.statistical_evaluations == (
+        first,
+        third,
+    )
+
+
+@pytest.mark.parametrize(
+    (
+        "evaluations",
+        "error_type",
+        "message",
+    ),
+    [
+        (
+            [],
+            TypeError,
+            "statistical_evaluations must be a tuple",
+        ),
+        (
+            (object(),),
+            TypeError,
+            "each statistical evaluation must be a "
+            "ComparativeStatisticalEvaluation",
+        ),
+    ],
+)
+def test_rejects_invalid_statistical_collection(
+    evaluations: object,
+    error_type: type[Exception],
+    message: str,
+) -> None:
+    with pytest.raises(
+        error_type,
+        match=message,
+    ):
+        build_result(
+            statistical_evaluations=evaluations,
+        )
+
+
+def test_rejects_duplicate_statistical_horizon(
+) -> None:
+    analysis = build_analysis_with_comparisons(1)
+    evaluation = build_statistical_evaluation(1)
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "statistical evaluations must not "
+            "contain duplicate horizons"
+        ),
+    ):
+        build_result(
+            analysis=analysis,
+            statistical_evaluations=(
+                evaluation,
+                evaluation,
+            ),
+        )
+
+
+def test_rejects_missing_statistical_horizon(
+) -> None:
+    analysis = build_analysis_with_comparisons(
+        1,
+        3,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "statistical evaluations must cover "
+            "all comparison horizons"
+        ),
+    ):
+        build_result(
+            analysis=analysis,
+            statistical_evaluations=(
+                build_statistical_evaluation(1),
+            ),
+        )
+
+
+@pytest.mark.parametrize(
+    (
+        "overrides",
+        "message",
+    ),
+    [
+        (
+            {
+                "research_fingerprint": (
+                    "different-research"
+                ),
+            },
+            "statistical evaluation research "
+            "fingerprint must match the result",
+        ),
+        (
+            {
+                "dataset_id": "different-dataset",
+            },
+            "statistical evaluation dataset id "
+            "must match the result",
+        ),
+        (
+            {
+                "candidate_sample_size": 11,
+            },
+            "statistical evaluation candidate "
+            "sample size must match the comparison",
+        ),
+        (
+            {
+                "baseline_sample_size": 101,
+            },
+            "statistical evaluation baseline "
+            "sample size must match the comparison",
+        ),
+        (
+            {
+                "effect_estimate": 0.5,
+            },
+            "statistical evaluation effect estimate "
+            "must match the comparison",
+        ),
+    ],
+)
+def test_rejects_mismatched_statistical_evaluation(
+    overrides: dict[str, object],
+    message: str,
+) -> None:
+    analysis = build_analysis_with_comparisons(1)
+
+    with pytest.raises(
+        ValueError,
+        match=message,
+    ):
+        build_result(
+            analysis=analysis,
+            statistical_evaluations=(
+                build_statistical_evaluation(
+                    1,
+                    **overrides,
+                ),
+            ),
         )
