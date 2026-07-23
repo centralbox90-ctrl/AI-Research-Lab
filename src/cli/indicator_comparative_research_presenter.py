@@ -56,6 +56,14 @@ def present_indicator_comparative_research_result(
                 result.data_quality_report
             ),
         },
+        "evaluation_plan": {
+            "fingerprint": (
+                result.evaluation_plan_fingerprint
+            ),
+            "specification": (
+                result.evaluation_plan.to_dict()
+            ),
+        },
         "outcome_specification": {
             "horizons": list(
                 outcome_specification.horizons

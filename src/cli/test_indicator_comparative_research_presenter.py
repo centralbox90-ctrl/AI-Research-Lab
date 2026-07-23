@@ -14,6 +14,9 @@ from src.cli.indicator_comparative_research_presenter import (
 from src.research.comparative_analysis import (
     ComparativeAnalysis,
 )
+from src.research.comparative_evaluation_plan import (
+    ComparativeEvaluationPlan,
+)
 from src.research.comparative_statistical_evaluation import (
     ComparativeStatisticalEvaluation,
 )
@@ -125,6 +128,10 @@ def build_result(
         )
     )
 
+    evaluation_plan = ComparativeEvaluationPlan(
+        random_seed=7,
+    )
+
     return IndicatorComparativeResearchResult(
         indicator_id="test_indicator",
         symbol="EURUSD",
@@ -154,6 +161,7 @@ def build_result(
             monotonic_timestamp=True,
         ),
         analysis=analysis,
+        evaluation_plan=evaluation_plan,
         statistical_evaluations=(
             ComparativeStatisticalEvaluation(
                 research_fingerprint=(
@@ -170,7 +178,7 @@ def build_result(
                 method="moving_block_bootstrap",
                 resample_count=2_000,
                 block_length=1,
-                random_seed=0,
+                random_seed=7,
                 warnings=(
                     "candidate sample size is below 30",
                 ),
@@ -181,6 +189,9 @@ def build_result(
 
 def test_presents_json_compatible_result(
 ) -> None:
+    expected_plan = ComparativeEvaluationPlan(
+        random_seed=7,
+    )
     payload = (
         present_indicator_comparative_research_result(
             build_result()
@@ -197,6 +208,10 @@ def test_presents_json_compatible_result(
         "indicator_comparative_research"
     )
     assert serialized["artifact_version"] == 1
+    assert serialized["evaluation_plan"] == {
+        "fingerprint": expected_plan.fingerprint,
+        "specification": expected_plan.to_dict(),
+    }
     assert serialized["indicator"]["id"] == (
         "test_indicator"
     )
