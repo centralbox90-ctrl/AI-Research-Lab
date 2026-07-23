@@ -168,6 +168,10 @@ def test_presents_json_compatible_result(
         )
     )
 
+    assert serialized["artifact"] == {
+        "type": "indicator_comparative_research",
+        "schema_version": 1,
+    }
     assert serialized["indicator"]["id"] == (
         "test_indicator"
     )
