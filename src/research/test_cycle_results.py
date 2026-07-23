@@ -5,7 +5,9 @@ from src.research.cycle_results import (
     NextExperimentResearchCycleResult,
     ResearchCycleResult,
 )
-from src.research.evidence import Evidence
+from src.research.legacy_evidence import (
+    LegacyEvidence,
+)
 from src.research.evidence_strength_evaluation import (
     EvidenceStrengthEvaluation,
 )
@@ -25,7 +27,7 @@ from src.research.contradiction_evaluation import (
 
 def test_research_cycle_result_supports_named_and_tuple_access() -> None:
     result = ExperimentResult(experiment_id="experiment-1")
-    evidence = Evidence(experiment_id="experiment-1")
+    evidence = LegacyEvidence(experiment_id="experiment-1")
     analysis = Analysis(experiment_id="experiment-1")
     conclusion = Conclusion(hypothesis_id="hypothesis-1")
     knowledge = Knowledge(
@@ -87,7 +89,7 @@ def test_evidence_strength_cycle_result_preserves_public_order() -> None:
         experiment_id="experiment-1",
         hypothesis_id="hypothesis-1",
     )
-    evidence = Evidence(experiment_id="experiment-1")
+    evidence = LegacyEvidence(experiment_id="experiment-1")
     analysis = Analysis(experiment_id="experiment-1")
     conclusion = Conclusion(hypothesis_id="hypothesis-1")
     knowledge = Knowledge(
@@ -172,7 +174,7 @@ def test_next_experiment_cycle_result_exposes_selection() -> None:
         action="replicate_experiment",
         priority="low",
     )
-    evidence = Evidence(experiment_id="experiment-1")
+    evidence = LegacyEvidence(experiment_id="experiment-1")
     analysis = Analysis(experiment_id="experiment-1")
     conclusion = Conclusion(hypothesis_id="hypothesis-1")
     knowledge = Knowledge(

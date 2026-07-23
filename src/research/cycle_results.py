@@ -6,7 +6,9 @@ from src.research.conclusion import Conclusion
 from src.research.contradiction_evaluation import (
     ContradictionEvaluation,
 )
-from src.research.evidence import Evidence
+from src.research.legacy_evidence import (
+    LegacyEvidence,
+)
 from src.research.evidence_strength_evaluation import (
     EvidenceStrengthEvaluation,
 )
@@ -45,7 +47,7 @@ class TupleCompatibleResult:
 @dataclass
 class ResearchCycleResult(TupleCompatibleResult):
     result: ExperimentResult
-    evidence: Evidence
+    evidence: LegacyEvidence
     analysis: Analysis
     conclusion: Conclusion
     knowledge: Knowledge
@@ -64,7 +66,7 @@ class ResearchCycleResult(TupleCompatibleResult):
 class EvaluatedResearchCycleResult(TupleCompatibleResult):
     result: ExperimentResult
     evaluation: ExperimentEvaluation
-    evidence: Evidence
+    evidence: LegacyEvidence
     analysis: Analysis
     conclusion: Conclusion
     knowledge: Knowledge
@@ -87,7 +89,7 @@ class StatisticallyEvaluatedResearchCycleResult(
     result: ExperimentResult
     evaluation: ExperimentEvaluation
     statistical_evaluation: StatisticalEvaluation
-    evidence: Evidence
+    evidence: LegacyEvidence
     analysis: Analysis
     conclusion: Conclusion
     knowledge: Knowledge
@@ -112,7 +114,7 @@ class RobustnessEvaluatedResearchCycleResult(
     evaluation: ExperimentEvaluation
     statistical_evaluation: StatisticalEvaluation
     robustness_evaluation: RobustnessEvaluation
-    evidence: Evidence
+    evidence: LegacyEvidence
     analysis: Analysis
     conclusion: Conclusion
     knowledge: Knowledge
@@ -139,7 +141,7 @@ class ContradictionEvaluatedResearchCycleResult(
     statistical_evaluation: StatisticalEvaluation
     robustness_evaluation: RobustnessEvaluation
     contradiction_evaluation: ContradictionEvaluation
-    evidence: Evidence
+    evidence: LegacyEvidence
     analysis: Analysis
     conclusion: Conclusion
     knowledge: Knowledge
@@ -166,7 +168,7 @@ class DecidedResearchCycleResult(TupleCompatibleResult):
     robustness_evaluation: RobustnessEvaluation
     contradiction_evaluation: ContradictionEvaluation
     hypothesis_decision: HypothesisDecision
-    evidence: Evidence
+    evidence: LegacyEvidence
     analysis: Analysis
     conclusion: Conclusion
     knowledge: Knowledge
@@ -197,7 +199,7 @@ class EvidenceStrengthResearchCycleResult(
     contradiction_evaluation: ContradictionEvaluation
     evidence_strength_evaluation: EvidenceStrengthEvaluation
     hypothesis_decision: HypothesisDecision
-    evidence: Evidence
+    evidence: LegacyEvidence
     analysis: Analysis
     conclusion: Conclusion
     knowledge: Knowledge
@@ -230,7 +232,7 @@ class NextExperimentResearchCycleResult(
     evidence_strength_evaluation: EvidenceStrengthEvaluation
     hypothesis_decision: HypothesisDecision
     next_experiment_selection: NextExperimentSelection
-    evidence: Evidence
+    evidence: LegacyEvidence
     analysis: Analysis
     conclusion: Conclusion
     knowledge: Knowledge

@@ -1,4 +1,4 @@
-﻿from collections.abc import Callable
+from collections.abc import Callable
 
 from src.research.analysis import Analysis
 from src.research.conclusion import Conclusion
@@ -16,7 +16,6 @@ from src.research.cycle_results import (
     RobustnessEvaluatedResearchCycleResult,
     StatisticallyEvaluatedResearchCycleResult,
 )
-from src.research.evidence import Evidence
 from src.research.evidence_strength_evaluation import (
     EvidenceStrengthEvaluation,
 )

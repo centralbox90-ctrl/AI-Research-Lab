@@ -1,7 +1,9 @@
 from src.research.analysis import Analysis
 from src.research.conclusion import Conclusion
 from src.research.contradiction_evaluation import ContradictionEvaluation
-from src.research.evidence import Evidence
+from src.research.legacy_evidence import (
+    LegacyEvidence,
+)
 from src.research.evidence_strength_evaluation import EvidenceStrengthEvaluation
 from src.research.experiment import Experiment
 from src.research.experiment_evaluation import ExperimentEvaluation
@@ -32,12 +34,12 @@ class ResearchObjectsBuilder:
         hypothesis_decision: HypothesisDecision | None = None,
         next_experiment_selection: NextExperimentSelection | None = None,
     ) -> tuple[
-        Evidence,
+        LegacyEvidence,
         Analysis,
         Conclusion,
         Knowledge,
     ]:
-        evidence = Evidence(
+        evidence = LegacyEvidence(
             experiment_id=experiment.id,
             title=f"Evidence for {experiment.title}",
             data=result.metrics,

@@ -1,6 +1,8 @@
-﻿from src.research.analysis import Analysis
+from src.research.analysis import Analysis
 from src.research.conclusion import Conclusion
-from src.research.evidence import Evidence
+from src.research.legacy_evidence import (
+    LegacyEvidence,
+)
 from src.research.experiment import Experiment
 from src.research.experiment_result import ExperimentResult
 from src.research.experiment_runner import ExperimentRunner
@@ -65,7 +67,7 @@ def test_research_pipeline() -> None:
         execute,
     )
 
-    evidence = Evidence(
+    evidence = LegacyEvidence(
         experiment_id=experiment.id,
         title="Experiment metrics",
         data=result.metrics,
