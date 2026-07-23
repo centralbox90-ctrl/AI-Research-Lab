@@ -2,6 +2,10 @@ from typing import Protocol
 
 import pandas as pd
 
+from src.application.canonical_market_dataset import (
+    CanonicalMarketDataset,
+)
+
 from src.application.market_experiment_specification import (
     MarketExperimentSpecification,
 )
@@ -24,4 +28,17 @@ class MarketDataProvider(Protocol):
     ) -> pd.DataFrame:
         """
         Load market data for the supplied specification.
+        """
+
+class CanonicalMarketDatasetProvider(Protocol):
+    """
+    Provides one canonical market dataset for a research session.
+    """
+
+    def load(
+        self,
+        specification: MarketExperimentSpecification,
+    ) -> CanonicalMarketDataset:
+        """
+        Load the canonical dataset for the supplied specification.
         """

@@ -1,7 +1,7 @@
 ﻿from __future__ import annotations
 
 from src.application.market_data_provider import (
-    MarketDataProvider,
+    CanonicalMarketDatasetProvider,
 )
 from src.application.market_experiment_mapper import (
     MarketExperimentMapper,
@@ -34,7 +34,7 @@ class MarketResearchSessionFactory:
     def __init__(
         self,
         *,
-        data_provider: MarketDataProvider,
+        data_provider: CanonicalMarketDatasetProvider,
         signal_provider: MarketSignalProvider,
         context_factory: MarketResearchContextFactory,
         mapper: MarketExperimentMapper | None = None,

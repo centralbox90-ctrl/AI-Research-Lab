@@ -1,4 +1,7 @@
-﻿from src.application.canonical_market_data_provider import (
+﻿from src.application.canonical_market_dataset import (
+    CanonicalMarketDataset,
+)
+from src.application.canonical_market_data_provider import (
     CanonicalMarketDataProvider,
 )
 from src.application.code_version_provider import (
@@ -39,6 +42,7 @@ from src.application.market_backtest_executor import (
     MarketBacktestExecutor,
 )
 from src.application.market_data_provider import (
+    CanonicalMarketDatasetProvider,
     MarketDataProvider,
 )
 from src.application.market_experiment_executor import (
@@ -119,6 +123,8 @@ from src.application.run_and_store_serialized_research_campaign import (
 
 __all__ = [
     "CanonicalMarketDataProvider",
+    "CanonicalMarketDataset",
+    "CanonicalMarketDatasetProvider",
     "CodeVersionProvider",
     "ExportStoredResearchArtifact",
     "GetResearchCycle",
