@@ -1,5 +1,11 @@
 import pandas as pd
 
+from src.application.canonical_market_dataset import (
+    CanonicalMarketDataset,
+)
+from src.application.market_dataset_quality import (
+    MarketDatasetQualityAnalyzer,
+)
 from src.application.indicator_comparative_research_design import (
     IndicatorComparativeResearchDesign,
 )
@@ -10,12 +16,62 @@ from src.cli.indicator_comparative_research_composition_root import (
     build_default_indicator_comparative_research_service,
 )
 from src.indicators.implementations.rsi import INDICATOR
+from src.research.market_dataset_fingerprint import (
+    DatasetFingerprintContext,
+    MarketDatasetCanonicalizer,
+    MarketDatasetFingerprinter,
+)
 from src.research.outcome_specification import (
     ForwardReturnSpecification,
 )
 from src.research.specification_factory import (
     create_default_research_specification,
 )
+
+
+def build_dataset(
+    close: list[float],
+) -> CanonicalMarketDataset:
+    canonical = (
+        MarketDatasetCanonicalizer()
+        .canonicalize(
+            pd.DataFrame(
+                {
+                    "timestamp": pd.date_range(
+                        "2026-01-01",
+                        periods=len(close),
+                        freq="h",
+                        tz="UTC",
+                    ),
+                    "open": close,
+                    "high": close,
+                    "low": close,
+                    "close": close,
+                    "tick_volume": [
+                        100 + index
+                        for index in range(len(close))
+                    ],
+                }
+            )
+        )
+    )
+    fingerprint = MarketDatasetFingerprinter().attach(
+        canonical,
+        DatasetFingerprintContext(
+            symbol="EURUSD",
+            timeframe="H1",
+        ),
+    )
+
+    return CanonicalMarketDataset(
+        data=canonical,
+        fingerprint=fingerprint,
+        quality_report=(
+            MarketDatasetQualityAnalyzer().analyze(
+                canonical
+            )
+        ),
+    )
 
 
 def test_builds_default_comparative_research_service(
@@ -59,20 +115,10 @@ def test_runs_default_rsi_comparative_pipeline(
             for index in range(20)
         ]
     )
-    data = pd.DataFrame(
-        {
-            "close": close,
-        },
-        index=pd.date_range(
-            "2026-01-01",
-            periods=len(close),
-            freq="h",
-            tz="UTC",
-        ),
-    )
+    dataset = build_dataset(close)
 
     analysis = service.run(
-        data=data,
+        dataset=dataset,
         design=design,
         symbol="EURUSD",
         timeframe="H1",
@@ -86,7 +132,7 @@ def test_runs_default_rsi_comparative_pipeline(
     assert (
         analysis.baseline_result
         .observation_count
-        == len(data) - 3
+        == len(dataset.data) - 3
     )
     assert tuple(
         comparison.horizon

@@ -4,6 +4,12 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
+from src.application.canonical_market_dataset import (
+    CanonicalMarketDataset,
+)
+from src.application.market_dataset_quality import (
+    MarketDatasetQualityAnalyzer,
+)
 from src.application.indicator_comparative_research_design import (
     IndicatorComparativeResearchDesign,
 )
@@ -12,6 +18,11 @@ from src.application.indicator_comparative_research_service import (
 )
 from src.application.indicator_research_result import (
     IndicatorResearchResult,
+)
+from src.research.market_dataset_fingerprint import (
+    DatasetFingerprintContext,
+    MarketDatasetCanonicalizer,
+    MarketDatasetFingerprinter,
 )
 from src.research.outcome_specification import (
     ForwardReturnSpecification,
@@ -167,6 +178,71 @@ def build_data() -> pd.DataFrame:
     )
 
 
+def build_dataset(
+    data: pd.DataFrame | None = None,
+) -> CanonicalMarketDataset:
+    source = (
+        build_data()
+        if data is None
+        else data.copy(deep=True)
+    )
+    close = source["close"].tolist()
+    open_prices = (
+        source["open"].tolist()
+        if "open" in source.columns
+        else close
+    )
+
+    canonical = (
+        MarketDatasetCanonicalizer()
+        .canonicalize(
+            pd.DataFrame(
+                {
+                    "timestamp": pd.date_range(
+                        "2026-01-01",
+                        periods=len(source),
+                        freq="h",
+                        tz="UTC",
+                    ),
+                    "open": open_prices,
+                    "high": [
+                        max(open_price, close_price)
+                        for open_price, close_price
+                        in zip(open_prices, close)
+                    ],
+                    "low": [
+                        min(open_price, close_price)
+                        for open_price, close_price
+                        in zip(open_prices, close)
+                    ],
+                    "close": close,
+                    "tick_volume": [
+                        100 + index
+                        for index in range(len(source))
+                    ],
+                }
+            )
+        )
+    )
+    fingerprint = MarketDatasetFingerprinter().attach(
+        canonical,
+        DatasetFingerprintContext(
+            symbol="EURUSD",
+            timeframe="H1",
+        ),
+    )
+
+    return CanonicalMarketDataset(
+        data=canonical,
+        fingerprint=fingerprint,
+        quality_report=(
+            MarketDatasetQualityAnalyzer().analyze(
+                canonical
+            )
+        ),
+    )
+
+
 def test_runs_complete_indicator_comparative_pipeline(
 ) -> None:
     indicator_result = build_indicator_result()
@@ -185,7 +261,7 @@ def test_runs_complete_indicator_comparative_pipeline(
     )
 
     analysis = service.run(
-        data=build_data(),
+        dataset=build_dataset(),
         design=build_design(
             research_specification=(
                 research_specification
@@ -223,7 +299,32 @@ def test_runs_complete_indicator_comparative_pipeline(
     assert called_specification is (
         research_specification
     )
-    assert called_data.equals(build_data())
+    assert called_data.equals(build_dataset().data)
+
+
+def test_rejects_noncanonical_dataset(
+) -> None:
+    service = IndicatorComparativeResearchService(
+        research_execution_service=(
+            StubResearchExecutionService(
+                build_indicator_result()
+            )
+        )
+    )
+
+    with pytest.raises(
+        TypeError,
+        match=(
+            "dataset must be a "
+            "CanonicalMarketDataset"
+        ),
+    ):
+        service.run(
+            dataset=object(),
+            design=build_design(),
+            symbol="EURUSD",
+            timeframe="H1",
+        )
 
 
 def test_preserves_materialized_observation_context(
@@ -237,7 +338,7 @@ def test_preserves_materialized_observation_context(
     )
 
     analysis = service.run(
-        data=build_data(),
+        dataset=build_dataset(),
         design=build_design(
             horizons=(1,),
         ),
@@ -291,7 +392,7 @@ def test_uses_outcome_price_field() -> None:
     )
 
     analysis = service.run(
-        data=data,
+        dataset=build_dataset(data),
         design=build_design(
             horizons=(1,),
             price_field="open",
@@ -334,7 +435,7 @@ def test_rejects_result_without_complete_observations(
         ),
     ):
         service.run(
-            data=build_data(),
+            dataset=build_dataset(),
             design=build_design(
                 horizons=(2,),
             ),
@@ -344,8 +445,8 @@ def test_rejects_result_without_complete_observations(
 
 
 def test_does_not_modify_data() -> None:
-    data = build_data()
-    original = data.copy(deep=True)
+    dataset = build_dataset()
+    original = dataset.data.copy(deep=True)
     service = IndicatorComparativeResearchService(
         research_execution_service=(
             StubResearchExecutionService(
@@ -355,7 +456,7 @@ def test_does_not_modify_data() -> None:
     )
 
     service.run(
-        data=data,
+        dataset=dataset,
         design=build_design(
             horizons=(1,),
         ),
@@ -364,6 +465,6 @@ def test_does_not_modify_data() -> None:
     )
 
     pd.testing.assert_frame_equal(
-        data,
+        dataset.data,
         original,
     )

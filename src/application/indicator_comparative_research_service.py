@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-import pandas as pd
+from src.application.canonical_market_dataset import (
+    CanonicalMarketDataset,
+)
 
 from src.application.indicator_comparative_research_design import (
     IndicatorComparativeResearchDesign,
@@ -38,11 +40,21 @@ class IndicatorComparativeResearchService:
     def run(
         self,
         *,
-        data: pd.DataFrame,
+        dataset: CanonicalMarketDataset,
         design: IndicatorComparativeResearchDesign,
         symbol: str,
         timeframe: str,
     ) -> ComparativeAnalysis:
+        if not isinstance(
+            dataset,
+            CanonicalMarketDataset,
+        ):
+            raise TypeError(
+                "dataset must be a CanonicalMarketDataset"
+            )
+
+        data = dataset.data
+
         if not isinstance(
             design,
             IndicatorComparativeResearchDesign,
