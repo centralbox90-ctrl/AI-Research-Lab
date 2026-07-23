@@ -6,6 +6,9 @@ import pytest
 from src.research.comparative_analysis import (
     ComparativeAnalysis,
 )
+from src.research.comparative_evaluation_plan import (
+    ComparativeEvaluationPlan,
+)
 from src.research.comparative_analysis_service import (
     ComparativeAnalysisService,
 )
@@ -87,9 +90,22 @@ def evaluate(
     resample_count: object = 200,
     block_length: object = 2,
     random_seed: object = 17,
+    minimum_candidate_sample_size: object = 30,
+    method: object = "moving_block_bootstrap",
     research_fingerprint: object = "research-id",
     dataset_id: object = "dataset-id",
 ):
+    plan = ComparativeEvaluationPlan(
+        method=method,  # type: ignore[arg-type]
+        confidence_level=confidence_level,
+        resample_count=resample_count,
+        block_length=block_length,
+        random_seed=random_seed,
+        minimum_candidate_sample_size=(
+            minimum_candidate_sample_size
+        ),
+    )
+
     return ComparativeStatisticalEvaluator().evaluate(
         analysis=(
             analysis
@@ -98,12 +114,8 @@ def evaluate(
         ),
         research_fingerprint=research_fingerprint,
         dataset_id=dataset_id,
-        confidence_level=confidence_level,
-        resample_count=resample_count,
-        block_length=block_length,
-        random_seed=random_seed,
+        plan=plan,
     )
-
 
 def test_evaluates_each_comparison_horizon(
 ) -> None:
@@ -290,8 +302,6 @@ def test_rejects_invalid_analysis() -> None:
             analysis=object(),
             research_fingerprint="research-id",
             dataset_id="dataset-id",
-            resample_count=10,
-            block_length=1,
         )
 
 
@@ -507,4 +517,46 @@ def test_rejects_invalid_random_seed(
     ):
         evaluate(
             random_seed=value,
+        )
+
+def test_rejects_invalid_plan() -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "plan must be a "
+            "ComparativeEvaluationPlan"
+        ),
+    ):
+        ComparativeStatisticalEvaluator().evaluate(
+            analysis=build_analysis(),
+            research_fingerprint="research-id",
+            dataset_id="dataset-id",
+            plan=object(),
+        )
+
+
+def test_rejects_unsupported_plan_method(
+) -> None:
+    with pytest.raises(
+        ValueError,
+        match=(
+            "unsupported comparative evaluation "
+            "method: unsupported"
+        ),
+    ):
+        evaluate(
+            method="unsupported",
+        )
+
+
+def test_uses_plan_sample_warning_threshold(
+) -> None:
+    evaluations = evaluate(
+        minimum_candidate_sample_size=3,
+    )
+
+    for evaluation in evaluations:
+        assert (
+            "candidate sample size is below 30"
+            not in evaluation.warnings
         )

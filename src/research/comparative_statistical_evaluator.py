@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from math import isfinite
-from numbers import Real
-
 import numpy as np
 
 from src.research.comparative_analysis import (
     ComparativeAnalysis,
+)
+from src.research.comparative_evaluation_plan import (
+    ComparativeEvaluationPlan,
 )
 from src.research.comparative_statistical_evaluation import (
     ComparativeStatisticalEvaluation,
@@ -18,7 +18,7 @@ from src.research.horizon_comparison import (
 
 class ComparativeStatisticalEvaluator:
     """
-    Estimates uncertainty with a deterministic moving-block bootstrap.
+    Estimates uncertainty under a predeclared evaluation plan.
     """
 
     _METHOD = "moving_block_bootstrap"
@@ -29,10 +29,9 @@ class ComparativeStatisticalEvaluator:
         analysis: ComparativeAnalysis,
         research_fingerprint: str,
         dataset_id: str,
-        confidence_level: float = 0.95,
-        resample_count: int = 2_000,
-        block_length: int = 24,
-        random_seed: int = 0,
+        plan: ComparativeEvaluationPlan = (
+            ComparativeEvaluationPlan()
+        ),
     ) -> tuple[
         ComparativeStatisticalEvaluation,
         ...,
@@ -45,6 +44,20 @@ class ComparativeStatisticalEvaluator:
                 "analysis must be a ComparativeAnalysis"
             )
 
+        if not isinstance(
+            plan,
+            ComparativeEvaluationPlan,
+        ):
+            raise TypeError(
+                "plan must be a ComparativeEvaluationPlan"
+            )
+
+        if plan.method != self._METHOD:
+            raise ValueError(
+                "unsupported comparative evaluation method: "
+                f"{plan.method}"
+            )
+
         normalized_research_fingerprint = (
             self._normalize_text(
                 research_fingerprint,
@@ -55,29 +68,6 @@ class ComparativeStatisticalEvaluator:
             dataset_id,
             field_name="dataset_id",
         )
-        normalized_confidence_level = (
-            self._require_confidence_level(
-                confidence_level
-            )
-        )
-        normalized_resample_count = (
-            self._require_resample_count(
-                resample_count
-            )
-        )
-        normalized_block_length = (
-            self._require_positive_integer(
-                block_length,
-                field_name="block_length",
-            )
-        )
-        normalized_random_seed = (
-            self._require_nonnegative_integer(
-                random_seed,
-                field_name="random_seed",
-            )
-        )
-
         evaluations: list[
             ComparativeStatisticalEvaluation
         ] = []
@@ -92,7 +82,7 @@ class ComparativeStatisticalEvaluator:
             )
 
             if (
-                normalized_block_length
+                plan.block_length
                 > len(baseline_returns)
             ):
                 raise ValueError(
@@ -106,20 +96,15 @@ class ComparativeStatisticalEvaluator:
                     candidate_mask=candidate_mask,
                     horizon=comparison.horizon,
                     resample_count=(
-                        normalized_resample_count
+                        plan.resample_count
                     ),
-                    block_length=(
-                        normalized_block_length
-                    ),
-                    random_seed=(
-                        normalized_random_seed
-                    ),
+                    block_length=plan.block_length,
+                    random_seed=plan.random_seed,
                 )
             )
 
             alpha = (
-                1.0
-                - normalized_confidence_level
+                1.0 - plan.confidence_level
             ) / 2.0
             lower, upper = np.quantile(
                 bootstrap_effects,
@@ -133,6 +118,9 @@ class ComparativeStatisticalEvaluator:
             warnings = self._build_warnings(
                 candidate_sample_size=(
                     comparison.candidate_sample_size
+                ),
+                minimum_candidate_sample_size=(
+                    plan.minimum_candidate_sample_size
                 ),
                 discarded_count=discarded_count,
             )
@@ -160,18 +148,14 @@ class ComparativeStatisticalEvaluator:
                         upper
                     ),
                     confidence_level=(
-                        normalized_confidence_level
+                        plan.confidence_level
                     ),
-                    method=self._METHOD,
+                    method=plan.method,
                     resample_count=(
-                        normalized_resample_count
+                        plan.resample_count
                     ),
-                    block_length=(
-                        normalized_block_length
-                    ),
-                    random_seed=(
-                        normalized_random_seed
-                    ),
+                    block_length=plan.block_length,
+                    random_seed=plan.random_seed,
                     warnings=warnings,
                 )
             )
@@ -403,13 +387,18 @@ class ComparativeStatisticalEvaluator:
     def _build_warnings(
         *,
         candidate_sample_size: int,
+        minimum_candidate_sample_size: int,
         discarded_count: int,
     ) -> tuple[str, ...]:
         warnings: list[str] = []
 
-        if candidate_sample_size < 30:
+        if (
+            candidate_sample_size
+            < minimum_candidate_sample_size
+        ):
             warnings.append(
-                "candidate sample size is below 30"
+                "candidate sample size is below "
+                f"{minimum_candidate_sample_size}"
             )
 
         if discarded_count:
@@ -436,91 +425,6 @@ class ComparativeStatisticalEvaluator:
         if not normalized:
             raise ValueError(
                 f"{field_name} must not be empty"
-            )
-
-        return normalized
-
-    @staticmethod
-    def _require_positive_integer(
-        value: object,
-        *,
-        field_name: str,
-    ) -> int:
-        if (
-            not isinstance(value, int)
-            or isinstance(value, bool)
-        ):
-            raise TypeError(
-                f"{field_name} must be an integer"
-            )
-
-        if value < 1:
-            raise ValueError(
-                f"{field_name} must be positive"
-            )
-
-        return value
-
-    @classmethod
-    def _require_resample_count(
-        cls,
-        value: object,
-    ) -> int:
-        normalized = cls._require_positive_integer(
-            value,
-            field_name="resample_count",
-        )
-
-        if normalized < 2:
-            raise ValueError(
-                "resample_count must be at least 2"
-            )
-
-        return normalized
-
-    @staticmethod
-    def _require_nonnegative_integer(
-        value: object,
-        *,
-        field_name: str,
-    ) -> int:
-        if (
-            not isinstance(value, int)
-            or isinstance(value, bool)
-        ):
-            raise TypeError(
-                f"{field_name} must be an integer"
-            )
-
-        if value < 0:
-            raise ValueError(
-                f"{field_name} must not be negative"
-            )
-
-        return value
-
-    @staticmethod
-    def _require_confidence_level(
-        value: object,
-    ) -> float:
-        if (
-            not isinstance(value, Real)
-            or isinstance(value, bool)
-        ):
-            raise TypeError(
-                "confidence_level must be a real number"
-            )
-
-        normalized = float(value)
-
-        if not isfinite(normalized):
-            raise ValueError(
-                "confidence_level must be finite"
-            )
-
-        if not 0.0 < normalized < 1.0:
-            raise ValueError(
-                "confidence_level must be between 0 and 1"
             )
 
         return normalized
