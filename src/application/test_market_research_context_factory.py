@@ -4,27 +4,25 @@ import pandas as pd
 import pytest
 
 from src.application import (
+    CodeVersionProvider,
     MarketExperimentSpecification,
     MarketPositionDirection,
+    MarketResearchContextFactory,
     ResearchRuntimeConfiguration,
+    StaticCodeVersionProvider,
+)
+from src.application.canonical_market_dataset import (
+    CanonicalMarketDataset,
+)
+from src.application.market_dataset_quality import (
+    MarketDatasetQualityAnalyzer,
 )
 from src.research.market_dataset_fingerprint import (
     DatasetFingerprintContext,
     MarketDatasetCanonicalizer,
     MarketDatasetFingerprinter,
 )
-from src.application.market_research_context_factory import (
-    MarketResearchContextFactory,
-)
-from src.research.research_environment_builder import (
-    MissingDatasetFingerprintError,
-)
-from src.application import (
-    CodeVersionProvider,
-    MarketResearchContextFactory,
-    ResearchRuntimeConfiguration,
-    StaticCodeVersionProvider,
-)
+
 def test_factory_uses_code_version_provider() -> None:
     context = build_factory(
         random_seed=42,
@@ -36,7 +34,7 @@ def test_factory_uses_code_version_provider() -> None:
         ),
     ).create(
         specification=build_specification(),
-        market_data=build_fingerprinted_market_data(),
+        dataset=build_canonical_market_dataset(),
     )
 
     assert (
@@ -92,7 +90,7 @@ def build_specification() -> MarketExperimentSpecification:
     )
 
 
-def build_fingerprinted_market_data() -> pd.DataFrame:
+def build_canonical_market_dataset() -> CanonicalMarketDataset:
     raw = pd.DataFrame(
         {
             "timestamp": [
@@ -124,15 +122,27 @@ def build_fingerprinted_market_data() -> pd.DataFrame:
         .canonicalize(raw)
     )
 
-    MarketDatasetFingerprinter().attach(
-        canonical,
-        DatasetFingerprintContext(
-            symbol="EURUSD",
-            timeframe="H1",
-        ),
+    fingerprint = (
+        MarketDatasetFingerprinter().attach(
+            canonical,
+            DatasetFingerprintContext(
+                symbol="EURUSD",
+                timeframe="H1",
+            ),
+        )
     )
 
-    return canonical
+    quality_report = (
+        MarketDatasetQualityAnalyzer().analyze(
+            canonical
+        )
+    )
+
+    return CanonicalMarketDataset(
+        data=canonical,
+        fingerprint=fingerprint,
+        quality_report=quality_report,
+    )
 
 
 def build_runtime_configuration(
@@ -168,16 +178,16 @@ def build_factory(
     )
 
 def test_factory_builds_reproducible_context() -> None:
-    data = build_fingerprinted_market_data()
+    dataset = build_canonical_market_dataset()
 
     context = build_factory().create(
         specification=build_specification(),
-        market_data=data,
+        dataset=dataset,
     )
 
     assert (
         context.environment.dataset_fingerprint
-        == data.attrs["dataset_fingerprint"]
+        == dataset.data.attrs["dataset_fingerprint"]
     )
 
     assert (
@@ -205,7 +215,7 @@ def test_factory_uses_runtime_configuration_seed() -> None:
         random_seed=42,
     ).create(
         specification=build_specification(),
-        market_data=build_fingerprinted_market_data(),
+        dataset=build_canonical_market_dataset(),
     )
 
     assert context.environment.random_seed == 42
@@ -214,7 +224,7 @@ def test_factory_uses_runtime_configuration_seed() -> None:
 def test_factory_builds_market_assumptions() -> None:
     context = build_factory().create(
         specification=build_specification(),
-        market_data=build_fingerprinted_market_data(),
+        dataset=build_canonical_market_dataset(),
     )
 
     assert context.assumptions.get(
@@ -226,7 +236,7 @@ def test_factory_builds_market_assumptions() -> None:
     ).value == 1.0
 
 
-def test_factory_rejects_dataset_without_fingerprint() -> None:
+def test_factory_rejects_legacy_dataframe() -> None:
     data = (
         MarketDatasetCanonicalizer()
         .canonicalize(
@@ -251,11 +261,12 @@ def test_factory_rejects_dataset_without_fingerprint() -> None:
     )
 
     with pytest.raises(
-        MissingDatasetFingerprintError,
+        TypeError,
+        match="CanonicalMarketDataset",
     ):
         build_factory().create(
             specification=build_specification(),
-            market_data=data,
+            dataset=data,
         )
 
 

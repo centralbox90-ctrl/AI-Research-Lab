@@ -2,6 +2,13 @@ from datetime import datetime, timezone
 
 import pandas as pd
 
+from src.application.canonical_market_dataset import (
+    CanonicalMarketDataset,
+)
+from src.application.market_dataset_quality import (
+    MarketDatasetQualityAnalyzer,
+)
+
 from src.application import (
     MarketExperimentSpecification,
     MarketPositionDirection,
@@ -28,7 +35,7 @@ class CountingMarketDataProvider:
     def load(
         self,
         specification: MarketExperimentSpecification,
-    ) -> pd.DataFrame:
+    ) -> CanonicalMarketDataset:
         self.load_count += 1
 
         raw = pd.DataFrame(
@@ -89,17 +96,29 @@ class CountingMarketDataProvider:
             .canonicalize(raw)
         )
 
-        MarketDatasetFingerprinter().attach(
-            canonical,
-            DatasetFingerprintContext(
-                symbol=specification.symbol,
-                timeframe=specification.timeframe,
-            ),
+        fingerprint = (
+            MarketDatasetFingerprinter().attach(
+                canonical,
+                DatasetFingerprintContext(
+                    symbol=specification.symbol,
+                    timeframe=specification.timeframe,
+                ),
+            )
+        )
+
+        quality_report = (
+            MarketDatasetQualityAnalyzer().analyze(
+                canonical
+            )
         )
 
         self.last_data = canonical
 
-        return canonical
+        return CanonicalMarketDataset(
+            data=canonical,
+            fingerprint=fingerprint,
+            quality_report=quality_report,
+        )
 
 
 class FakeSignalProvider:

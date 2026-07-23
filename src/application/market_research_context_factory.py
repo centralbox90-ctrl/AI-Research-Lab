@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import pandas as pd
-
 from src.application.canonical_market_dataset import (
     CanonicalMarketDataset,
 )
@@ -34,8 +32,6 @@ class MarketResearchContextFactory:
     It combines an already canonical fingerprinted dataset with the
     specification-derived assumption set and research environment.
 
-    During the dataset-contract migration, the factory accepts either
-    CanonicalMarketDataset or a legacy pandas DataFrame.
     """
 
     def __init__(
@@ -67,17 +63,17 @@ class MarketResearchContextFactory:
         self,
         *,
         specification: MarketExperimentSpecification,
-        dataset: (
-            CanonicalMarketDataset
-            | pd.DataFrame
-            | None
-        ) = None,
-        market_data: pd.DataFrame | None = None,
+        dataset: CanonicalMarketDataset,
     ) -> ResearchContext:
-        resolved_market_data = self._resolve_market_data(
-            dataset=dataset,
-            market_data=market_data,
-        )
+        if not isinstance(
+            dataset,
+            CanonicalMarketDataset,
+        ):
+            raise TypeError(
+                "dataset must be CanonicalMarketDataset"
+            )
+
+        market_data = dataset.data
 
         assumptions = (
             build_assumption_set_from_market_specification(
@@ -87,7 +83,7 @@ class MarketResearchContextFactory:
 
         environment = (
             self._research_environment_builder.build(
-                resolved_market_data,
+                market_data,
                 assumption_set_fingerprint=(
                     assumptions.fingerprint()
                 ),
@@ -113,49 +109,6 @@ class MarketResearchContextFactory:
         return ResearchContext(
             specification=specification,
             environment=environment,
-            market_data=resolved_market_data,
+            market_data=market_data,
             assumptions=assumptions,
-        )
-
-    @staticmethod
-    def _resolve_market_data(
-        *,
-        dataset: (
-            CanonicalMarketDataset
-            | pd.DataFrame
-            | None
-        ),
-        market_data: pd.DataFrame | None,
-    ) -> pd.DataFrame:
-        if (
-            dataset is not None
-            and market_data is not None
-        ):
-            raise ValueError(
-                "Provide either dataset or market_data, "
-                "not both."
-            )
-
-        if isinstance(
-            dataset,
-            CanonicalMarketDataset,
-        ):
-            return dataset.data
-
-        if isinstance(
-            dataset,
-            pd.DataFrame,
-        ):
-            return dataset
-
-        if isinstance(
-            market_data,
-            pd.DataFrame,
-        ):
-            return market_data
-
-        raise TypeError(
-            "MarketResearchContextFactory.create() "
-            "requires CanonicalMarketDataset or "
-            "pandas DataFrame."
         )

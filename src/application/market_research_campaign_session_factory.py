@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from src.application.market_data_provider import (
-    MarketDataProvider,
+    CanonicalMarketDatasetProvider,
 )
 from src.application.market_experiment_mapper import (
     MarketExperimentMapper,
@@ -41,7 +41,7 @@ class MarketResearchCampaignSessionFactory:
     def __init__(
         self,
         *,
-        data_provider: MarketDataProvider,
+        data_provider: CanonicalMarketDatasetProvider,
         signal_provider: MarketSignalProvider,
         context_factory: MarketResearchContextFactory,
         mapper: MarketExperimentMapper | None = None,
@@ -89,7 +89,7 @@ class MarketResearchCampaignSessionFactory:
 
             executor = PreparedMarketBacktestExecutor(
                 specification=specification,
-                market_data=dataset,
+                market_data=context.market_data,
                 signal_provider=self._signal_provider,
             )
 
