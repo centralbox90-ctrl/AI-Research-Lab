@@ -20,6 +20,9 @@ from src.indicators.discovery import (
 )
 
 
+from src.research.comparative_evaluation_plan import (
+    ComparativeEvaluationPlan,
+)
 from src.research.comparative_statistical_evaluator import (
     ComparativeStatisticalEvaluator,
 )
@@ -38,6 +41,9 @@ def build_default_indicator_comparative_research_service(
 def build_default_indicator_comparative_research_application(
     *,
     data_provider: CanonicalMarketDatasetProvider,
+    evaluation_plan: ComparativeEvaluationPlan = (
+        ComparativeEvaluationPlan()
+    ),
 ) -> IndicatorComparativeResearchApplication:
     """Build the default comparative research application."""
 
@@ -51,6 +57,7 @@ def build_default_indicator_comparative_research_application(
                 indicator_catalog
             )
         ),
+        evaluation_plan=evaluation_plan,
         statistical_evaluator=(
             ComparativeStatisticalEvaluator()
         ),

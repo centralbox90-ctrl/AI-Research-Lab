@@ -20,6 +20,9 @@ from src.cli.indicator_comparative_research_composition_root import (
     build_default_indicator_comparative_research_service,
 )
 from src.indicators.implementations.rsi import INDICATOR
+from src.research.comparative_evaluation_plan import (
+    ComparativeEvaluationPlan,
+)
 from src.research.market_dataset_fingerprint import (
     DatasetFingerprintContext,
     MarketDatasetCanonicalizer,
@@ -87,15 +90,25 @@ class StubDatasetProvider:
 
 def test_builds_default_comparative_research_application(
 ) -> None:
+    evaluation_plan = ComparativeEvaluationPlan(
+        random_seed=7,
+    )
+
     application = (
         build_default_indicator_comparative_research_application(
             data_provider=StubDatasetProvider(),
+            evaluation_plan=evaluation_plan,
         )
     )
 
     assert isinstance(
         application,
         IndicatorComparativeResearchApplication,
+    )
+
+
+    assert application._evaluation_plan is (
+        evaluation_plan
     )
 
 
