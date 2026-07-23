@@ -3,6 +3,9 @@ from __future__ import annotations
 from src.application.indicator_comparative_research_design import (
     IndicatorComparativeResearchDesign,
 )
+from src.application.indicator_comparative_research_result import (
+    IndicatorComparativeResearchResult,
+)
 from src.application.indicator_comparative_research_service import (
     IndicatorComparativeResearchService,
 )
@@ -13,9 +16,6 @@ from src.application.market_experiment_specification import (
     MarketExperimentSpecification,
 )
 from src.indicators.catalog import IndicatorCatalog
-from src.research.comparative_analysis import (
-    ComparativeAnalysis,
-)
 from src.research.outcome_specification import (
     ForwardReturnSpecification,
 )
@@ -44,7 +44,7 @@ class IndicatorComparativeResearchApplication:
         market_specification: MarketExperimentSpecification,
         indicator_id: str,
         outcome_specification: ForwardReturnSpecification,
-    ) -> ComparativeAnalysis:
+    ) -> IndicatorComparativeResearchResult:
         if not isinstance(
             market_specification,
             MarketExperimentSpecification,
@@ -95,9 +95,25 @@ class IndicatorComparativeResearchApplication:
             market_specification
         )
 
-        return self._research_service.run(
+        analysis = self._research_service.run(
             dataset=dataset,
             design=design,
             symbol=market_specification.symbol,
             timeframe=market_specification.timeframe,
+        )
+
+        return IndicatorComparativeResearchResult(
+            indicator_id=descriptor.id,
+            symbol=market_specification.symbol,
+            timeframe=market_specification.timeframe,
+            research_specification=(
+                research_specification
+            ),
+            dataset_fingerprint=(
+                dataset.fingerprint
+            ),
+            data_quality_report=(
+                dataset.quality_report
+            ),
+            analysis=analysis,
         )

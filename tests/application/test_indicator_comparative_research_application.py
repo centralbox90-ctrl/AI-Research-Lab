@@ -1,9 +1,19 @@
 from datetime import UTC, datetime
 
+import pandas as pd
 import pytest
 
+from src.application.canonical_market_dataset import (
+    CanonicalMarketDataset,
+)
 from src.application.indicator_comparative_research_application import (
     IndicatorComparativeResearchApplication,
+)
+from src.application.indicator_comparative_research_result import (
+    IndicatorComparativeResearchResult,
+)
+from src.application.market_dataset_quality import (
+    DataQualityReport,
 )
 from src.application.indicator_comparative_research_design import (
     IndicatorComparativeResearchDesign,
@@ -17,6 +27,12 @@ from src.indicators.catalog import (
     IndicatorNotFoundError,
 )
 from src.indicators.implementations.rsi import INDICATOR
+from src.research.comparative_analysis import (
+    ComparativeAnalysis,
+)
+from src.research.market_dataset_fingerprint import (
+    MarketDatasetFingerprint,
+)
 from src.research.outcome_specification import (
     ForwardReturnSpecification,
 )
@@ -102,6 +118,52 @@ def build_market_specification(
     )
 
 
+def build_dataset() -> CanonicalMarketDataset:
+    timestamp = 1_700_000_000_000_000_000
+
+    return CanonicalMarketDataset(
+        data=pd.DataFrame(
+            {
+                "timestamp": [timestamp],
+                "open": [100.0],
+                "high": [101.0],
+                "low": [99.0],
+                "close": [100.5],
+                "tick_volume": [100],
+            }
+        ),
+        fingerprint=MarketDatasetFingerprint(
+            content_fingerprint=(
+                "content-fingerprint"
+            ),
+            dataset_fingerprint=(
+                "dataset-fingerprint"
+            ),
+            algorithm="sha256",
+            content_schema_version="content-v1",
+            dataset_schema_version="dataset-v1",
+            normalization_schema_version=(
+                "normalization-v1"
+            ),
+        ),
+        quality_report=DataQualityReport(
+            row_count=1,
+            first_timestamp=timestamp,
+            last_timestamp=timestamp,
+            duplicate_timestamp_count=0,
+            missing_timestamp_count=0,
+            invalid_ohlc_count=0,
+            monotonic_timestamp=True,
+        ),
+    )
+
+
+def build_analysis() -> ComparativeAnalysis:
+    return object.__new__(
+        ComparativeAnalysis
+    )
+
+
 def build_application(
     *,
     catalog: IndicatorCatalog | None = None,
@@ -112,8 +174,8 @@ def build_application(
     object,
     object,
 ]:
-    dataset = object()
-    analysis = object()
+    dataset = build_dataset()
+    analysis = build_analysis()
     provider = StubDatasetProvider(dataset)
     service = StubComparativeResearchService(
         analysis
@@ -151,13 +213,26 @@ def test_runs_default_comparative_indicator_research(
         horizons=(1, 3),
     )
 
-    analysis = application.run(
+    result = application.run(
         market_specification=market_specification,
         indicator_id="  rsi  ",
         outcome_specification=outcome_specification,
     )
 
-    assert analysis is expected_analysis
+    assert isinstance(
+        result,
+        IndicatorComparativeResearchResult,
+    )
+    assert result.analysis is expected_analysis
+    assert result.dataset_fingerprint is (
+        dataset.fingerprint
+    )
+    assert result.data_quality_report is (
+        dataset.quality_report
+    )
+    assert result.indicator_id == "rsi"
+    assert result.symbol == "EURUSD"
+    assert result.timeframe == "H1"
     assert provider.calls == [market_specification]
     assert len(service.calls) == 1
 
@@ -170,6 +245,9 @@ def test_runs_default_comparative_indicator_research(
     assert isinstance(
         design,
         IndicatorComparativeResearchDesign,
+    )
+    assert result.research_specification is (
+        design.research_specification
     )
     assert design.outcome_specification is (
         outcome_specification
