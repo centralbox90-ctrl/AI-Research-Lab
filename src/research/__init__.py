@@ -1,4 +1,4 @@
-﻿from src.research.analysis import Analysis
+from src.research.analysis import Analysis
 from src.research.assumption import (
     Assumption,
     AssumptionSet,
@@ -21,7 +21,11 @@ from src.research.cycle_results import (
     StatisticallyEvaluatedResearchCycleResult,
 )
 from src.research.engine import ResearchEngine
-from src.research.evidence import Evidence
+from src.research.evidence import (
+    Evidence,
+    EvidenceDirection,
+    EvidenceStrength,
+)
 from src.research.evidence_strength_evaluation import (
     EvidenceStrengthEvaluation,
 )
@@ -50,6 +54,8 @@ __all__ = [
     "DecidedResearchCycleResult",
     "EvaluatedResearchCycleResult",
     "Evidence",
+    "EvidenceDirection",
+    "EvidenceStrength",
     "EvidenceStrengthEvaluation",
     "EvidenceStrengthResearchCycleResult",
     "Experiment",
