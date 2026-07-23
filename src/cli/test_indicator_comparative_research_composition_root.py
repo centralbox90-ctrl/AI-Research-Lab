@@ -1,5 +1,8 @@
 import pandas as pd
 
+from src.application.indicator_comparative_evidence_service import (
+    IndicatorComparativeEvidenceService,
+)
 from src.application.indicator_comparative_research_application import (
     IndicatorComparativeResearchApplication,
 )
@@ -16,12 +19,16 @@ from src.application.indicator_comparative_research_service import (
     IndicatorComparativeResearchService,
 )
 from src.cli.indicator_comparative_research_composition_root import (
+    build_default_indicator_comparative_evidence_service,
     build_default_indicator_comparative_research_application,
     build_default_indicator_comparative_research_service,
 )
 from src.indicators.implementations.rsi import INDICATOR
 from src.research.comparative_evaluation_plan import (
     ComparativeEvaluationPlan,
+)
+from src.research.comparative_evidence_evaluator import (
+    ComparativeEvidenceEvaluator,
 )
 from src.research.market_dataset_fingerprint import (
     DatasetFingerprintContext,
@@ -109,6 +116,22 @@ def test_builds_default_comparative_research_application(
 
     assert application._evaluation_plan is (
         evaluation_plan
+    )
+
+
+def test_builds_default_comparative_evidence_service(
+) -> None:
+    service = (
+        build_default_indicator_comparative_evidence_service()
+    )
+
+    assert isinstance(
+        service,
+        IndicatorComparativeEvidenceService,
+    )
+    assert isinstance(
+        service._evidence_evaluator,
+        ComparativeEvidenceEvaluator,
     )
 
 

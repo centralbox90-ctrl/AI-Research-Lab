@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from src.application.indicator_comparative_evidence_service import (
+    IndicatorComparativeEvidenceService,
+)
 from src.application.indicator_comparative_research_application import (
     IndicatorComparativeResearchApplication,
 )
@@ -23,9 +26,23 @@ from src.indicators.discovery import (
 from src.research.comparative_evaluation_plan import (
     ComparativeEvaluationPlan,
 )
+from src.research.comparative_evidence_evaluator import (
+    ComparativeEvidenceEvaluator,
+)
 from src.research.comparative_statistical_evaluator import (
     ComparativeStatisticalEvaluator,
 )
+
+def build_default_indicator_comparative_evidence_service(
+) -> IndicatorComparativeEvidenceService:
+    """Build the default comparative Evidence service."""
+
+    return IndicatorComparativeEvidenceService(
+        evidence_evaluator=(
+            ComparativeEvidenceEvaluator()
+        ),
+    )
+
 
 def build_default_indicator_comparative_research_service(
 ) -> IndicatorComparativeResearchService:
