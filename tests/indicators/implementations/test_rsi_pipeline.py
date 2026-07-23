@@ -1,76 +1,59 @@
 import pandas as pd
 
+from src.application.indicator_research_execution_factory import (
+    IndicatorResearchExecutionFactory,
+)
 from src.indicators.catalog import IndicatorCatalog
 from src.indicators.discovery import discover_indicators
-from src.indicators.calculation_service import (
-    IndicatorCalculationService,
-)
-from src.application.mappers.indicator_specification_mapper import (
-    IndicatorSpecificationMapper,
-)
-from src.research.specification import (
-    ResearchSpecification,
-    IndicatorReference,
+from src.indicators.implementations.rsi import INDICATOR
+from src.research.specification_factory import (
+    create_default_research_specification,
 )
 
 
-def test_rsi_calculation_pipeline():
-
+def test_rsi_default_specification_executes_complete_pipeline(
+) -> None:
     catalog = IndicatorCatalog(
         discover_indicators()
     )
-
-    service = IndicatorCalculationService(
-        catalog
-    )
-
-    research_specification = (
-        ResearchSpecification.create(
-            indicator=IndicatorReference(
-                indicator_id="rsi",
-                indicator_version=1,
-            ),
-            output="rsi",
-            profile="overbought_oversold",
-            observation_type="level_cross",
-            signal_rule_id="indicator_direction",
-            calculation_parameters={
-                "period": 14,
-            },
-            observation_parameters={},
+    specification = (
+        create_default_research_specification(
+            INDICATOR
         )
     )
+    service = IndicatorResearchExecutionFactory(
+        indicator_catalog=catalog,
+    ).create()
 
-    indicator_specification = (
-        IndicatorSpecificationMapper()
-        .map(research_specification)
+    close = (
+        [
+            100.0 + index
+            for index in range(20)
+        ]
+        + [
+            120.0 - (2.0 * index)
+            for index in range(20)
+        ]
     )
-
     data = pd.DataFrame(
         {
-            "close": [
-                100,
-                101,
-                102,
-                103,
-                102,
-                104,
-                105,
-                106,
-                107,
-                108,
-                109,
-                110,
-                111,
-                112,
-                113,
-            ]
+            "close": close,
         }
     )
 
-    result = service.calculate(
-        data,
-        indicator_specification,
+    result = service.execute(
+        data=data,
+        specification=specification,
     )
 
-    assert len(result.values) == len(data)
+    assert specification.calculation_parameter_values == {
+        "period": 14,
+    }
+    assert specification.observation_parameter_values == {
+        "level": 30.0,
+        "direction": "cross_below",
+    }
+    assert len(result.series) == len(data)
+    assert len(result.observations) == len(data)
+    assert set(result.observations).issubset({-1, 0, 1})
+    assert -1 in result.observations

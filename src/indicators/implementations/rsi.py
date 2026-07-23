@@ -3,8 +3,13 @@ from __future__ import annotations
 import pandas as pd
 
 from src.indicators.series import IndicatorSeries
+from src.indicators.specification import (
+    IndicatorSpecification,
+)
 from src.indicators.descriptor import IndicatorDescriptor
 from src.indicators.parameter_spaces import (
+    ChoiceParameter,
+    FloatParameter,
     IntegerParameter,
 )
 from src.indicators.research_space import (
@@ -15,12 +20,22 @@ from src.indicators.research_space import (
 
 def calculate(
     data: pd.DataFrame,
-    specification,
+    specification: IndicatorSpecification,
 ) -> IndicatorSeries:
 
     period = int(
         specification.parameters["period"]
     )
+
+    if "close" not in data.columns:
+        raise ValueError(
+            "RSI requires column: close"
+        )
+
+    if period < 1:
+        raise ValueError(
+            "RSI period must be greater than zero"
+        )
 
     delta = data["close"].diff()
 
@@ -54,7 +69,7 @@ def calculate(
         specification=specification,
         timestamps=data.index,
         values=rsi,
-        warmup_bars=period,
+        warmup_bars=period - 1,
     )
 
 
@@ -73,7 +88,20 @@ RESEARCH_SPACE = IndicatorResearchSpace(
         ),
     },
 
-    observation_parameters={},
+    observation_parameters={
+        "level": FloatParameter(
+            minimum=0.0,
+            maximum=100.0,
+            default=30.0,
+        ),
+        "direction": ChoiceParameter(
+            values=(
+                "cross_above",
+                "cross_below",
+            ),
+            default="cross_below",
+        ),
+    },
 
     observation_types=(
         "level_cross",
