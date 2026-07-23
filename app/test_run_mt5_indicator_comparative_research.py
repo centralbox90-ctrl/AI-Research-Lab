@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
+from pathlib import Path
 
 import pytest
 
@@ -238,3 +239,63 @@ def test_main_prints_json(
 
     assert exit_code == 0
     assert output == expected_payload
+
+
+def test_main_exports_presented_payload(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    expected_payload = {
+        "indicator": {
+            "id": "rsi",
+            "research_fingerprint": "research-id",
+        },
+        "dataset": {
+            "id": "dataset-id",
+            "fingerprint": {
+                "dataset_fingerprint": "dataset-id",
+            },
+        },
+    }
+    output_path = (
+        tmp_path
+        / "nested"
+        / "result.json"
+    )
+
+    monkeypatch.setattr(
+        runner,
+        "build_application",
+        lambda: object(),
+    )
+    monkeypatch.setattr(
+        runner,
+        "execute_comparative_research",
+        lambda **arguments: expected_payload,
+    )
+
+    exit_code = runner.main(
+        build_cli_arguments()
+        + [
+            "--output",
+            str(output_path),
+        ]
+    )
+    printed_payload = json.loads(
+        capsys.readouterr().out
+    )
+    stored_payload = json.loads(
+        output_path.read_text(
+            encoding="utf-8",
+        )
+    )
+
+    assert exit_code == 0
+    assert printed_payload == expected_payload
+    assert stored_payload == expected_payload
+    assert list(
+        output_path.parent.glob(
+            ".result.json.*.tmp"
+        )
+    ) == []

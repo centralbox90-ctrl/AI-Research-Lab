@@ -8,12 +8,16 @@ from argparse import (
 )
 from collections.abc import Sequence
 from datetime import UTC, datetime
+from pathlib import Path
 
 from src.application.canonical_market_data_provider import (
     CanonicalMarketDataProvider,
 )
 from src.application.indicator_comparative_research_application import (
     IndicatorComparativeResearchApplication,
+)
+from src.application.research_artifact_file_exporter import (
+    ResearchArtifactFileExporter,
 )
 from src.application.market_experiment_specification import (
     MarketExperimentSpecification,
@@ -73,6 +77,10 @@ def build_argument_parser() -> ArgumentParser:
         action="append",
         dest="horizons",
         type=_parse_positive_integer,
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
     )
     parser.add_argument(
         "--indent",
@@ -207,6 +215,12 @@ def main(
         arguments=parsed,
         application=build_application(),
     )
+
+    if parsed.output is not None:
+        ResearchArtifactFileExporter().export(
+            payload,
+            parsed.output,
+        )
 
     print(
         json.dumps(
