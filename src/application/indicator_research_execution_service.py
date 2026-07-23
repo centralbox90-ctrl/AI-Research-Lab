@@ -121,5 +121,6 @@ class IndicatorResearchExecutionService:
         return IndicatorResearchResult(
             research_specification=specification,
             series=series,
+            observations=observations,
             signal_result=signal_result,
         )
