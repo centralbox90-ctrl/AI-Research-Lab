@@ -75,6 +75,16 @@ def discover_signal_rules(
                 "Expected SignalRuleDescriptor."
             )
 
+        if signal_rule.rule_id in discovered_rule_ids:
+            raise SignalRuleDiscoveryError(
+                f"Duplicate signal rule id "
+                f"'{signal_rule.rule_id}'."
+            )
+
+        discovered_rule_ids.add(
+            signal_rule.rule_id
+        )
+
         rules.append(
             signal_rule
         )
