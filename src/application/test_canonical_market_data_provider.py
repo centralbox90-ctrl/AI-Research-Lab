@@ -145,6 +145,16 @@ def test_provider_returns_canonical_fingerprinted_data() -> None:
     ]
 
     assert data["timestamp"].is_monotonic_increasing
+    assert tuple(
+        pd.to_datetime(
+            data["timestamp"],
+            unit="ns",
+            utc=True,
+        )
+    ) == (
+        pd.Timestamp("2024-01-01T00:00:00Z"),
+        pd.Timestamp("2024-01-01T01:00:00Z"),
+    )
 
     assert data.attrs[
         "content_fingerprint"

@@ -133,6 +133,7 @@ class ObservationMaterializationService:
 
         timestamp = pd.to_datetime(
             data.iloc[bar_index]["timestamp"],
+            unit="ns",
             utc=True,
         )
 

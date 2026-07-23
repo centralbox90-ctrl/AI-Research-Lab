@@ -150,7 +150,7 @@ def test_uses_canonical_timestamp_column(
         freq="h",
         tz="UTC",
     )
-    data["timestamp"] = timestamps.asi8
+    data["timestamp"] = timestamps.as_unit("ns").asi8
 
     observations = (
         ObservationMaterializationService()

@@ -211,7 +211,7 @@ class MarketDatasetCanonicalizer:
                 "timestamp cannot contain missing values"
             )
 
-        nanoseconds = timestamps.astype("int64")
+        nanoseconds = timestamps.dt.as_unit("ns").astype("int64")
 
         return pd.Series(
             nanoseconds.to_numpy(
