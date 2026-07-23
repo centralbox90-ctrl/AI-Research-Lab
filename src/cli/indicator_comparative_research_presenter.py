@@ -30,12 +30,10 @@ def present_indicator_comparative_research_result(
     )
 
     return {
-        "artifact": {
-            "type": (
-                "indicator_comparative_research"
-            ),
-            "schema_version": 1,
-        },
+        "artifact_type": (
+            "indicator_comparative_research"
+        ),
+        "artifact_version": 1,
         "indicator": {
             "id": result.indicator_id,
             "research_fingerprint": (
