@@ -17,6 +17,9 @@ from src.cli.main import (
     build_research_cli,
     main,
 )
+from src.cli.market_research_campaign_presenter import (
+    MarketResearchCampaignPresenter,
+)
 from src.cli.research_cli import (
     ResearchCli,
 )
@@ -44,6 +47,7 @@ __all__ = [
     "GetStoredResearchCampaignCommand",
     "ListStoredResearchCyclesCommand",
     "ListStoredResearchCampaignsCommand",
+    "MarketResearchCampaignPresenter",
     "ResearchCli",
     "ResearchCycleJsonPresenter",
     "RunMarketResearchCommand",
