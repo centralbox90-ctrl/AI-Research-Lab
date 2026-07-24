@@ -17,7 +17,7 @@
 
 | Домен | Architecture Status | Implementation Status | Подтверждённое состояние |
 |---|---|---|---|
-| Research | Core | Partial | Реализованы сравнительные исследования индикаторов и прикладная orchestration. Полноценные Campaign Design и Research Planner отсутствуют. |
+| Research | Core | Partial | Реализованы сравнительные исследования, существующая runtime-модель ResearchCampaign и новый immutable CampaignDesign. Research Planner и преобразование design в воспроизводимую кампанию пока отсутствуют. |
 | Experiment | Core | Partial | Поддерживаются воспроизводимые результаты, планы оценки и исследовательские артефакты. Унифицированный жизненный цикл всех типов экспериментов ещё не завершён. |
 | Market Data | Core | Partial | Реализованы загрузчики, generated market data и canonical dataset provider. Legacy-представления используются не во всех сценариях через единый контракт. |
 | Calculation | Core | Confirmed | Реализованы индикаторы, их автоматическое обнаружение и вычислительные исследовательские сценарии. |
@@ -66,6 +66,8 @@
 
 ### Research и Experiment
 
+- существующая изменяемая runtime-модель ResearchCampaign;
+- immutable CampaignDesign с детерминированной идентичностью;
 - comparative research application;
 - воспроизводимый comparative research result;
 - версионированный формат research artifact;
@@ -109,7 +111,7 @@
 
 ### Research orchestration
 
-Часть управления исследованием находится в application-слое. Независимые Research Campaign, Campaign Design и Research Planner представлены не полностью.
+Существующий ResearchCampaign остаётся изменяемым runtime-контрактом совместимости. Immutable CampaignDesign фиксирует пространство исследования, но Research Planner и преобразование design в воспроизводимую кампанию ещё не реализованы.
 
 ### Market Data
 
@@ -129,7 +131,7 @@ Conclusion и HypothesisDecision используются существующи
 
 ## Приоритеты развития
 
-1. Спроектировать явные Research Campaign и Campaign Design.
+1. Связать CampaignDesign с воспроизводимой Research Campaign через минимальный Research Planner.
 2. Добавить минимальный Research Planner.
 3. Продолжить внедрение canonical market data через адаптеры.
 4. Разделить оставшиеся ответственности Backtest Engine.

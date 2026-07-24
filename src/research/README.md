@@ -9,6 +9,7 @@
 Пакет отвечает за:
 
 - спецификацию исследования;
+- декларативный Campaign Design;
 - описание измеряемого результата;
 - фиксацию наблюдений;
 - event study;
@@ -54,7 +55,8 @@
 
 | Модуль | Контракт | Назначение |
 |---|---|---|
-| `specification.py` | `ResearchSpecification` | Неизменяемая спецификация и fingerprint исследования |
+| specification.py | ResearchSpecification | Неизменяемая спецификация и fingerprint исследования |
+| campaign_design.py | CampaignDesign | Неизменяемые измерения и ссылки будущей исследовательской кампании |
 | `specification.py` | `IndicatorReference` | Версионированная ссылка на индикатор |
 | `outcome_specification.py` | `ForwardReturnSpecification` | Горизонты и поле цены для измерения результата |
 | `observations/observation.py` | `Observation` | Зафиксированный случай исследуемого события |
@@ -127,6 +129,14 @@ Evaluation plan должен быть сформирован до анализа
 Research-код не должен импортировать CLI или application-слой. Прикладной слой может координировать несколько research-контрактов, но научные правила должны оставаться внутри `src/research/`.
 
 Canonicalization рыночного набора сейчас частично находится в `market_dataset_fingerprint.py`. Это переходное размещение до окончательного выделения Market Data Domain.
+
+## Campaign Design
+
+CampaignDesign заранее фиксирует пространство будущей исследовательской кампании: гипотезы, инструменты, таймфреймы, периоды данных, конфигурации индикаторов, signal rules, execution policies, baselines, validation strategy и evaluation plan.
+
+Все вычислительные элементы представлены непрозрачными версионированными ссылками. Research Domain выбирает их, но не реализует calculation, signal generation или execution. Идентичность design детерминирована его нормализованным содержимым и provenance.
+
+Существующий изменяемый ResearchCampaign пока сохраняется как runtime-контракт совместимости. Следующий шаг — Research Planner, который преобразует CampaignDesign в согласованный набор experiment specifications и новую воспроизводимую кампанию.
 
 ## Finding Pipeline
 
