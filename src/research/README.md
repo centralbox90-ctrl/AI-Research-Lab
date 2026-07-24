@@ -65,6 +65,7 @@
 | `evidence.py` | `Evidence` | Неизменяемая оценка отношения данных к гипотезе |
 | `finding.py` | `Finding` | Неизменяемая интерпретация Evidence с явным отношением к гипотезе |
 | `hypothesis_evaluation.py` | `HypothesisEvaluation` | Воспроизводимый результат формальной оценки гипотезы |
+| `hypothesis_evaluation_plan.py` | `HypothesisEvaluationPlan` | Предварительно объявленные правила формальной оценки гипотезы |
 | `market_dataset_fingerprint.py` | `MarketDatasetFingerprint` | Версионированная идентичность canonical dataset |
 
 ## Доменные сервисы
@@ -147,7 +148,7 @@ Composition root и presenter для Finding подключены.
 - `inconclusive`;
 - `rejected`.
 
-Модель результата реализована как immutable и воспроизводимый контракт. Доменный `HypothesisEvaluator` будет подключён отдельным изменением.
+Модель результата и `HypothesisEvaluationPlan` реализованы как immutable воспроизводимые контракты. План заранее фиксирует пороги уверенности и минимальное количество Findings для окончательного решения. Доменный `HypothesisEvaluator` будет подключён следующим изменением.
 
 ## Legacy Analysis
 
