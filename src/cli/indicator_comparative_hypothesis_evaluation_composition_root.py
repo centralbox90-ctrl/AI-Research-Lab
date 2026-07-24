@@ -6,6 +6,9 @@ from src.application.indicator_comparative_hypothesis_evaluation_application imp
 from src.application.market_data_provider import (
     CanonicalMarketDatasetProvider,
 )
+from src.cli.run_indicator_comparative_hypothesis_evaluation_command import (
+    RunIndicatorComparativeHypothesisEvaluationCommand,
+)
 from src.cli.hypothesis_evaluation_composition_root import (
     build_default_hypothesis_evaluation_application,
 )
@@ -18,6 +21,33 @@ from src.research.comparative_evaluation_plan import (
 from src.research.hypothesis_evaluation_plan import (
     HypothesisEvaluationPlan,
 )
+
+
+def build_default_indicator_comparative_hypothesis_evaluation_command(
+    *,
+    data_provider: CanonicalMarketDatasetProvider,
+    comparative_evaluation_plan: ComparativeEvaluationPlan = (
+        ComparativeEvaluationPlan()
+    ),
+    hypothesis_evaluation_plan: HypothesisEvaluationPlan = (
+        HypothesisEvaluationPlan()
+    ),
+) -> RunIndicatorComparativeHypothesisEvaluationCommand:
+    """Build the complete comparative evaluation CLI command."""
+
+    return RunIndicatorComparativeHypothesisEvaluationCommand(
+        application=(
+            build_default_indicator_comparative_hypothesis_evaluation_application(
+                data_provider=data_provider,
+                comparative_evaluation_plan=(
+                    comparative_evaluation_plan
+                ),
+                hypothesis_evaluation_plan=(
+                    hypothesis_evaluation_plan
+                ),
+            )
+        ),
+    )
 
 
 def build_default_indicator_comparative_hypothesis_evaluation_application(

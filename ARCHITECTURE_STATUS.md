@@ -23,7 +23,7 @@
 | Calculation | Core | Confirmed | Реализованы индикаторы, их автоматическое обнаружение и вычислительные исследовательские сценарии. |
 | Signal | Core | Confirmed | Генерация сигналов и интеграция с существующим execution-контуром присутствуют. Декларативная композиция правил ограничена. |
 | Execution | Core | Confirmed | Backtest Engine остаётся основной реализацией исполнения. Его внутренние ответственности ещё не полностью разделены. |
-| Analysis | Core | Partial | Реализованы Observation, Evidence, Finding, FindingEvaluator, HypothesisEvaluation, HypothesisEvaluationPlan, доменный HypothesisEvaluator, application boundary, presenters и единая orchestration от сравнительного исследования до формальной оценки гипотезы. Объединённый composition root подключён; специализированный CLI handler пока отсутствует. |
+| Analysis | Core | Partial | Реализованы Observation, Evidence, Finding, FindingEvaluator, HypothesisEvaluation, HypothesisEvaluationPlan, доменный HypothesisEvaluator, application boundary, presenters и единая orchestration от сравнительного исследования до формальной оценки гипотезы. JSON loader, CLI-команда и её composition root подключены; команда пока не зарегистрирована в общем ResearchCli. |
 | Knowledge | Core | Planned | Специализированные repository, versioning и contradiction detection пока отсутствуют. |
 | Infrastructure | Supporting | Partial | Реализованы composition roots, CLI-компоненты, presenters, артефакты и CI. Границы инфраструктурных адаптеров продолжают уточняться. |
 
@@ -116,7 +116,7 @@ Canonical market data ещё не является единственным вн
 
 ### Analysis
 
-Модели Observation, Evidence и Finding связаны доменным FindingEvaluator и IndicatorComparativeFindingApplication. HypothesisEvaluation, HypothesisEvaluationPlan и доменный HypothesisEvaluator завершают формальную оценку. IndicatorComparativeHypothesisEvaluationApplication и его composition root объединяют полный прикладной поток. Строгий JSON request loader реализован. Оставшееся отклонение — отсутствие специализированной CLI-команды для запуска этого сценария пользователем.
+Модели Observation, Evidence и Finding связаны доменным FindingEvaluator и IndicatorComparativeFindingApplication. HypothesisEvaluation, HypothesisEvaluationPlan и доменный HypothesisEvaluator завершают формальную оценку. IndicatorComparativeHypothesisEvaluationApplication и его composition root объединяют полный прикладной поток. Строгий JSON request loader и специализированная CLI-команда реализованы. Оставшееся отклонение — команда ещё не зарегистрирована в общем ResearchCli и его parser.
 
 ### Legacy Analysis Pipeline
 

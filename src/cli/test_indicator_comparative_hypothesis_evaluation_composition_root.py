@@ -9,6 +9,10 @@ from src.application.indicator_comparative_hypothesis_evaluation_application imp
 )
 from src.cli.indicator_comparative_hypothesis_evaluation_composition_root import (
     build_default_indicator_comparative_hypothesis_evaluation_application,
+    build_default_indicator_comparative_hypothesis_evaluation_command,
+)
+from src.cli.run_indicator_comparative_hypothesis_evaluation_command import (
+    RunIndicatorComparativeHypothesisEvaluationCommand,
 )
 from src.research.comparative_evaluation_plan import (
     ComparativeEvaluationPlan,
@@ -107,4 +111,49 @@ def test_builds_application_with_default_plans(
     assert comparative_plan.random_seed == 0
     assert hypothesis_plan.version == (
         "hypothesis-evaluation-v1"
+    )
+
+
+def test_builds_command_with_declared_plans(
+) -> None:
+    comparative_plan = ComparativeEvaluationPlan(
+        random_seed=29,
+    )
+    hypothesis_plan = HypothesisEvaluationPlan(
+        version="hypothesis-evaluation-command",
+        minimum_decisive_findings=4,
+    )
+
+    command = (
+        build_default_indicator_comparative_hypothesis_evaluation_command(
+            data_provider=StubDatasetProvider(),
+            comparative_evaluation_plan=(
+                comparative_plan
+            ),
+            hypothesis_evaluation_plan=(
+                hypothesis_plan
+            ),
+        )
+    )
+
+    assert isinstance(
+        command,
+        RunIndicatorComparativeHypothesisEvaluationCommand,
+    )
+    assert (
+        command
+        ._application
+        ._finding_application
+        ._evidence_application
+        ._research_application
+        ._evaluation_plan
+        is comparative_plan
+    )
+    assert (
+        command
+        ._application
+        ._hypothesis_evaluation_application
+        ._hypothesis_evaluator
+        ._plan
+        is hypothesis_plan
     )
