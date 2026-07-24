@@ -23,7 +23,7 @@
 | Calculation | Core | Confirmed | Реализованы индикаторы, их автоматическое обнаружение и вычислительные исследовательские сценарии. |
 | Signal | Core | Confirmed | Генерация сигналов и интеграция с существующим execution-контуром присутствуют. Декларативная композиция правил ограничена. |
 | Execution | Core | Confirmed | Backtest Engine остаётся основной реализацией исполнения. Его внутренние ответственности ещё не полностью разделены. |
-| Analysis | Core | Partial | Реализованы Observation, Evidence, Finding, FindingEvaluator, HypothesisEvaluation, HypothesisEvaluationPlan, доменный HypothesisEvaluator и application boundary. Composition root и presenter оценки гипотезы пока отсутствуют. |
+| Analysis | Core | Partial | Реализованы Observation, Evidence, Finding, FindingEvaluator, HypothesisEvaluation, HypothesisEvaluationPlan, доменный HypothesisEvaluator, application boundary и composition root. Presenter оценки гипотезы пока отсутствует. |
 | Knowledge | Core | Planned | Специализированные repository, versioning и contradiction detection пока отсутствуют. |
 | Infrastructure | Supporting | Partial | Реализованы composition roots, CLI-компоненты, presenters, артефакты и CI. Границы инфраструктурных адаптеров продолжают уточняться. |
 
@@ -91,7 +91,7 @@
 
 ### Infrastructure
 
-- composition roots в `src/cli/`;
+- composition roots в `src/cli/`, включая формальную оценку гипотезы;
 - presenters, отделённые от прикладных сервисов;
 - воспроизводимый `requirements.txt`;
 - автоматический запуск `python -m pytest -q`;
@@ -114,7 +114,7 @@ Canonical market data ещё не является единственным вн
 
 ### Analysis
 
-Модели Observation, Evidence и Finding связаны доменным FindingEvaluator и IndicatorComparativeFindingApplication. Composition root и presenter подключены. HypothesisEvaluation, HypothesisEvaluationPlan, доменный HypothesisEvaluator и HypothesisEvaluationApplication реализованы; composition root и presenter оценки гипотезы отсутствуют.
+Модели Observation, Evidence и Finding связаны доменным FindingEvaluator и IndicatorComparativeFindingApplication. Composition root и presenter подключены. HypothesisEvaluation, HypothesisEvaluationPlan, доменный HypothesisEvaluator, HypothesisEvaluationApplication и отдельный composition root реализованы; presenter оценки гипотезы отсутствует.
 
 ### Legacy Analysis Pipeline
 
