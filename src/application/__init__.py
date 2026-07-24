@@ -29,6 +29,9 @@ from src.application.get_stored_research_campaign import (
 from src.application.git_code_version_provider import (
     GitCodeVersionProvider,
 )
+from src.application.in_memory_market_experiment_specification_resolver import (
+    InMemoryMarketExperimentSpecificationResolver,
+)
 from src.application.in_memory_research_cycle_repository import (
     InMemoryResearchCycleRepository,
 )
@@ -139,6 +142,7 @@ __all__ = [
     "GetStoredResearchCycle",
     "GetStoredResearchCampaign",
     "GitCodeVersionProvider",
+    "InMemoryMarketExperimentSpecificationResolver",
     "InMemoryResearchCycleRepository",
     "ListStoredResearchCycles",
     "ListStoredResearchCampaigns",
