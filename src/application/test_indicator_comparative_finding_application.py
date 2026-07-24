@@ -13,7 +13,10 @@ from src.research.evidence import (
     EvidenceDirection,
     EvidenceStrength,
 )
-from src.research.finding import Finding
+from src.research.finding import (
+    Finding,
+    FindingRelationship,
+)
 from src.research.finding_evaluator import (
     FindingEvaluator,
 )
@@ -130,6 +133,9 @@ def test_runs_evidence_application_into_finding(
     )
 
     assert isinstance(finding, Finding)
+    assert finding.relationship is (
+        FindingRelationship.SUPPORTING
+    )
     assert finding.hypothesis_id == (
         "hypothesis-rsi"
     )

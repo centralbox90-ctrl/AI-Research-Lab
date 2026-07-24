@@ -4,7 +4,10 @@ import json
 from hashlib import sha256
 
 from src.research.evidence import Evidence
-from src.research.finding import Finding
+from src.research.finding import (
+    Finding,
+    FindingRelationship,
+)
 
 
 class FindingEvaluator:
@@ -12,7 +15,7 @@ class FindingEvaluator:
     Converts Evidence into a reproducible scientific Finding.
     """
 
-    DEFAULT_PIPELINE_VERSION = "finding-v1"
+    DEFAULT_PIPELINE_VERSION = "finding-v2"
 
     def evaluate(
         self,
@@ -71,6 +74,9 @@ class FindingEvaluator:
             id="pending",
             hypothesis_id=evidence.hypothesis_id,
             statement=statement,
+            relationship=FindingRelationship(
+                evidence.direction.value
+            ),
             confidence=evidence.confidence,
             applicable_markets=applicable_markets,
             limitations=evidence.limitations,
@@ -85,6 +91,7 @@ class FindingEvaluator:
             id=finding_id,
             hypothesis_id=prototype.hypothesis_id,
             statement=prototype.statement,
+            relationship=prototype.relationship,
             confidence=prototype.confidence,
             applicable_markets=(
                 prototype.applicable_markets

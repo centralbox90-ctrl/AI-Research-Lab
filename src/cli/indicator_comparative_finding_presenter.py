@@ -22,6 +22,6 @@ def present_indicator_comparative_finding(
         "artifact_type": (
             "indicator_comparative_finding"
         ),
-        "artifact_version": 1,
+        "artifact_version": 2,
         "finding": presented_finding,
     }

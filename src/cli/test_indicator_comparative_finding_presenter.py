@@ -5,7 +5,10 @@ import pytest
 from src.cli.indicator_comparative_finding_presenter import (
     present_indicator_comparative_finding,
 )
-from src.research.finding import Finding
+from src.research.finding import (
+    Finding,
+    FindingRelationship,
+)
 
 
 def build_finding() -> Finding:
@@ -15,6 +18,9 @@ def build_finding() -> Finding:
         statement=(
             "The replicated effect supports "
             "further investigation."
+        ),
+        relationship=(
+            FindingRelationship.SUPPORTING
         ),
         confidence=0.75,
         applicable_markets=(
@@ -59,11 +65,11 @@ def test_presents_json_compatible_finding(
     assert serialized["artifact_type"] == (
         "indicator_comparative_finding"
     )
-    assert serialized["artifact_version"] == 1
+    assert serialized["artifact_version"] == 2
 
     presented = serialized["finding"]
 
-    assert presented["schema_version"] == 1
+    assert presented["schema_version"] == 2
     assert presented["id"] == "finding-id"
     assert presented["fingerprint"] == (
         finding.fingerprint
@@ -75,6 +81,7 @@ def test_presents_json_compatible_finding(
         "The replicated effect supports "
         "further investigation."
     )
+    assert presented["relationship"] == "supporting"
     assert presented["confidence"] == 0.75
     assert presented["applicable_markets"] == [
         "symbol:EURUSD",

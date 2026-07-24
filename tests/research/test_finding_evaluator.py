@@ -7,7 +7,10 @@ from src.research.evidence import (
     EvidenceDirection,
     EvidenceStrength,
 )
-from src.research.finding import Finding
+from src.research.finding import (
+    Finding,
+    FindingRelationship,
+)
 from src.research.finding_evaluator import (
     FindingEvaluator,
 )
@@ -102,6 +105,9 @@ def test_builds_finding_from_evidence() -> None:
     assert finding.hypothesis_id == (
         evidence.hypothesis_id
     )
+    assert finding.relationship is (
+        FindingRelationship.SUPPORTING
+    )
     assert finding.statement == (
         "RSI improves entries on EURUSD H1."
     )
@@ -135,6 +141,36 @@ def test_builds_finding_from_evidence() -> None:
     assert provenance["evidence.method"] == (
         "moving_block_bootstrap"
     )
+
+
+@pytest.mark.parametrize(
+    ("direction", "relationship"),
+    (
+        (
+            EvidenceDirection.SUPPORTING,
+            FindingRelationship.SUPPORTING,
+        ),
+        (
+            EvidenceDirection.CONTRADICTORY,
+            FindingRelationship.CONTRADICTORY,
+        ),
+        (
+            EvidenceDirection.INCONCLUSIVE,
+            FindingRelationship.INCONCLUSIVE,
+        ),
+    ),
+)
+def test_maps_evidence_direction_to_relationship(
+    direction: EvidenceDirection,
+    relationship: FindingRelationship,
+) -> None:
+    finding = evaluate(
+        evidence=build_evidence(
+            direction=direction,
+        ),
+    )
+
+    assert finding.relationship is relationship
 
 
 def test_is_deterministic_and_order_independent(

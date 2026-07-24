@@ -2,9 +2,18 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from enum import StrEnum
 from hashlib import sha256
 from math import isfinite
 from numbers import Real
+
+
+class FindingRelationship(StrEnum):
+    """Typed relationship between a Finding and its hypothesis."""
+
+    SUPPORTING = "supporting"
+    CONTRADICTORY = "contradictory"
+    INCONCLUSIVE = "inconclusive"
 
 
 @dataclass(frozen=True, slots=True)
@@ -16,6 +25,7 @@ class Finding:
     id: str
     hypothesis_id: str
     statement: str
+    relationship: FindingRelationship
     confidence: float
     applicable_markets: tuple[str, ...]
     limitations: tuple[str, ...]
@@ -38,6 +48,16 @@ class Finding:
             self.statement,
             field_name="statement",
         )
+
+        if not isinstance(
+            self.relationship,
+            FindingRelationship,
+        ):
+            raise TypeError(
+                "relationship must be a "
+                "FindingRelationship"
+            )
+
         confidence = self._normalize_confidence(
             self.confidence
         )
@@ -106,10 +126,11 @@ class Finding:
 
     def to_dict(self) -> dict[str, object]:
         return {
-            "schema_version": 1,
+            "schema_version": 2,
             "id": self.id,
             "hypothesis_id": self.hypothesis_id,
             "statement": self.statement,
+            "relationship": self.relationship.value,
             "confidence": self.confidence,
             "applicable_markets": list(
                 self.applicable_markets

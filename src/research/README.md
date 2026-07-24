@@ -128,7 +128,7 @@ Canonicalization рыночного набора сейчас частично �
 
 Новый воспроизводимый Analysis-поток использует следующие контракты:
 
-- `Finding` — неизменяемая интерпретация Evidence в рамках гипотезы;
+- `Finding` — неизменяемая интерпретация Evidence с явным типизированным отношением к гипотезе;
 - `FindingEvaluator` — детерминированное преобразование Evidence → Finding;
 - `IndicatorComparativeFindingApplication` — orchestration сравнительного исследования через Evidence до Finding.
 

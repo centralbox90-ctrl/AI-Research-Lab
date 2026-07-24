@@ -2,7 +2,10 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from src.research.finding import Finding
+from src.research.finding import (
+    Finding,
+    FindingRelationship,
+)
 
 
 def build_finding(
@@ -13,6 +16,9 @@ def build_finding(
         "hypothesis_id": "hypothesis-rsi",
         "statement": (
             "RSI improves entries in selected markets."
+        ),
+        "relationship": (
+            FindingRelationship.SUPPORTING
         ),
         "confidence": 0.8,
         "applicable_markets": (
@@ -61,6 +67,9 @@ def test_normalizes_finding() -> None:
     assert finding.id == "finding-rsi"
     assert finding.hypothesis_id == "hypothesis-rsi"
     assert finding.statement == "Supported statement."
+    assert finding.relationship is (
+        FindingRelationship.SUPPORTING
+    )
     assert finding.applicable_markets == (
         "EURUSD:H1",
         "GBPUSD:H1",
@@ -82,12 +91,13 @@ def test_serializes_public_contract() -> None:
     finding = build_finding()
 
     assert finding.to_dict() == {
-        "schema_version": 1,
+        "schema_version": 2,
         "id": "finding-rsi",
         "hypothesis_id": "hypothesis-rsi",
         "statement": (
             "RSI improves entries in selected markets."
         ),
+        "relationship": "supporting",
         "confidence": 0.8,
         "applicable_markets": [
             "EURUSD:H1",
@@ -175,6 +185,19 @@ def test_rejects_invalid_required_text(
 ) -> None:
     with pytest.raises(error_type, match=message):
         build_finding(**{field_name: value})
+
+
+def test_rejects_invalid_relationship() -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "relationship must be a "
+            "FindingRelationship"
+        ),
+    ):
+        build_finding(
+            relationship="supporting",
+        )
 
 
 @pytest.mark.parametrize(
