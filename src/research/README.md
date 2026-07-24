@@ -139,19 +139,20 @@ Canonicalization рыночного набора сейчас частично �
 
 Все вычислительные элементы представлены непрозрачными версионированными ссылками. Research Domain выбирает их, но не реализует calculation, signal generation или execution. Идентичность design детерминирована его нормализованным содержимым и provenance.
 
-Существующий изменяемый `ResearchCampaign` пока сохраняется как runtime-контракт совместимости. `ResearchPlanner` детерминированно разворачивает нормализованный `CampaignDesign` в полный Cartesian-набор `CampaignExperimentSpecification` и объединяет их в immutable `ResearchCampaignPlan`. Максимальный размер пространства ограничивается до создания спецификаций. `ResearchCampaignPlanMarketAdapter` разрешает каждый элемент плана в `MarketExperimentSpecification`, проверяет соответствие инструмента и таймфрейма и сохраняет связь с исходной спецификацией. `InMemoryMarketExperimentSpecificationResolver` реализует явный каталог полностью заполненных market specifications по детерминированным идентификаторам элементов плана и не интерпретирует непрозрачные ссылки. `MarketExperimentRegistrationLoader` загружает только полный набор регистраций, принадлежащий конкретному plan ID. `RunMarketResearchCampaign` объединяет планирование, полное предварительное разрешение и последовательное выполнение экспериментов. Внешний loader `CampaignDesign`, composition root и CLI-маршрут кампании ещё не реализованы.
+Существующий изменяемый `ResearchCampaign` пока сохраняется как runtime-контракт совместимости. `CampaignDesignLoader` преобразует строгий JSON-контракт в immutable `CampaignDesign` и проверяет необязательный вычисленный design ID. `ResearchPlanner` детерминированно разворачивает нормализованный design в полный Cartesian-набор `CampaignExperimentSpecification` и объединяет их в immutable `ResearchCampaignPlan`. Максимальный размер пространства ограничивается до создания спецификаций. `ResearchCampaignPlanMarketAdapter` разрешает каждый элемент плана в `MarketExperimentSpecification`, проверяет соответствие инструмента и таймфрейма и сохраняет связь с исходной спецификацией. `InMemoryMarketExperimentSpecificationResolver` реализует явный каталог полностью заполненных market specifications по детерминированным идентификаторам элементов плана и не интерпретирует непрозрачные ссылки. `MarketExperimentRegistrationLoader` загружает только полный набор регистраций, принадлежащий конкретному plan ID. `RunMarketResearchCampaign` объединяет планирование, полное предварительное разрешение и последовательное выполнение экспериментов. Composition root, presenter и CLI-маршрут кампании ещё не реализованы.
 
 ## Campaign Execution
 
 Подтверждённый поток выполнения исследовательской кампании:
 
-1. `CampaignDesign` фиксирует пространство исследования.
-2. `ResearchPlanner` создаёт детерминированный `ResearchCampaignPlan`.
-3. `MarketExperimentRegistrationLoader` проверяет schema version, plan ID и полноту внешних регистраций.
-4. `InMemoryMarketExperimentSpecificationResolver` находит явную регистрацию каждого элемента плана.
-5. `ResearchCampaignPlanMarketAdapter` проверяет соответствие инструмента и таймфрейма.
-6. `RunMarketResearchCampaign` завершает разрешение всего плана до первого запуска.
-7. Каждый результат сохраняет связь с исходным `CampaignExperimentSpecification`.
+1. `CampaignDesignLoader` проверяет внешний JSON и создаёт immutable design.
+2. `CampaignDesign` фиксирует пространство исследования.
+3. `ResearchPlanner` создаёт детерминированный `ResearchCampaignPlan`.
+4. `MarketExperimentRegistrationLoader` проверяет schema version, plan ID и полноту внешних регистраций.
+5. `InMemoryMarketExperimentSpecificationResolver` находит явную регистрацию каждого элемента плана.
+6. `ResearchCampaignPlanMarketAdapter` проверяет соответствие инструмента и таймфрейма.
+7. `RunMarketResearchCampaign` завершает разрешение всего плана до первого запуска.
+8. Каждый результат сохраняет связь с исходным `CampaignExperimentSpecification`.
 
 Отсутствующая или несовместимая регистрация останавливает кампанию до выполнения первого эксперимента. Ошибка самого runner после начала выполнения распространяется вызывающему коду и не маскируется.
 
