@@ -24,6 +24,8 @@ def discover_indicators(
     Каждый plugin должен экспортировать переменную INDICATOR.
     Discovery ничего не регистрирует и не создаёт глобальный catalog.
     """
+    importlib.invalidate_caches()
+
     package = _import_package(package_name)
     indicators: list[IndicatorDescriptor] = []
     indicator_modules: dict[str, str] = {}
