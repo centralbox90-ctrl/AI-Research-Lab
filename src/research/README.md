@@ -134,6 +134,19 @@ Canonicalization рыночного набора сейчас частично �
 
 Composition root и presenter для Finding подключены.
 
+## Hypothesis Evaluation
+
+HypothesisEvaluation фиксирует формальный результат проверки гипотезы на основании Finding.
+
+Допустимые состояния:
+
+- supported;
+- partially_supported;
+- inconclusive;
+- ejected.
+
+Модель результата реализована как immutable и воспроизводимый контракт. Доменный HypothesisEvaluator будет подключён отдельным изменением.
+
 ## Legacy Analysis
 
 `Conclusion` и `HypothesisDecision` относятся к старому циклу `ResearchEngine`. Они используют runtime UUID, временные метки и изменяемое состояние.
