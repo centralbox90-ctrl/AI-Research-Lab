@@ -117,6 +117,12 @@ from src.application.run_and_store_serialized_research_cycle import (
 from src.application.run_market_research import (
     RunMarketResearch,
 )
+from src.application.run_market_research_campaign import (
+    MarketResearchCampaignExperimentResult,
+    MarketResearchCampaignResult,
+    MarketResearchExperimentRunner,
+    RunMarketResearchCampaign,
+)
 from src.application.run_research_cycle import (
     RunResearchCycle,
 )
@@ -156,7 +162,10 @@ __all__ = [
     "MarketExperimentSpecificationLoader",
     "MarketExperimentSpecificationResolver",
     "MarketPositionDirection",
+    "MarketResearchCampaignExperimentResult",
+    "MarketResearchCampaignResult",
     "MarketResearchContextFactory",
+    "MarketResearchExperimentRunner",
     "MarketResearchSession",
     "MarketResearchSessionFactory",
     "MarketSignalProvider",
@@ -174,6 +183,7 @@ __all__ = [
     "RunAndStoreResearchArtifact",
     "RunAndStoreSerializedResearchCycle",
     "RunMarketResearch",
+    "RunMarketResearchCampaign",
     "RunResearchCycle",
     "SerializedResearchCycleStore",
     "StaticCodeVersionProvider",
