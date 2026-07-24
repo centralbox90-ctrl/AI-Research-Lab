@@ -132,7 +132,7 @@ Canonicalization рыночного набора сейчас частично �
 - `FindingEvaluator` — детерминированное преобразование Evidence → Finding;
 - `IndicatorComparativeFindingApplication` — orchestration сравнительного исследования через Evidence до Finding.
 
-Composition root для Finding подключён. Отдельным вертикальным срезом остаётся presenter.
+Composition root и presenter для Finding подключены.
 
 ## Legacy Analysis
 

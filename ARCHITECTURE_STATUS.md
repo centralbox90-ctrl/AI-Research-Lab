@@ -23,7 +23,7 @@
 | Calculation | Core | Confirmed | Реализованы индикаторы, их автоматическое обнаружение и вычислительные исследовательские сценарии. |
 | Signal | Core | Confirmed | Генерация сигналов и интеграция с существующим execution-контуром присутствуют. Декларативная композиция правил ограничена. |
 | Execution | Core | Confirmed | Backtest Engine остаётся основной реализацией исполнения. Его внутренние ответственности ещё не полностью разделены. |
-| Analysis | Core | Partial | Реализованы Observation, Evidence, Finding, FindingEvaluator, application orchestration и composition root сравнительного сценария. Presenter и формальная оценка гипотезы отсутствуют. |
+| Analysis | Core | Partial | Реализованы Observation, Evidence, Finding, FindingEvaluator, application orchestration, composition root и presenter сравнительного сценария. Формальная оценка гипотезы отсутствует. |
 | Knowledge | Core | Planned | Специализированные repository, versioning и contradiction detection пока отсутствуют. |
 | Infrastructure | Supporting | Partial | Реализованы composition roots, CLI-компоненты, presenters, артефакты и CI. Границы инфраструктурных адаптеров продолжают уточняться. |
 
@@ -80,7 +80,10 @@
 - immutable evidence model;
 - агрегация сравнительных оценок;
 - comparative evidence service и application;
-- evidence presenter.
+- evidence presenter;
+- immutable finding model;
+- FindingEvaluator и IndicatorComparativeFindingApplication;
+- finding presenter.
 
 ### Infrastructure
 
@@ -107,7 +110,7 @@ Canonical market data ещё не является единственным вн
 
 ### Analysis
 
-Модели Observation, Evidence и Finding связаны доменным FindingEvaluator и IndicatorComparativeFindingApplication. Composition root подключён; presenter и формальная оценка исследовательской гипотезы отсутствуют.
+Модели Observation, Evidence и Finding связаны доменным FindingEvaluator и IndicatorComparativeFindingApplication. Composition root и presenter подключены; формальная оценка исследовательской гипотезы отсутствует.
 
 ### Legacy Analysis Pipeline
 
