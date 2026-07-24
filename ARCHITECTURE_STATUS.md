@@ -17,7 +17,7 @@
 
 | Домен | Architecture Status | Implementation Status | Подтверждённое состояние |
 |---|---|---|---|
-| Research | Core | Partial | Реализованы сравнительные исследования, legacy runtime ResearchCampaign, immutable CampaignDesign, детерминированный ResearchPlanner и application-адаптер ResearchCampaignPlan к MarketExperimentSpecification. Конкретный resolver ссылок и orchestration выполнения кампании пока отсутствуют. |
+| Research | Core | Partial | Реализованы сравнительные исследования, legacy runtime ResearchCampaign, immutable CampaignDesign, детерминированный ResearchPlanner, application-адаптер и явный in-memory resolver MarketExperimentSpecification. Application orchestration выполнения всей запланированной кампании пока отсутствует. |
 | Experiment | Core | Partial | Поддерживаются воспроизводимые результаты, планы оценки и исследовательские артефакты. Унифицированный жизненный цикл всех типов экспериментов ещё не завершён. |
 | Market Data | Core | Partial | Реализованы загрузчики, generated market data и canonical dataset provider. Legacy-представления используются не во всех сценариях через единый контракт. |
 | Calculation | Core | Confirmed | Реализованы индикаторы, их автоматическое обнаружение и вычислительные исследовательские сценарии. |
@@ -72,6 +72,7 @@
 - детерминированный ResearchPlanner с ограничением Cartesian expansion;
 - ResearchCampaignPlanMarketAdapter с проверкой соответствия инструмента и таймфрейма;
 - сохранение связи resolved market experiment с исходной плановой спецификацией;
+- InMemoryMarketExperimentSpecificationResolver с явными неизменяемыми регистрациями;
 - comparative research application;
 - воспроизводимый comparative research result;
 - версионированный формат research artifact;
@@ -115,7 +116,7 @@
 
 ### Research orchestration
 
-Существующий ResearchCampaign остаётся изменяемым runtime-контрактом совместимости. CampaignDesign и ResearchPlanner формируют воспроизводимый ResearchCampaignPlan. Application-адаптер плана к MarketExperimentSpecification реализован через явный resolver-контракт, но конкретный каталог версионированных ссылок и последующая orchestration выполнения ещё отсутствуют.
+Существующий ResearchCampaign остаётся изменяемым runtime-контрактом совместимости. CampaignDesign и ResearchPlanner формируют воспроизводимый ResearchCampaignPlan. Application-адаптер и конкретный in-memory resolver полностью заполненных MarketExperimentSpecification реализованы. Явный application use case планирования, разрешения и последовательного выполнения всей кампании пока отсутствует.
 
 ### Market Data
 
@@ -135,8 +136,8 @@ Conclusion и HypothesisDecision используются существующи
 
 ## Приоритеты развития
 
-1. Реализовать конкретный resolver версионированных ссылок Campaign Design.
-2. Подключить планирование и выполнение кампании через явный application use case.
+1. Подключить планирование, разрешение и выполнение кампании через явный application use case.
+2. Добавить строгий внешний loader регистраций market experiment specifications.
 3. Продолжить внедрение canonical market data через адаптеры.
 4. Разделить оставшиеся ответственности Backtest Engine.
 5. Реализовать первый минимальный вертикальный срез Knowledge Domain.
