@@ -9,6 +9,11 @@ from src.research.research_graph import (
     ResearchGraph,
 )
 from src.research.campaign_design import CampaignDesign
+from src.research.research_planner import (
+    CampaignExperimentSpecification,
+    ResearchCampaignPlan,
+    ResearchPlanner,
+)
 from src.research.conclusion import Conclusion
 from src.research.contradiction_evaluation import ContradictionEvaluation
 from src.research.cycle_results import (
@@ -50,6 +55,9 @@ __all__ = [
     "AssumptionStatus",
     "AssumptionType",
     "CampaignDesign",
+    "CampaignExperimentSpecification",
+    "ResearchCampaignPlan",
+    "ResearchPlanner",
     "Conclusion",
     "ContradictionEvaluation",
     "ContradictionEvaluatedResearchCycleResult",
