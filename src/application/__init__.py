@@ -4,6 +4,9 @@ from src.application.canonical_market_dataset import (
 from src.application.canonical_market_data_provider import (
     CanonicalMarketDataProvider,
 )
+from src.application.campaign_design_loader import (
+    CampaignDesignLoader,
+)
 from src.application.code_version_provider import (
     CodeVersionProvider,
     StaticCodeVersionProvider,
@@ -143,6 +146,7 @@ __all__ = [
     "CanonicalMarketDataProvider",
     "CanonicalMarketDataset",
     "CanonicalMarketDatasetProvider",
+    "CampaignDesignLoader",
     "CodeVersionProvider",
     "ExportStoredResearchArtifact",
     "GetResearchCycle",
