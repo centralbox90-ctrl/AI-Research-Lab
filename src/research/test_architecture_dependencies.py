@@ -177,3 +177,37 @@ def test_research_production_modules_have_no_import_cycles(
         "a circular dependency:\n"
         + " -> ".join(cycle)
     )
+
+_LEGACY_ANALYSIS_MODULES = (
+    "src.research.conclusion",
+    "src.research.hypothesis_decision",
+)
+_APPLICATION_ROOT = _RESEARCH_ROOT.parent / "application"
+
+
+def test_application_does_not_depend_on_legacy_analysis_models(
+) -> None:
+    violations: list[str] = []
+
+    for path in sorted(
+        _APPLICATION_ROOT.rglob("*.py")
+    ):
+        if path.name.startswith("test_"):
+            continue
+
+        relative_path = path.relative_to(
+            _APPLICATION_ROOT
+        )
+
+        for module in _imported_modules(path):
+            if module in _LEGACY_ANALYSIS_MODULES:
+                violations.append(
+                    f"{relative_path}: {module}"
+                )
+
+    assert not violations, (
+        "Application production modules must use "
+        "Evidence and Finding instead of legacy "
+        "analysis models:\n"
+        + "\n".join(violations)
+    )

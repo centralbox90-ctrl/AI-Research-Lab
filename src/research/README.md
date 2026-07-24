@@ -124,6 +124,29 @@ Research-код не должен импортировать CLI или applicat
 
 Canonicalization рыночного набора сейчас частично находится в `market_dataset_fingerprint.py`. Это переходное размещение до окончательного выделения Market Data Domain.
 
+## Finding Pipeline
+
+Новый воспроизводимый Analysis-поток использует следующие контракты:
+
+- `Finding` — неизменяемая интерпретация Evidence в рамках гипотезы;
+- `FindingEvaluator` — детерминированное преобразование Evidence → Finding;
+- `IndicatorComparativeFindingApplication` — orchestration сравнительного исследования через Evidence до Finding.
+
+Composition root и presenter для Finding подключаются отдельным вертикальным срезом.
+
+## Legacy Analysis
+
+`Conclusion` и `HypothesisDecision` относятся к старому циклу `ResearchEngine`. Они используют runtime UUID, временные метки и изменяемое состояние.
+
+Они временно сохраняются для совместимости с существующими `cycle_results`, `research_objects_builder`, `next_experiment_selector` и `hypothesis_decision_evaluator`.
+
+Новый application-код не должен импортировать:
+
+- `src.research.conclusion`;
+- `src.research.hypothesis_decision`.
+
+Эта граница контролируется архитектурным тестом.
+
 ## Тестирование
 
 Все изменения research-контрактов должны проверять:
