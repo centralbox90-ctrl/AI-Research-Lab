@@ -1,5 +1,8 @@
 import pandas as pd
 
+from src.application.indicator_comparative_finding_application import (
+    IndicatorComparativeFindingApplication,
+)
 from src.application.indicator_comparative_evidence_application import (
     IndicatorComparativeEvidenceApplication,
 )
@@ -22,6 +25,7 @@ from src.application.indicator_comparative_research_service import (
     IndicatorComparativeResearchService,
 )
 from src.cli.indicator_comparative_research_composition_root import (
+    build_default_indicator_comparative_finding_application,
     build_default_indicator_comparative_evidence_application,
     build_default_indicator_comparative_evidence_service,
     build_default_indicator_comparative_research_application,
@@ -33,6 +37,9 @@ from src.research.comparative_evaluation_plan import (
 )
 from src.research.comparative_evidence_evaluator import (
     ComparativeEvidenceEvaluator,
+)
+from src.research.finding_evaluator import (
+    FindingEvaluator,
 )
 from src.research.market_dataset_fingerprint import (
     DatasetFingerprintContext,
@@ -97,6 +104,40 @@ class StubDatasetProvider:
         raise AssertionError(
             "load must not run during composition"
         )
+
+
+def test_builds_default_comparative_finding_application(
+) -> None:
+    evaluation_plan = ComparativeEvaluationPlan(
+        random_seed=13,
+    )
+
+    application = (
+        build_default_indicator_comparative_finding_application(
+            data_provider=StubDatasetProvider(),
+            evaluation_plan=evaluation_plan,
+        )
+    )
+
+    assert isinstance(
+        application,
+        IndicatorComparativeFindingApplication,
+    )
+    assert isinstance(
+        application._evidence_application,
+        IndicatorComparativeEvidenceApplication,
+    )
+    assert (
+        application
+        ._evidence_application
+        ._research_application
+        ._evaluation_plan
+        is evaluation_plan
+    )
+    assert isinstance(
+        application._finding_evaluator,
+        FindingEvaluator,
+    )
 
 
 def test_builds_default_comparative_evidence_application(

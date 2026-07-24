@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from src.application.indicator_comparative_finding_application import (
+    IndicatorComparativeFindingApplication,
+)
 from src.application.indicator_comparative_evidence_application import (
     IndicatorComparativeEvidenceApplication,
 )

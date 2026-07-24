@@ -23,7 +23,7 @@
 | Calculation | Core | Confirmed | Реализованы индикаторы, их автоматическое обнаружение и вычислительные исследовательские сценарии. |
 | Signal | Core | Confirmed | Генерация сигналов и интеграция с существующим execution-контуром присутствуют. Декларативная композиция правил ограничена. |
 | Execution | Core | Confirmed | Backtest Engine остаётся основной реализацией исполнения. Его внутренние ответственности ещё не полностью разделены. |
-| Analysis | Core | Partial | Реализованы Observation, Evidence, Finding, FindingEvaluator и application orchestration сравнительного сценария. Composition root, presenter и формальная оценка гипотезы отсутствуют. |
+| Analysis | Core | Partial | Реализованы Observation, Evidence, Finding, FindingEvaluator, application orchestration и composition root сравнительного сценария. Presenter и формальная оценка гипотезы отсутствуют. |
 | Knowledge | Core | Planned | Специализированные repository, versioning и contradiction detection пока отсутствуют. |
 | Infrastructure | Supporting | Partial | Реализованы composition roots, CLI-компоненты, presenters, артефакты и CI. Границы инфраструктурных адаптеров продолжают уточняться. |
 
@@ -107,7 +107,7 @@ Canonical market data ещё не является единственным вн
 
 ### Analysis
 
-Модели Observation, Evidence и Finding связаны доменным FindingEvaluator и IndicatorComparativeFindingApplication. Composition root, presenter и формальная оценка исследовательской гипотезы отсутствуют.
+Модели Observation, Evidence и Finding связаны доменным FindingEvaluator и IndicatorComparativeFindingApplication. Composition root подключён; presenter и формальная оценка исследовательской гипотезы отсутствуют.
 
 ### Legacy Analysis Pipeline
 
