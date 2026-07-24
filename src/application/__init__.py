@@ -56,6 +56,9 @@ from src.application.market_experiment_mapper import (
     MappedMarketExperiment,
     MarketExperimentMapper,
 )
+from src.application.market_experiment_registration_loader import (
+    MarketExperimentRegistrationLoader,
+)
 from src.application.market_experiment_specification import (
     MarketExperimentSpecification,
     MarketPositionDirection,
@@ -158,6 +161,7 @@ __all__ = [
     "MarketExperimentExecutor",
     "MarketExperimentExecutorFactory",
     "MarketExperimentMapper",
+    "MarketExperimentRegistrationLoader",
     "MarketExperimentSpecification",
     "MarketExperimentSpecificationLoader",
     "MarketExperimentSpecificationResolver",
