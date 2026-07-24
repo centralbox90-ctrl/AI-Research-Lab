@@ -116,7 +116,7 @@ Canonical market data ещё не является единственным вн
 
 ### Analysis
 
-Модели Observation, Evidence и Finding связаны доменным FindingEvaluator и IndicatorComparativeFindingApplication. HypothesisEvaluation, HypothesisEvaluationPlan и доменный HypothesisEvaluator завершают формальную оценку. IndicatorComparativeHypothesisEvaluationApplication и его composition root объединяют полный прикладной поток. Оставшееся отклонение — отсутствие специализированного CLI handler для запуска этого сценария пользователем.
+Модели Observation, Evidence и Finding связаны доменным FindingEvaluator и IndicatorComparativeFindingApplication. HypothesisEvaluation, HypothesisEvaluationPlan и доменный HypothesisEvaluator завершают формальную оценку. IndicatorComparativeHypothesisEvaluationApplication и его composition root объединяют полный прикладной поток. Строгий JSON request loader реализован. Оставшееся отклонение — отсутствие специализированной CLI-команды для запуска этого сценария пользователем.
 
 ### Legacy Analysis Pipeline
 
