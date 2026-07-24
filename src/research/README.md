@@ -149,7 +149,7 @@ Composition root и presenter для Finding подключены.
 - `inconclusive`;
 - `rejected`.
 
-Модель результата и `HypothesisEvaluationPlan` реализованы как immutable воспроизводимые контракты. `HypothesisEvaluator` детерминированно классифицирует согласованный набор Findings по объявленным порогам и минимальному количеству результатов. `HypothesisEvaluationApplication`, отдельный composition root и presenter формируют завершённый внешний контракт оценки готового набора Findings. Единая end-to-end orchestration создания нескольких Findings и их последующей оценки остаётся отдельным срезом.
+Модель результата и `HypothesisEvaluationPlan` реализованы как immutable воспроизводимые контракты. `HypothesisEvaluator` детерминированно классифицирует согласованный набор Findings по объявленным порогам и минимальному количеству результатов. `HypothesisEvaluationApplication`, отдельный composition root и presenter формируют внешний контракт оценки готового набора Findings. `IndicatorComparativeHypothesisEvaluationApplication` выполняет end-to-end orchestration нескольких сравнительных Finding-запросов до формальной оценки гипотезы. Неподключённым остаётся composition root этого объединённого приложения.
 
 ## Legacy Analysis
 
