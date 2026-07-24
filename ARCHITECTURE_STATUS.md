@@ -107,7 +107,7 @@ Canonical market data ещё не является единственным вн
 
 ### Analysis
 
-Evidence уже формируется, но отсутствуют полноценные модели Observation и Finding, а также формальная оценка исследовательской гипотезы.
+Модели Observation и Evidence уже существуют, но ещё не объединены в полный цикл Observation → Evidence → Finding. Модель Finding и формальная оценка исследовательской гипотезы отсутствуют.
 
 ### Knowledge
 
@@ -117,7 +117,7 @@ Evidence уже формируется, но отсутствуют полноц
 
 1. Завершить документацию контрактов `src/research/`.
 2. Добавить архитектурные тесты запрещённых зависимостей.
-3. Расширить Analysis моделями Observation и Finding.
+3. Завершить Analysis моделью Finding и связать Observation → Evidence → Finding.
 4. Вынести оставшуюся research orchestration в явные доменные контракты.
 5. Продолжить внедрение canonical market data через адаптеры.
 6. Спроектировать первый минимальный вертикальный срез Knowledge Domain.
