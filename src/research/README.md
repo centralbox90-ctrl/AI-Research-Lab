@@ -55,8 +55,11 @@
 
 | Модуль | Контракт | Назначение |
 |---|---|---|
-| specification.py | ResearchSpecification | Неизменяемая спецификация и fingerprint исследования |
-| campaign_design.py | CampaignDesign | Неизменяемые измерения и ссылки будущей исследовательской кампании |
+| `specification.py` | `ResearchSpecification` | Неизменяемая спецификация и fingerprint исследования |
+| `campaign_design.py` | `CampaignDesign` | Неизменяемые измерения и ссылки будущей исследовательской кампании |
+| `research_planner.py` | `CampaignExperimentSpecification` | Один воспроизводимый элемент пространства экспериментов |
+| `research_planner.py` | `ResearchCampaignPlan` | Неизменяемая запланированная кампания |
+| `research_planner.py` | `ResearchPlanner` | Детерминированное разворачивание CampaignDesign в пространство экспериментов |
 | `specification.py` | `IndicatorReference` | Версионированная ссылка на индикатор |
 | `outcome_specification.py` | `ForwardReturnSpecification` | Горизонты и поле цены для измерения результата |
 | `observations/observation.py` | `Observation` | Зафиксированный случай исследуемого события |
@@ -132,11 +135,11 @@ Canonicalization рыночного набора сейчас частично �
 
 ## Campaign Design
 
-CampaignDesign заранее фиксирует пространство будущей исследовательской кампании: гипотезы, инструменты, таймфреймы, периоды данных, конфигурации индикаторов, signal rules, execution policies, baselines, validation strategy и evaluation plan.
+`CampaignDesign` заранее фиксирует пространство будущей исследовательской кампании: гипотезы, инструменты, таймфреймы, периоды данных, конфигурации индикаторов, signal rules, execution policies, baselines, validation strategy и evaluation plan.
 
 Все вычислительные элементы представлены непрозрачными версионированными ссылками. Research Domain выбирает их, но не реализует calculation, signal generation или execution. Идентичность design детерминирована его нормализованным содержимым и provenance.
 
-Существующий изменяемый ResearchCampaign пока сохраняется как runtime-контракт совместимости. Следующий шаг — Research Planner, который преобразует CampaignDesign в согласованный набор experiment specifications и новую воспроизводимую кампанию.
+Существующий изменяемый `ResearchCampaign` пока сохраняется как runtime-контракт совместимости. `ResearchPlanner` детерминированно разворачивает нормализованный `CampaignDesign` в полный Cartesian-набор `CampaignExperimentSpecification` и объединяет их в immutable `ResearchCampaignPlan`. Максимальный размер пространства ограничивается до создания спецификаций. Следующий шаг — application-адаптер из `ResearchCampaignPlan` в исполняемые market experiment specifications.
 
 ## Finding Pipeline
 
