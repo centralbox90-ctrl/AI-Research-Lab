@@ -1,5 +1,8 @@
 import pandas as pd
 
+from src.application.indicator_comparative_evidence_application import (
+    IndicatorComparativeEvidenceApplication,
+)
 from src.application.indicator_comparative_evidence_service import (
     IndicatorComparativeEvidenceService,
 )
@@ -19,6 +22,7 @@ from src.application.indicator_comparative_research_service import (
     IndicatorComparativeResearchService,
 )
 from src.cli.indicator_comparative_research_composition_root import (
+    build_default_indicator_comparative_evidence_application,
     build_default_indicator_comparative_evidence_service,
     build_default_indicator_comparative_research_application,
     build_default_indicator_comparative_research_service,
@@ -93,6 +97,40 @@ class StubDatasetProvider:
         raise AssertionError(
             "load must not run during composition"
         )
+
+
+def test_builds_default_comparative_evidence_application(
+) -> None:
+    evaluation_plan = ComparativeEvaluationPlan(
+        random_seed=11,
+    )
+
+    application = (
+        build_default_indicator_comparative_evidence_application(
+            data_provider=StubDatasetProvider(),
+            evaluation_plan=evaluation_plan,
+        )
+    )
+
+    assert isinstance(
+        application,
+        IndicatorComparativeEvidenceApplication,
+    )
+    assert isinstance(
+        application._research_application,
+        IndicatorComparativeResearchApplication,
+    )
+    assert (
+        application
+        ._research_application
+        ._evaluation_plan
+        is evaluation_plan
+    )
+    assert isinstance(
+        application._evidence_service,
+        IndicatorComparativeEvidenceService,
+    )
+
 
 
 def test_builds_default_comparative_research_application(

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from src.application.indicator_comparative_evidence_application import (
+    IndicatorComparativeEvidenceApplication,
+)
 from src.application.indicator_comparative_evidence_service import (
     IndicatorComparativeEvidenceService,
 )
@@ -32,6 +35,28 @@ from src.research.comparative_evidence_evaluator import (
 from src.research.comparative_statistical_evaluator import (
     ComparativeStatisticalEvaluator,
 )
+
+def build_default_indicator_comparative_evidence_application(
+    *,
+    data_provider: CanonicalMarketDatasetProvider,
+    evaluation_plan: ComparativeEvaluationPlan = (
+        ComparativeEvaluationPlan()
+    ),
+) -> IndicatorComparativeEvidenceApplication:
+    """Build the replicated comparative Evidence application."""
+
+    return IndicatorComparativeEvidenceApplication(
+        research_application=(
+            build_default_indicator_comparative_research_application(
+                data_provider=data_provider,
+                evaluation_plan=evaluation_plan,
+            )
+        ),
+        evidence_service=(
+            build_default_indicator_comparative_evidence_service()
+        ),
+    )
+
 
 def build_default_indicator_comparative_evidence_service(
 ) -> IndicatorComparativeEvidenceService:
