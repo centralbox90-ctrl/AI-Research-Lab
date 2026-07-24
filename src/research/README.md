@@ -66,6 +66,7 @@
 | `finding.py` | `Finding` | Неизменяемая интерпретация Evidence с явным отношением к гипотезе |
 | `hypothesis_evaluation.py` | `HypothesisEvaluation` | Воспроизводимый результат формальной оценки гипотезы |
 | `hypothesis_evaluation_plan.py` | `HypothesisEvaluationPlan` | Предварительно объявленные правила формальной оценки гипотезы |
+| `hypothesis_evaluator.py` | `HypothesisEvaluator` | Детерминированная оценка набора Findings по объявленному плану |
 | `market_dataset_fingerprint.py` | `MarketDatasetFingerprint` | Версионированная идентичность canonical dataset |
 
 ## Доменные сервисы
@@ -148,7 +149,7 @@ Composition root и presenter для Finding подключены.
 - `inconclusive`;
 - `rejected`.
 
-Модель результата и `HypothesisEvaluationPlan` реализованы как immutable воспроизводимые контракты. План заранее фиксирует пороги уверенности и минимальное количество Findings для окончательного решения. Доменный `HypothesisEvaluator` будет подключён следующим изменением.
+Модель результата и `HypothesisEvaluationPlan` реализованы как immutable воспроизводимые контракты. `HypothesisEvaluator` детерминированно классифицирует согласованный набор Findings по объявленным порогам и минимальному количеству результатов. Application orchestration и presenter для HypothesisEvaluation остаются отдельным вертикальным срезом.
 
 ## Legacy Analysis
 
