@@ -1,101 +1,290 @@
-from datetime import datetime
+from dataclasses import FrozenInstanceError
+
+import pytest
 
 from src.research.finding import Finding
 
 
-def test_finding_creates_with_defaults() -> None:
-    finding = Finding()
+def build_finding(
+    **overrides: object,
+) -> Finding:
+    values: dict[str, object] = {
+        "id": "finding-rsi",
+        "hypothesis_id": "hypothesis-rsi",
+        "statement": (
+            "RSI improves entries in selected markets."
+        ),
+        "confidence": 0.8,
+        "applicable_markets": (
+            "EURUSD:H1",
+            "GBPUSD:H1",
+        ),
+        "limitations": (
+            "high-volatility periods only",
+        ),
+        "supporting_evidence": (
+            "evidence-b",
+            "evidence-a",
+        ),
+        "provenance": (
+            ("pipeline_version", "analysis-v1"),
+            ("method", "moving_block_bootstrap"),
+        ),
+    }
+    values.update(overrides)
 
-    assert finding.id
-    assert finding.question_id == ""
-    assert finding.hypothesis_id == ""
-    assert finding.experiment_id == ""
-    assert finding.evidence_id == ""
-    assert finding.title == ""
-    assert finding.conclusion == ""
-    assert finding.supports_hypothesis is False
-    assert finding.confidence == 0.0
-    assert isinstance(finding.created_at, datetime)
-    assert finding.notes == ""
+    return Finding(**values)  # type: ignore[arg-type]
 
 
-def test_finding_accepts_research_context() -> None:
-    finding = Finding(
-        id="finding-001",
-        question_id="question-001",
-        hypothesis_id="hypothesis-001",
-        experiment_id="experiment-001",
-        evidence_id="evidence-001",
-        title="Williams %R finding",
-        conclusion="The hypothesis is supported.",
-        supports_hypothesis=True,
-        confidence=0.82,
-        notes="Observed across multiple datasets.",
+def test_normalizes_finding() -> None:
+    finding = build_finding(
+        id="  finding-rsi  ",
+        hypothesis_id="  hypothesis-rsi  ",
+        statement="  Supported statement.  ",
+        applicable_markets=(
+            "  GBPUSD:H1  ",
+            "EURUSD:H1",
+        ),
+        limitations=(
+            "  limited period  ",
+        ),
+        supporting_evidence=(
+            "evidence-b",
+            "  evidence-a  ",
+        ),
+        provenance=(
+            ("  method  ", "  bootstrap  "),
+            ("pipeline", "analysis-v1"),
+        ),
     )
 
-    assert finding.id == "finding-001"
-    assert finding.question_id == "question-001"
-    assert finding.hypothesis_id == "hypothesis-001"
-    assert finding.experiment_id == "experiment-001"
-    assert finding.evidence_id == "evidence-001"
-    assert finding.title == "Williams %R finding"
-    assert finding.conclusion == "The hypothesis is supported."
-    assert finding.supports_hypothesis is True
-    assert finding.confidence == 0.82
-    assert finding.notes == "Observed across multiple datasets."
-
-
-def test_finding_is_mutable() -> None:
-    finding = Finding(
-        confidence=0.35,
-        supports_hypothesis=False,
+    assert finding.id == "finding-rsi"
+    assert finding.hypothesis_id == "hypothesis-rsi"
+    assert finding.statement == "Supported statement."
+    assert finding.applicable_markets == (
+        "EURUSD:H1",
+        "GBPUSD:H1",
+    )
+    assert finding.limitations == (
+        "limited period",
+    )
+    assert finding.supporting_evidence == (
+        "evidence-a",
+        "evidence-b",
+    )
+    assert finding.provenance == (
+        ("method", "bootstrap"),
+        ("pipeline", "analysis-v1"),
     )
 
-    finding.confidence = 0.91
-    finding.supports_hypothesis = True
 
-    assert finding.confidence == 0.91
-    assert finding.supports_hypothesis is True
+def test_serializes_public_contract() -> None:
+    finding = build_finding()
+
+    assert finding.to_dict() == {
+        "schema_version": 1,
+        "id": "finding-rsi",
+        "hypothesis_id": "hypothesis-rsi",
+        "statement": (
+            "RSI improves entries in selected markets."
+        ),
+        "confidence": 0.8,
+        "applicable_markets": [
+            "EURUSD:H1",
+            "GBPUSD:H1",
+        ],
+        "limitations": [
+            "high-volatility periods only",
+        ],
+        "supporting_evidence": [
+            "evidence-a",
+            "evidence-b",
+        ],
+        "provenance": {
+            "method": "moving_block_bootstrap",
+            "pipeline_version": "analysis-v1",
+        },
+    }
 
 
-def test_finding_summary_contains_context() -> None:
-    finding = Finding(
-        id="finding-001",
-        question_id="question-001",
-        hypothesis_id="hypothesis-001",
-        experiment_id="experiment-001",
-        evidence_id="evidence-001",
-        title="Williams investigation",
-        conclusion="The effect is statistically significant.",
-        supports_hypothesis=True,
-        confidence=0.95,
+def test_fingerprint_is_order_independent() -> None:
+    first = build_finding()
+    second = build_finding(
+        applicable_markets=(
+            "GBPUSD:H1",
+            "EURUSD:H1",
+        ),
+        supporting_evidence=(
+            "evidence-a",
+            "evidence-b",
+        ),
+        provenance=(
+            ("method", "moving_block_bootstrap"),
+            ("pipeline_version", "analysis-v1"),
+        ),
     )
 
-    summary = finding.summary()
-
-    assert "Finding: Williams investigation" in summary
-    assert "ID: finding-001" in summary
-    assert "Question: question-001" in summary
-    assert "Hypothesis: hypothesis-001" in summary
-    assert "Experiment: experiment-001" in summary
-    assert "Evidence: evidence-001" in summary
-    assert "Supports hypothesis: True" in summary
-    assert "Confidence: 0.95" in summary
-    assert "Conclusion: The effect is statistically significant." in summary
+    assert first == second
+    assert first.fingerprint == second.fingerprint
+    assert len(first.fingerprint) == 64
 
 
-def test_finding_summary_uses_none_for_empty_conclusion() -> None:
-    finding = Finding(
-        title="Incomplete finding",
-    )
+def test_is_immutable() -> None:
+    finding = build_finding()
 
-    summary = finding.summary()
-
-    assert "Conclusion: None" in summary
+    with pytest.raises(FrozenInstanceError):
+        finding.statement = "changed"  # type: ignore[misc]
 
 
-def test_finding_unique_ids() -> None:
-    first = Finding()
-    second = Finding()
+@pytest.mark.parametrize(
+    ("field_name", "value", "error_type", "message"),
+    (
+        ("id", object(), TypeError, "id must be a string"),
+        ("id", " ", ValueError, "id must not be empty"),
+        (
+            "hypothesis_id",
+            object(),
+            TypeError,
+            "hypothesis_id must be a string",
+        ),
+        (
+            "hypothesis_id",
+            " ",
+            ValueError,
+            "hypothesis_id must not be empty",
+        ),
+        (
+            "statement",
+            object(),
+            TypeError,
+            "statement must be a string",
+        ),
+        (
+            "statement",
+            " ",
+            ValueError,
+            "statement must not be empty",
+        ),
+    ),
+)
+def test_rejects_invalid_required_text(
+    field_name: str,
+    value: object,
+    error_type: type[Exception],
+    message: str,
+) -> None:
+    with pytest.raises(error_type, match=message):
+        build_finding(**{field_name: value})
 
-    assert first.id != second.id
+
+@pytest.mark.parametrize(
+    ("value", "error_type", "message"),
+    (
+        (
+            True,
+            TypeError,
+            "confidence must be a real number",
+        ),
+        (
+            float("nan"),
+            ValueError,
+            "confidence must be finite",
+        ),
+        (
+            -0.1,
+            ValueError,
+            "confidence must be between 0 and 1",
+        ),
+        (
+            1.1,
+            ValueError,
+            "confidence must be between 0 and 1",
+        ),
+    ),
+)
+def test_rejects_invalid_confidence(
+    value: object,
+    error_type: type[Exception],
+    message: str,
+) -> None:
+    with pytest.raises(error_type, match=message):
+        build_finding(confidence=value)
+
+
+@pytest.mark.parametrize(
+    ("field_name", "value", "error_type", "message"),
+    (
+        (
+            "applicable_markets",
+            [],
+            TypeError,
+            "applicable_markets must be a tuple",
+        ),
+        (
+            "applicable_markets",
+            (),
+            ValueError,
+            "applicable_markets must not be empty",
+        ),
+        (
+            "applicable_markets",
+            ("EURUSD:H1", " EURUSD:H1 "),
+            ValueError,
+            "applicable_markets must not contain duplicates",
+        ),
+        (
+            "supporting_evidence",
+            (),
+            ValueError,
+            "supporting_evidence must not be empty",
+        ),
+        (
+            "limitations",
+            ("same", " same "),
+            ValueError,
+            "limitations must not contain duplicates",
+        ),
+    ),
+)
+def test_rejects_invalid_text_collections(
+    field_name: str,
+    value: object,
+    error_type: type[Exception],
+    message: str,
+) -> None:
+    with pytest.raises(error_type, match=message):
+        build_finding(**{field_name: value})
+
+
+@pytest.mark.parametrize(
+    ("value", "error_type", "message"),
+    (
+        (
+            [],
+            TypeError,
+            "provenance must be a tuple",
+        ),
+        (
+            (),
+            ValueError,
+            "provenance must not be empty",
+        ),
+        (
+            (("method",),),
+            TypeError,
+            "each provenance entry must be a key-value tuple",
+        ),
+        (
+            (("method", "a"), (" method ", "b")),
+            ValueError,
+            "provenance keys must be unique",
+        ),
+    ),
+)
+def test_rejects_invalid_provenance(
+    value: object,
+    error_type: type[Exception],
+    message: str,
+) -> None:
+    with pytest.raises(error_type, match=message):
+        build_finding(provenance=value)

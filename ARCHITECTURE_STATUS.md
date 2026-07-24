@@ -23,7 +23,7 @@
 | Calculation | Core | Confirmed | Реализованы индикаторы, их автоматическое обнаружение и вычислительные исследовательские сценарии. |
 | Signal | Core | Confirmed | Генерация сигналов и интеграция с существующим execution-контуром присутствуют. Декларативная композиция правил ограничена. |
 | Execution | Core | Confirmed | Backtest Engine остаётся основной реализацией исполнения. Его внутренние ответственности ещё не полностью разделены. |
-| Analysis | Core | Partial | Реализованы сравнительная статистическая оценка и формирование evidence. Полный цикл Observation → Evidence → Finding отсутствует. |
+| Analysis | Core | Partial | Реализованы модели Observation, Evidence и Finding. Прикладной переход Evidence → Finding и формальная оценка гипотезы отсутствуют. |
 | Knowledge | Core | Planned | Специализированные repository, versioning и contradiction detection пока отсутствуют. |
 | Infrastructure | Supporting | Partial | Реализованы composition roots, CLI-компоненты, presenters, артефакты и CI. Границы инфраструктурных адаптеров продолжают уточняться. |
 
@@ -107,7 +107,7 @@ Canonical market data ещё не является единственным вн
 
 ### Analysis
 
-Модели Observation и Evidence уже существуют, но ещё не объединены в полный цикл Observation → Evidence → Finding. Модель Finding и формальная оценка исследовательской гипотезы отсутствуют.
+Модели Observation, Evidence и Finding существуют, но ещё не объединены в полный прикладной цикл. Сервис Evidence → Finding и формальная оценка исследовательской гипотезы отсутствуют.
 
 ### Knowledge
 
