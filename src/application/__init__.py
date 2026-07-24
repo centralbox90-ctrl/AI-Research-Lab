@@ -1,4 +1,4 @@
-﻿from src.application.canonical_market_dataset import (
+from src.application.canonical_market_dataset import (
     CanonicalMarketDataset,
 )
 from src.application.canonical_market_data_provider import (
@@ -59,6 +59,12 @@ from src.application.market_experiment_specification import (
 )
 from src.application.market_experiment_specification_loader import (
     MarketExperimentSpecificationLoader,
+)
+from src.application.research_campaign_plan_market_adapter import (
+    MarketExperimentSpecificationResolver,
+    ResearchCampaignPlanMarketAdapter,
+    ResolvedMarketCampaignPlan,
+    ResolvedMarketExperiment,
 )
 from src.application.market_research_application import (
     build_market_research_application,
@@ -144,6 +150,7 @@ __all__ = [
     "MarketExperimentMapper",
     "MarketExperimentSpecification",
     "MarketExperimentSpecificationLoader",
+    "MarketExperimentSpecificationResolver",
     "MarketPositionDirection",
     "MarketResearchContextFactory",
     "MarketResearchSession",
@@ -152,7 +159,10 @@ __all__ = [
     "PreparedMarketBacktestExecutor",
     "ResearchArtifactFileExporter",
     "ResearchArtifactSerializer",
+    "ResearchCampaignPlanMarketAdapter",
     "ResearchCampaignSerializer",
+    "ResolvedMarketCampaignPlan",
+    "ResolvedMarketExperiment",
     "ResearchCycleRepository",
     "ResearchCycleRunner",
     "ResearchCycleSerializer",
