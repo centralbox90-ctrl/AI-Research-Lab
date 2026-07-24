@@ -109,6 +109,22 @@ class ListResearchCampaignsCommand(Protocol):
         Return stored research-campaign IDs as JSON.
         """
 
+class ComparativeHypothesisEvaluationCommand(Protocol):
+    """
+    Command boundary for comparative hypothesis evaluation.
+    """
+
+    def execute(
+        self,
+        request_path: str | Path,
+        *,
+        indent: int | None = 2,
+    ) -> str:
+        """
+        Run a comparative evaluation request and return JSON.
+        """
+
+
 class RunResearchCommand(Protocol):
     """
     Command boundary for running market research.
@@ -140,6 +156,9 @@ class ResearchCli:
             ListResearchCyclesCommand | None
         ) = None,
         run_research_command: RunResearchCommand | None = None,
+        run_comparative_hypothesis_evaluation_command: (
+            ComparativeHypothesisEvaluationCommand | None
+        ) = None,
         get_research_artifact_command: (
             ResearchArtifactCommand | None
         ) = None,
@@ -167,6 +186,9 @@ class ResearchCli:
         )
         self.run_research_command = (
             run_research_command
+        )
+        self.run_comparative_hypothesis_evaluation_command = (
+            run_comparative_hypothesis_evaluation_command
         )
 
         self.get_research_artifact_command = (
@@ -258,6 +280,17 @@ class ResearchCli:
                 arguments,
                 output_stream,
                 error_stream,
+            )
+
+        if arguments.command == (
+            "run-comparative-hypothesis-evaluation"
+        ):
+            return (
+                self._run_comparative_hypothesis_evaluation(
+                    arguments,
+                    output_stream,
+                    error_stream,
+                )
             )
 
         error_stream.write(
@@ -491,6 +524,42 @@ class ResearchCli:
 
         return 0
        
+    def _run_comparative_hypothesis_evaluation(
+        self,
+        arguments: argparse.Namespace,
+        stdout: TextIO,
+        stderr: TextIO,
+    ) -> int:
+        command = (
+            self.run_comparative_hypothesis_evaluation_command
+        )
+
+        if command is None:
+            stderr.write(
+                "Comparative hypothesis evaluation "
+                "command is not configured.\n"
+            )
+            return 2
+
+        indent = None if arguments.compact else 2
+
+        try:
+            rendered = command.execute(
+                arguments.request_path,
+                indent=indent,
+            )
+        except (ValueError, LookupError) as error:
+            stderr.write(
+                "Unable to run comparative hypothesis "
+                f"evaluation: {error}\n"
+            )
+            return 1
+
+        stdout.write(rendered)
+        stdout.write("\n")
+
+        return 0
+
     def _build_parser(self) -> argparse.ArgumentParser:
         parser = argparse.ArgumentParser(
             prog="ai-research-lab",
@@ -603,6 +672,28 @@ class ResearchCli:
         )
 
         run_research_parser.add_argument(
+            "--compact",
+            action="store_true",
+        )
+
+        comparative_evaluation_parser = (
+            subparsers.add_parser(
+                "run-comparative-hypothesis-evaluation",
+                help=(
+                    "Run comparative research through "
+                    "formal hypothesis evaluation."
+                ),
+            )
+        )
+
+        comparative_evaluation_parser.add_argument(
+            "--request",
+            dest="request_path",
+            type=Path,
+            required=True,
+        )
+
+        comparative_evaluation_parser.add_argument(
             "--compact",
             action="store_true",
         )

@@ -23,7 +23,7 @@
 | Calculation | Core | Confirmed | Реализованы индикаторы, их автоматическое обнаружение и вычислительные исследовательские сценарии. |
 | Signal | Core | Confirmed | Генерация сигналов и интеграция с существующим execution-контуром присутствуют. Декларативная композиция правил ограничена. |
 | Execution | Core | Confirmed | Backtest Engine остаётся основной реализацией исполнения. Его внутренние ответственности ещё не полностью разделены. |
-| Analysis | Core | Partial | Реализованы Observation, Evidence, Finding, FindingEvaluator, HypothesisEvaluation, HypothesisEvaluationPlan, доменный HypothesisEvaluator, application boundary, presenters и единая orchestration от сравнительного исследования до формальной оценки гипотезы. JSON loader, CLI-команда и её composition root подключены; команда пока не зарегистрирована в общем ResearchCli. |
+| Analysis | Core | Confirmed | Реализован и протестирован полный сценарий Observation → Evidence → Finding → HypothesisEvaluation. Строгий JSON loader, CLI-команда, presenters, composition roots и пользовательский маршрут общего ResearchCli подключены. |
 | Knowledge | Core | Planned | Специализированные repository, versioning и contradiction detection пока отсутствуют. |
 | Infrastructure | Supporting | Partial | Реализованы composition roots, CLI-компоненты, presenters, артефакты и CI. Границы инфраструктурных адаптеров продолжают уточняться. |
 
@@ -40,7 +40,9 @@
 7. статистическая оценка по явному evaluation plan;
 8. агрегация оценок в immutable evidence;
 9. прикладная orchestration через composition root;
-10. представление результата через CLI presenter.
+10. преобразование Evidence в immutable Finding;
+11. формальная оценка набора Findings;
+12. запуск и представление результата через общий CLI.
 
 Этот срез подтверждает движение от отдельных вычислений к архитектурному циклу Research → Experiment → Calculation → Analysis.
 
@@ -89,11 +91,14 @@
 - deterministic HypothesisEvaluator;
 - HypothesisEvaluationApplication;
 - hypothesis evaluation presenter;
-- IndicatorComparativeHypothesisEvaluationApplication.
+- IndicatorComparativeHypothesisEvaluationApplication;
+- строгий comparative hypothesis evaluation JSON loader;
+- специализированная CLI-команда;
+- пользовательский маршрут общего ResearchCli.
 
 ### Infrastructure
 
-- composition roots в `src/cli/`, включая формальную оценку гипотезы;
+- composition roots и CLI-команда полного цикла формальной оценки гипотезы;
 - presenters, отделённые от прикладных сервисов;
 - воспроизводимый `requirements.txt`;
 - автоматический запуск `python -m pytest -q`;
@@ -114,10 +119,6 @@ Canonical market data ещё не является единственным вн
 
 Существующий Backtest Engine объединяет моделирование брокера, исполнение и управление портфелем. Это допустимое переходное состояние, но не конечная граница домена.
 
-### Analysis
-
-Модели Observation, Evidence и Finding связаны доменным FindingEvaluator и IndicatorComparativeFindingApplication. HypothesisEvaluation, HypothesisEvaluationPlan и доменный HypothesisEvaluator завершают формальную оценку. IndicatorComparativeHypothesisEvaluationApplication и его composition root объединяют полный прикладной поток. Строгий JSON request loader и специализированная CLI-команда реализованы. Оставшееся отклонение — команда ещё не зарегистрирована в общем ResearchCli и его parser.
-
 ### Legacy Analysis Pipeline
 
 Conclusion и HypothesisDecision используются существующим ResearchEngine и связанными cycle results. Они изолированы как legacy-контракты: новый application-слой не может импортировать их напрямую.
@@ -128,12 +129,12 @@ Conclusion и HypothesisDecision используются существующи
 
 ## Приоритеты развития
 
-1. Завершить документацию контрактов `src/research/`.
-2. Добавить архитектурные тесты запрещённых зависимостей.
-3. Завершить Analysis моделью Finding и связать Observation → Evidence → Finding.
-4. Вынести оставшуюся research orchestration в явные доменные контракты.
-5. Продолжить внедрение canonical market data через адаптеры.
-6. Спроектировать первый минимальный вертикальный срез Knowledge Domain.
+1. Спроектировать явные Research Campaign и Campaign Design.
+2. Добавить минимальный Research Planner.
+3. Продолжить внедрение canonical market data через адаптеры.
+4. Разделить оставшиеся ответственности Backtest Engine.
+5. Реализовать первый минимальный вертикальный срез Knowledge Domain.
+6. Продолжить изоляцию и поэтапное удаление Legacy Analysis Pipeline.
 
 ## Критерий обновления
 

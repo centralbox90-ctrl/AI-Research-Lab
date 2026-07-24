@@ -1,4 +1,6 @@
+import json
 from io import StringIO
+from pathlib import Path
 
 from src.application import (
     GetSerializedResearchCycle,
@@ -142,4 +144,145 @@ def test_research_cli_reports_missing_cycle() -> None:
     assert (
         stderr.getvalue()
         == "Research cycle not found: unknown-result-id\n"
+    )
+
+
+class StubComparativeEvaluationCommand:
+    def __init__(self) -> None:
+        self.calls: list[
+            tuple[Path, int | None]
+        ] = []
+
+    def execute(
+        self,
+        request_path: str | Path,
+        *,
+        indent: int | None = 2,
+    ) -> str:
+        normalized_path = Path(request_path)
+        self.calls.append(
+            (
+                normalized_path,
+                indent,
+            )
+        )
+
+        return json.dumps(
+            {
+                "artifact_type": "hypothesis_evaluation",
+                "request_path": str(normalized_path),
+            },
+            indent=indent,
+        )
+
+
+class FailingComparativeEvaluationCommand:
+    def execute(
+        self,
+        request_path: str | Path,
+        *,
+        indent: int | None = 2,
+    ) -> str:
+        raise ValueError(
+            "invalid comparative request"
+        )
+
+
+def build_cli_with_comparative_command(
+    command: object,
+) -> ResearchCli:
+    base_cli, _ = build_cli_with_saved_cycle()
+
+    return ResearchCli(
+        base_cli.get_research_cycle_command,
+        run_comparative_hypothesis_evaluation_command=(
+            command
+        ),
+    )
+
+
+def test_research_cli_runs_comparative_evaluation(
+) -> None:
+    command = StubComparativeEvaluationCommand()
+    cli = build_cli_with_comparative_command(
+        command
+    )
+    stdout = StringIO()
+    stderr = StringIO()
+
+    exit_code = cli.run(
+        [
+            "run-comparative-hypothesis-evaluation",
+            "--request",
+            "evaluation.json",
+        ],
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 0
+    assert stderr.getvalue() == ""
+    assert command.calls == [
+        (
+            Path("evaluation.json"),
+            2,
+        )
+    ]
+    assert json.loads(stdout.getvalue())[
+        "artifact_type"
+    ] == "hypothesis_evaluation"
+
+
+def test_research_cli_supports_compact_comparative_json(
+) -> None:
+    command = StubComparativeEvaluationCommand()
+    cli = build_cli_with_comparative_command(
+        command
+    )
+    stdout = StringIO()
+    stderr = StringIO()
+
+    exit_code = cli.run(
+        [
+            "run-comparative-hypothesis-evaluation",
+            "--request",
+            "evaluation.json",
+            "--compact",
+        ],
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 0
+    assert stderr.getvalue() == ""
+    assert command.calls[0][1] is None
+    assert "\n" not in stdout.getvalue().rstrip("\n")
+
+
+def test_research_cli_reports_comparative_error(
+) -> None:
+    cli = build_cli_with_comparative_command(
+        FailingComparativeEvaluationCommand()
+    )
+    stdout = StringIO()
+    stderr = StringIO()
+
+    exit_code = cli.run(
+        [
+            "run-comparative-hypothesis-evaluation",
+            "--request",
+            "invalid.json",
+        ],
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 1
+    assert stdout.getvalue() == ""
+    assert (
+        stderr.getvalue()
+        == (
+            "Unable to run comparative hypothesis "
+            "evaluation: invalid comparative request\n"
+        )
     )

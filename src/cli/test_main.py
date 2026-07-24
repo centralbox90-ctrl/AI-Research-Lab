@@ -2,7 +2,13 @@ import json
 from io import StringIO
 from pathlib import Path
 
-from src.cli import main
+from src.cli import (
+    build_research_cli,
+    main,
+)
+from src.cli.run_indicator_comparative_hypothesis_evaluation_command import (
+    RunIndicatorComparativeHypothesisEvaluationCommand,
+)
 from src.storage import SqliteResearchCycleStore
 
 
@@ -93,4 +99,17 @@ def test_main_reports_missing_research_cycle(
     assert (
         stderr.getvalue()
         == "Research cycle not found: unknown-result-id\n"
+    )
+
+
+def test_build_research_cli_configures_comparative_command(
+    tmp_path: Path,
+) -> None:
+    cli = build_research_cli(
+        db_path=tmp_path / "research_cycles.db",
+    )
+
+    assert isinstance(
+        cli.run_comparative_hypothesis_evaluation_command,
+        RunIndicatorComparativeHypothesisEvaluationCommand,
     )

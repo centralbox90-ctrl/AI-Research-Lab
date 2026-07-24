@@ -16,6 +16,9 @@ from src.application.artifact_comparison_input_extractor import (
 from src.application.compare_stored_research_artifacts import (
     CompareStoredResearchArtifacts,
 )
+from src.application.canonical_market_data_provider import (
+    CanonicalMarketDataProvider,
+)
 from src.application.generated_market_data_provider import (
     GeneratedMarketDataProvider,
 )
@@ -39,6 +42,9 @@ from src.cli.get_stored_research_cycle_command import (
 )
 from src.cli.list_stored_research_cycles_command import (
     ListStoredResearchCyclesCommand,
+)
+from src.cli.indicator_comparative_hypothesis_evaluation_composition_root import (
+    build_default_indicator_comparative_hypothesis_evaluation_command,
 )
 from src.cli.research_cli import ResearchCli
 from src.cli.run_market_research_command import (
@@ -122,6 +128,14 @@ def build_research_cli(
         run_market_research=market_research_application,
     )
 
+    comparative_evaluation_command = (
+        build_default_indicator_comparative_hypothesis_evaluation_command(
+            data_provider=CanonicalMarketDataProvider(
+                GeneratedMarketDataProvider()
+            ),
+        )
+    )
+
     return ResearchCli(
         get_research_cycle_command=get_cycle_command,
         get_research_artifact_command=get_artifact_command,
@@ -133,6 +147,9 @@ def build_research_cli(
         ),
         list_research_cycles_command=list_command,
         run_research_command=run_command,
+        run_comparative_hypothesis_evaluation_command=(
+            comparative_evaluation_command
+        ),
     )
 
 

@@ -26,6 +26,9 @@ from src.cli.research_cycle_json import (
 from src.cli.run_market_research_command import (
     RunMarketResearchCommand,
 )
+from src.cli.run_indicator_comparative_hypothesis_evaluation_command import (
+    RunIndicatorComparativeHypothesisEvaluationCommand,
+)
 from src.cli.list_stored_research_campaigns_command import (
     ListStoredResearchCampaignsCommand,
 )
@@ -44,6 +47,7 @@ __all__ = [
     "ResearchCli",
     "ResearchCycleJsonPresenter",
     "RunMarketResearchCommand",
+    "RunIndicatorComparativeHypothesisEvaluationCommand",
     "build_research_cli",
     "main",
 ]
