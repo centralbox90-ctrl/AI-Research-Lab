@@ -139,7 +139,7 @@ Canonicalization рыночного набора сейчас частично �
 
 Все вычислительные элементы представлены непрозрачными версионированными ссылками. Research Domain выбирает их, но не реализует calculation, signal generation или execution. Идентичность design детерминирована его нормализованным содержимым и provenance.
 
-Существующий изменяемый `ResearchCampaign` пока сохраняется как runtime-контракт совместимости. `ResearchPlanner` детерминированно разворачивает нормализованный `CampaignDesign` в полный Cartesian-набор `CampaignExperimentSpecification` и объединяет их в immutable `ResearchCampaignPlan`. Максимальный размер пространства ограничивается до создания спецификаций. Следующий шаг — application-адаптер из `ResearchCampaignPlan` в исполняемые market experiment specifications.
+Существующий изменяемый `ResearchCampaign` пока сохраняется как runtime-контракт совместимости. `ResearchPlanner` детерминированно разворачивает нормализованный `CampaignDesign` в полный Cartesian-набор `CampaignExperimentSpecification` и объединяет их в immutable `ResearchCampaignPlan`. Максимальный размер пространства ограничивается до создания спецификаций. `ResearchCampaignPlanMarketAdapter` разрешает каждый элемент плана в `MarketExperimentSpecification`, проверяет соответствие инструмента и таймфрейма и сохраняет связь с исходной спецификацией. Конкретный resolver ссылок Campaign Design и application use case выполнения кампании ещё не реализованы.
 
 ## Finding Pipeline
 

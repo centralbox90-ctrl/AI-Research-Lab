@@ -17,7 +17,7 @@
 
 | Домен | Architecture Status | Implementation Status | Подтверждённое состояние |
 |---|---|---|---|
-| Research | Core | Partial | Реализованы сравнительные исследования, legacy runtime ResearchCampaign, immutable CampaignDesign и детерминированный ResearchPlanner, создающий ResearchCampaignPlan. Адаптер плана к исполняемым experiment specifications пока отсутствует. |
+| Research | Core | Partial | Реализованы сравнительные исследования, legacy runtime ResearchCampaign, immutable CampaignDesign, детерминированный ResearchPlanner и application-адаптер ResearchCampaignPlan к MarketExperimentSpecification. Конкретный resolver ссылок и orchestration выполнения кампании пока отсутствуют. |
 | Experiment | Core | Partial | Поддерживаются воспроизводимые результаты, планы оценки и исследовательские артефакты. Унифицированный жизненный цикл всех типов экспериментов ещё не завершён. |
 | Market Data | Core | Partial | Реализованы загрузчики, generated market data и canonical dataset provider. Legacy-представления используются не во всех сценариях через единый контракт. |
 | Calculation | Core | Confirmed | Реализованы индикаторы, их автоматическое обнаружение и вычислительные исследовательские сценарии. |
@@ -70,6 +70,8 @@
 - immutable CampaignDesign с детерминированной идентичностью;
 - CampaignExperimentSpecification и immutable ResearchCampaignPlan;
 - детерминированный ResearchPlanner с ограничением Cartesian expansion;
+- ResearchCampaignPlanMarketAdapter с проверкой соответствия инструмента и таймфрейма;
+- сохранение связи resolved market experiment с исходной плановой спецификацией;
 - comparative research application;
 - воспроизводимый comparative research result;
 - версионированный формат research artifact;
@@ -113,7 +115,7 @@
 
 ### Research orchestration
 
-Существующий ResearchCampaign остаётся изменяемым runtime-контрактом совместимости. CampaignDesign и ResearchPlanner формируют воспроизводимый ResearchCampaignPlan, но application-адаптер плана к MarketExperimentSpecification и последующая orchestration выполнения ещё не реализованы.
+Существующий ResearchCampaign остаётся изменяемым runtime-контрактом совместимости. CampaignDesign и ResearchPlanner формируют воспроизводимый ResearchCampaignPlan. Application-адаптер плана к MarketExperimentSpecification реализован через явный resolver-контракт, но конкретный каталог версионированных ссылок и последующая orchestration выполнения ещё отсутствуют.
 
 ### Market Data
 
@@ -133,7 +135,7 @@ Conclusion и HypothesisDecision используются существующи
 
 ## Приоритеты развития
 
-1. Добавить application-адаптер ResearchCampaignPlan к MarketExperimentSpecification.
+1. Реализовать конкретный resolver версионированных ссылок Campaign Design.
 2. Подключить планирование и выполнение кампании через явный application use case.
 3. Продолжить внедрение canonical market data через адаптеры.
 4. Разделить оставшиеся ответственности Backtest Engine.
