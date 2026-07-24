@@ -38,6 +38,29 @@ from src.research.comparative_evidence_evaluator import (
 from src.research.comparative_statistical_evaluator import (
     ComparativeStatisticalEvaluator,
 )
+from src.research.finding_evaluator import (
+    FindingEvaluator,
+)
+
+def build_default_indicator_comparative_finding_application(
+    *,
+    data_provider: CanonicalMarketDatasetProvider,
+    evaluation_plan: ComparativeEvaluationPlan = (
+        ComparativeEvaluationPlan()
+    ),
+) -> IndicatorComparativeFindingApplication:
+    """Build the replicated comparative Finding application."""
+
+    return IndicatorComparativeFindingApplication(
+        evidence_application=(
+            build_default_indicator_comparative_evidence_application(
+                data_provider=data_provider,
+                evaluation_plan=evaluation_plan,
+            )
+        ),
+        finding_evaluator=FindingEvaluator(),
+    )
+
 
 def build_default_indicator_comparative_evidence_application(
     *,
