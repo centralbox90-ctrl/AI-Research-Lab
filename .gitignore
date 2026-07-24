@@ -12,7 +12,7 @@ experiment.json
 *_current.txt
 
 # Local datasets
-data/
+/data/
 
 # Backup files
 *.bak
