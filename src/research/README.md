@@ -63,6 +63,8 @@
 | `comparative_evaluation_plan.py` | `ComparativeEvaluationPlan` | Предварительно объявленные статистические правила |
 | `comparative_statistical_evaluation.py` | `ComparativeStatisticalEvaluation` | Воспроизводимая оценка одного горизонта |
 | `evidence.py` | `Evidence` | Неизменяемая оценка отношения данных к гипотезе |
+| `finding.py` | `Finding` | Неизменяемая интерпретация Evidence с явным отношением к гипотезе |
+| `hypothesis_evaluation.py` | `HypothesisEvaluation` | Воспроизводимый результат формальной оценки гипотезы |
 | `market_dataset_fingerprint.py` | `MarketDatasetFingerprint` | Версионированная идентичность canonical dataset |
 
 ## Доменные сервисы
@@ -136,16 +138,16 @@ Composition root и presenter для Finding подключены.
 
 ## Hypothesis Evaluation
 
-HypothesisEvaluation фиксирует формальный результат проверки гипотезы на основании Finding.
+`HypothesisEvaluation` фиксирует формальный результат проверки гипотезы на основании Finding.
 
 Допустимые состояния:
 
-- supported;
-- partially_supported;
-- inconclusive;
-- ejected.
+- `supported`;
+- `partially_supported`;
+- `inconclusive`;
+- `rejected`.
 
-Модель результата реализована как immutable и воспроизводимый контракт. Доменный HypothesisEvaluator будет подключён отдельным изменением.
+Модель результата реализована как immutable и воспроизводимый контракт. Доменный `HypothesisEvaluator` будет подключён отдельным изменением.
 
 ## Legacy Analysis
 
