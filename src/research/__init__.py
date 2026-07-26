@@ -51,6 +51,10 @@ from src.research.knowledge_candidate_validator import (
 from src.research.knowledge_item import (
     KnowledgeItem,
 )
+from src.research.knowledge_repository import (
+    KnowledgeItemConflictError,
+    KnowledgeRepository,
+)
 from src.research.next_experiment_selection import NextExperimentSelection
 from src.research.question import Question
 from src.research.research_environment import ResearchEnvironmentRef
@@ -88,6 +92,8 @@ __all__ = [
     "KnowledgeCandidateValidationError",
     "KnowledgeCandidateValidator",
     "KnowledgeItem",
+    "KnowledgeItemConflictError",
+    "KnowledgeRepository",
     "NextExperimentResearchCycleResult",
     "NextExperimentSelection",
     "Question",
