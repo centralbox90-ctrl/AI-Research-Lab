@@ -24,7 +24,7 @@
 | Signal | Core | Confirmed | Генерация сигналов и интеграция с существующим execution-контуром присутствуют. Декларативная композиция правил ограничена. |
 | Execution | Core | Confirmed | Technical Execution Stabilization завершена: BacktestEngine координирует жизненный цикл позиции, PositionFactory создаёт открытые LONG/SHORT позиции, PositionExitEvaluator определяет выход, TradeFactory формирует закрытые сделки. |
 | Analysis | Core | Confirmed | Реализован и протестирован полный сценарий Observation → Evidence → Finding → HypothesisEvaluation. Строгий JSON loader, CLI-команда, presenters, composition roots и пользовательский маршрут общего ResearchCli подключены. |
-| Knowledge | Core | Planned | Специализированные repository, versioning и contradiction detection пока отсутствуют. |
+| Knowledge | Core | Partial | Реализован immutable KnowledgeCandidate с обязательными applicability, supporting Findings, HypothesisEvaluation reference и provenance. Validation, KnowledgeItem и repository ещё не реализованы. |
 | Infrastructure | Supporting | Partial | Реализованы composition roots, CLI-компоненты, presenters, артефакты и CI. Границы инфраструктурных адаптеров продолжают уточняться. |
 
 ## Подтверждённый вертикальный срез
@@ -111,6 +111,14 @@
 - специализированная CLI-команда;
 - пользовательский маршрут общего ResearchCli.
 
+### Knowledge
+
+- immutable KnowledgeCandidate;
+- обязательная область применимости;
+- ссылки на supporting Findings и HypothesisEvaluation;
+- воспроизводимый fingerprint и provenance;
+- отдельный контракт, не изменяющий legacy Knowledge.
+
 ### Infrastructure
 
 - composition roots и CLI-команда полного цикла формальной оценки гипотезы;
@@ -140,11 +148,11 @@ Conclusion и HypothesisDecision используются существующи
 
 ### Knowledge
 
-Результаты сохраняются как артефакты, но пока не образуют версионированную базу знаний с обнаружением противоречий.
+Immutable KnowledgeCandidate реализован как первый специализированный контракт Knowledge Domain. Существующий mutable Knowledge остаётся legacy-моделью ResearchEngine. Validation, immutable KnowledgeItem, repository, versioning и contradiction detection ещё не реализованы.
 
 ## Приоритеты развития
 
-1. Реализовать минимальный вертикальный срез Knowledge Domain: Knowledge Candidate → validation → immutable KnowledgeItem → repository.
+1. Добавить Knowledge Candidate validation и преобразование в immutable KnowledgeItem.
 2. Продолжить внедрение canonical market data через адаптеры.
 3. Продолжить изоляцию и поэтапное удаление Legacy Analysis Pipeline.
 4. Унифицировать ExperimentExecution для остальных типов экспериментов.
