@@ -24,7 +24,7 @@
 | Signal | Core | Confirmed | Генерация сигналов и интеграция с существующим execution-контуром присутствуют. Декларативная композиция правил ограничена. |
 | Execution | Core | Confirmed | Technical Execution Stabilization завершена: BacktestEngine координирует жизненный цикл позиции, PositionFactory создаёт открытые LONG/SHORT позиции, PositionExitEvaluator определяет выход, TradeFactory формирует закрытые сделки. |
 | Analysis | Core | Confirmed | Реализован и протестирован полный сценарий Observation → Evidence → Finding → HypothesisEvaluation. Строгий JSON loader, CLI-команда, presenters, composition roots и пользовательский маршрут общего ResearchCli подключены. |
-| Knowledge | Core | Partial | Реализован и протестирован минимальный поток KnowledgeCandidate → validation → immutable KnowledgeItem → append-only InMemoryKnowledgeRepository. Добавлен immutable KnowledgeRevision с UTC valid_from, обязательной причиной изменения и последовательной связью supersedes_version. Repository-managd version history и contradiction detection ещё не реализованы. |
+| Knowledge | Core | Partial | Реализован и протестирован поток KnowledgeCandidate → validation → immutable KnowledgeItem → KnowledgeRevision → versioned InMemoryKnowledgeRepository. Repository сохраняет append-only историю, возвращает latest/version/history и проверяет последовательность версий и UTC-хронологию. Contradiction detection ещё не реализован. |
 | Infrastructure | Supporting | Partial | Реализованы composition roots, CLI-компоненты, presenters, артефакты и CI. Границы инфраструктурных адаптеров продолжают уточняться. |
 
 ## Подтверждённый вертикальный срез
@@ -119,11 +119,13 @@
 - последовательная связь каждой новой revision с непосредственно предыдущей версией;
 - KnowledgeCandidateValidator с явными confidence и supporting Findings policy;
 - детерминированное преобразование принятого кандидата в KnowledgeItem версии 1;
-- KnowledgeRepository protocol;
-- append-only InMemoryKnowledgeRepository;
-- идемпотентное сохранение одинакового item и запрет скрытой замены по ID;
-- детерминированное перечисление сохранённых знаний;
-- сквозной контрактный тест Candidate → validation → KnowledgeItem → repository;
+- version-aware KnowledgeRepository protocol;
+- append-only InMemoryKnowledgeRepository с полной revision history;
+- операции latest, version и history;
+- идемпотентное сохранение одинаковой revision;
+- запрет пропуска версий, конфликтующей записи и немонотонного valid_from;
+- детерминированное перечисление последних версий знаний;
+- сквозной контрактный тест Candidate → validation → KnowledgeItem → KnowledgeRevision → repository;
 - обязательная область применимости;
 - ссылки на supporting Findings и HypothesisEvaluation;
 - обязательный provenance;
@@ -159,11 +161,11 @@ Conclusion и HypothesisDecision используются существующи
 
 ### Knowledge
 
-Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandidateValidator и KnowledgeRepository реализованы как специализированные контракты Knowledge Domain. Существующий mutable Knowledge остаётся legacy-моделью ResearchEngine. KnowledgeRevision фиксирует UTC valid_from, причину изменения, fingerprint item и последовательную ссылку supersedes_version. InMemoryKnowledgeRepository пока хранит только один item на ID и ещё не использует revision history. Repository-managed version history, superseding и contradiction detection ещё не реализованы.
+Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandidateValidator и KnowledgeRepository реализованы как специализированные контракты Knowledge Domain. Существующий mutable Knowledge остаётся legacy-моделью ResearchEngine. InMemoryKnowledgeRepository хранит все KnowledgeRevision без удаления, возвращает latest/version/history, проверяет линейную последовательность и монотонный UTC valid_from. Persistent repository, applicability search и contradiction detection ещё не реализованы.
 
 ## Приоритеты развития
 
-1. Подключить KnowledgeRevision к KnowledgeRepository: хранить полную историю и возвращать latest/version/history без удаления предыдущих KnowledgeItem.
+1. Добавить типизированный applicability query и детерминированный поиск по последним KnowledgeItem.
 2. Продолжить внедрение canonical market data через адаптеры.
 3. Продолжить изоляцию и поэтапное удаление Legacy Analysis Pipeline.
 4. Унифицировать ExperimentExecution для остальных типов экспериментов.

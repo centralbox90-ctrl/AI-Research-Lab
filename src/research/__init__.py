@@ -54,6 +54,7 @@ from src.research.knowledge_item import (
 from src.research.knowledge_repository import (
     KnowledgeItemConflictError,
     KnowledgeRepository,
+    KnowledgeRevisionSequenceError,
 )
 from src.research.knowledge_revision import (
     KnowledgeRevision,
@@ -98,6 +99,7 @@ __all__ = [
     "KnowledgeItemConflictError",
     "KnowledgeRepository",
     "KnowledgeRevision",
+    "KnowledgeRevisionSequenceError",
     "NextExperimentResearchCycleResult",
     "NextExperimentSelection",
     "Question",

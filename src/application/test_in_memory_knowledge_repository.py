@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 import pytest
 
 from src.application.in_memory_knowledge_repository import (
@@ -13,6 +15,10 @@ from src.research.knowledge_item import KnowledgeItem
 from src.research.knowledge_repository import (
     KnowledgeItemConflictError,
     KnowledgeRepository,
+    KnowledgeRevisionSequenceError,
+)
+from src.research.knowledge_revision import (
+    KnowledgeRevision,
 )
 
 
@@ -42,6 +48,38 @@ def build_item(
                 "knowledge_candidate_id",
                 f"{item_id}-candidate",
             ),
+        ),
+    )
+
+
+def build_revision(
+    *,
+    item_id: str = "knowledge-a",
+    statement: str = "Statement A.",
+    version: int = 1,
+    day: int = 26,
+) -> KnowledgeRevision:
+    return KnowledgeRevision(
+        item=build_item(
+            item_id=item_id,
+            statement=statement,
+            version=version,
+        ),
+        valid_from=datetime(
+            2026,
+            7,
+            day,
+            tzinfo=timezone.utc,
+        ),
+        change_reason=(
+            "Initial validation"
+            if version == 1
+            else "New supporting evidence"
+        ),
+        supersedes_version=(
+            None
+            if version == 1
+            else version - 1
         ),
     )
 
@@ -85,71 +123,119 @@ def test_stores_item_admitted_from_knowledge_candidate(
         minimum_confidence=0.75,
         minimum_supporting_findings=2,
     ).validate(candidate=candidate)
+    revision = KnowledgeRevision(
+        item=item,
+        valid_from=datetime(
+            2026,
+            7,
+            26,
+            tzinfo=timezone.utc,
+        ),
+        change_reason="Initial validation",
+        supersedes_version=None,
+    )
     repository = InMemoryKnowledgeRepository()
 
-    repository.save(item)
+    repository.save(revision)
 
     assert repository.get(item.id) is item
+    assert repository.history(item.id) == (
+        revision,
+    )
     assert dict(item.provenance)[
         "knowledge_candidate_fingerprint"
     ] == candidate.fingerprint
 
 
-def test_saves_and_returns_knowledge_item() -> None:
+def test_returns_latest_item_and_complete_history(
+) -> None:
     repository = InMemoryKnowledgeRepository()
-    item = build_item()
+    first = build_revision()
+    second = build_revision(
+        statement="Updated statement.",
+        version=2,
+        day=27,
+    )
 
-    repository.save(item)
+    repository.save(first)
+    repository.save(second)
 
-    assert repository.get(item.id) is item
-    assert repository.get(f"  {item.id}  ") is item
+    assert repository.get(first.item.id) is (
+        second.item
+    )
+    assert repository.get_version(
+        first.item.id,
+        1,
+    ) is first
+    assert repository.get_version(
+        first.item.id,
+        2,
+    ) is second
+    assert repository.history(first.item.id) == (
+        first,
+        second,
+    )
 
 
-def test_returns_none_for_unknown_item() -> None:
+def test_returns_empty_results_for_unknown_item(
+) -> None:
     repository = InMemoryKnowledgeRepository()
 
     assert repository.get("unknown-item") is None
+    assert repository.get_version(
+        "unknown-item",
+        1,
+    ) is None
+    assert repository.history("unknown-item") == ()
 
 
-def test_lists_items_in_deterministic_id_order(
+def test_lists_latest_items_in_deterministic_id_order(
 ) -> None:
     repository = InMemoryKnowledgeRepository()
-    item_b = build_item(
+    item_b_v1 = build_revision(
         item_id="knowledge-b",
         statement="Statement B.",
     )
-    item_a = build_item(
+    item_a_v1 = build_revision(
         item_id="knowledge-a",
         statement="Statement A.",
     )
+    item_a_v2 = build_revision(
+        item_id="knowledge-a",
+        statement="Updated statement A.",
+        version=2,
+        day=27,
+    )
 
-    repository.save(item_b)
-    repository.save(item_a)
+    repository.save(item_b_v1)
+    repository.save(item_a_v1)
+    repository.save(item_a_v2)
 
     assert repository.list_all() == (
-        item_a,
-        item_b,
+        item_a_v2.item,
+        item_b_v1.item,
     )
 
 
-def test_repeated_save_of_same_item_is_idempotent(
+def test_repeated_save_of_same_revision_is_idempotent(
 ) -> None:
     repository = InMemoryKnowledgeRepository()
-    item = build_item()
+    revision = build_revision()
 
-    repository.save(item)
-    repository.save(item)
+    repository.save(revision)
+    repository.save(revision)
 
-    assert repository.list_all() == (item,)
+    assert repository.history(
+        revision.item.id
+    ) == (revision,)
 
 
-def test_rejects_conflicting_content_for_existing_id(
+def test_rejects_conflicting_content_for_existing_version(
 ) -> None:
     repository = InMemoryKnowledgeRepository()
-    existing = build_item()
-    incoming = build_item(
+    existing = build_revision()
+    incoming = build_revision(
         statement="Changed statement.",
-        version=2,
     )
     repository.save(existing)
 
@@ -158,7 +244,8 @@ def test_rejects_conflicting_content_for_existing_id(
     ) as error:
         repository.save(incoming)
 
-    assert error.value.item_id == existing.id
+    assert error.value.item_id == existing.item.id
+    assert error.value.version == 1
     assert error.value.existing_fingerprint == (
         existing.fingerprint
     )
@@ -166,18 +253,89 @@ def test_rejects_conflicting_content_for_existing_id(
         incoming.fingerprint
     )
     assert str(error.value) == (
-        "knowledge item 'knowledge-a' already "
-        "exists with different content"
+        "knowledge item 'knowledge-a' version 1 "
+        "already exists with different content"
     )
-    assert repository.get(existing.id) is existing
+    assert repository.get_version(
+        existing.item.id,
+        1,
+    ) is existing
 
 
-def test_rejects_non_knowledge_item() -> None:
+def test_rejects_non_initial_first_revision(
+) -> None:
+    repository = InMemoryKnowledgeRepository()
+    incoming = build_revision(
+        version=2,
+        day=27,
+    )
+
+    with pytest.raises(
+        KnowledgeRevisionSequenceError
+    ) as error:
+        repository.save(incoming)
+
+    assert error.value.item_id == incoming.item.id
+    assert error.value.expected_version == 1
+    assert error.value.incoming_version == 2
+    assert repository.history(
+        incoming.item.id
+    ) == ()
+
+
+def test_rejects_skipped_revision() -> None:
+    repository = InMemoryKnowledgeRepository()
+    first = build_revision()
+    third = build_revision(
+        version=3,
+        day=28,
+    )
+    repository.save(first)
+
+    with pytest.raises(
+        KnowledgeRevisionSequenceError
+    ) as error:
+        repository.save(third)
+
+    assert error.value.expected_version == 2
+    assert error.value.incoming_version == 3
+    assert repository.history(first.item.id) == (
+        first,
+    )
+
+
+def test_rejects_non_increasing_valid_from(
+) -> None:
+    repository = InMemoryKnowledgeRepository()
+    first = build_revision()
+    second = build_revision(
+        version=2,
+        day=26,
+    )
+    repository.save(first)
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "revision valid_from must be later "
+            "than the latest stored revision"
+        ),
+    ):
+        repository.save(second)
+
+    assert repository.history(first.item.id) == (
+        first,
+    )
+
+
+def test_rejects_non_knowledge_revision() -> None:
     repository = InMemoryKnowledgeRepository()
 
     with pytest.raises(
         TypeError,
-        match="item must be a KnowledgeItem",
+        match=(
+            "revision must be a KnowledgeRevision"
+        ),
     ):
         repository.save(
             object(),  # type: ignore[arg-type]
@@ -200,7 +358,7 @@ def test_rejects_empty_item_id(
         ValueError,
         match="item_id must not be empty",
     ):
-        repository.get(item_id)
+        repository.history(item_id)
 
 
 @pytest.mark.parametrize(
@@ -220,6 +378,29 @@ def test_rejects_non_string_item_id(
         TypeError,
         match="item_id must be a string",
     ):
-        repository.get(
+        repository.history(
             item_id  # type: ignore[arg-type]
+        )
+
+
+@pytest.mark.parametrize(
+    ("version", "expected_exception"),
+    (
+        (True, TypeError),
+        (1.5, TypeError),
+        ("1", TypeError),
+        (0, ValueError),
+        (-1, ValueError),
+    ),
+)
+def test_rejects_invalid_version_lookup(
+    version: object,
+    expected_exception: type[Exception],
+) -> None:
+    repository = InMemoryKnowledgeRepository()
+
+    with pytest.raises(expected_exception):
+        repository.get_version(
+            "knowledge-a",
+            version,  # type: ignore[arg-type]
         )
