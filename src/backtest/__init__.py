@@ -12,6 +12,7 @@ from src.backtest.position_exit_evaluator import (
 )
 from src.backtest.statistics import Statistics
 from src.backtest.trade import Trade
+from src.backtest.trade_factory import TradeFactory
 
 
 __all__ = [
@@ -25,4 +26,5 @@ __all__ = [
     "PositionExitEvaluator",
     "Statistics",
     "Trade",
+    "TradeFactory",
 ]

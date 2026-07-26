@@ -132,7 +132,7 @@ Canonical market data ещё не является единственным вн
 
 ### Execution
 
-Production research sessions используют CanonicalMarketDatasetProvider и PreparedMarketBacktestExecutor. LegacyMarketBacktestExecutor сохранён только как compatibility-контракт. PositionExitEvaluator отделяет детерминированные правила выхода из позиции от orchestration движка. PreparedMarketBacktestExecutor передаёт зарегистрированные commission и slippage в ExecutionPolicy. Существующий Backtest Engine объединяет оставшиеся моделирование брокера, исполнение и управление портфелем. Это допустимое переходное состояние, но не конечная граница домена.
+Production research sessions используют CanonicalMarketDatasetProvider и PreparedMarketBacktestExecutor. LegacyMarketBacktestExecutor сохранён только как compatibility-контракт. PositionExitEvaluator отделяет детерминированные правила выхода из позиции от orchestration движка. TradeFactory отделяет применение модели исполнения и формирование закрытой сделки. PreparedMarketBacktestExecutor передаёт зарегистрированные commission и slippage в ExecutionPolicy. Существующий Backtest Engine объединяет оставшиеся моделирование брокера, исполнение и управление портфелем. Это допустимое переходное состояние, но не конечная граница домена.
 
 ### Legacy Analysis Pipeline
 

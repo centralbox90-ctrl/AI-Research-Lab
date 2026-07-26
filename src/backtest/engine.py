@@ -13,6 +13,7 @@ from src.backtest.position_exit_evaluator import (
     PositionExitEvaluator,
 )
 from src.backtest.trade import Trade
+from src.backtest.trade_factory import TradeFactory
 
 
 class BacktestEngine:
@@ -31,11 +32,16 @@ class BacktestEngine:
     def __init__(
         self,
         exit_evaluator: PositionExitEvaluator | None = None,
+        trade_factory: TradeFactory | None = None,
     ) -> None:
         self.trades: list[Trade] = []
         self._exit_evaluator = (
             exit_evaluator
             or PositionExitEvaluator()
+        )
+        self._trade_factory = (
+            trade_factory
+            or TradeFactory()
         )
 
     def run(
@@ -97,7 +103,7 @@ class BacktestEngine:
 
                 if exit_decision is not None:
                     self.trades.append(
-                        self._create_trade(
+                        self._trade_factory.create_closed_trade(
                             position=position,
                             exit_time=timestamp,
                             requested_exit_price=(
@@ -145,7 +151,7 @@ class BacktestEngine:
         if position is not None:
 
             self.trades.append(
-                self._create_trade(
+                self._trade_factory.create_closed_trade(
                     position=position,
                     exit_time=data.iloc[-1]["timestamp"],
                     requested_exit_price=float(
@@ -157,40 +163,3 @@ class BacktestEngine:
             )
 
         return self.trades
-
-    def _create_trade(
-        self,
-        position: Position,
-        exit_time,
-        requested_exit_price: float,
-        reason: ExitReason,
-        execution_model: ExecutionModel,
-    ) -> Trade:
-
-        executed_exit_price = execution_model.exit_price(
-            price=requested_exit_price,
-            side=position.side,
-        )
-
-        trade = Trade(
-            symbol=position.symbol,
-            timeframe=position.timeframe,
-            side=position.side,
-            entry_time=position.entry_time,
-            entry_price=position.entry_price,
-            entry_signal=position.entry_signal,
-            bars_held=position.bars_held,
-            max_profit_percent=position.max_profit_percent,
-            max_drawdown_percent=position.max_drawdown_percent,
-            commission_percent=(
-                execution_model.commission_percent
-            ),
-        )
-
-        trade.close(
-            exit_time=exit_time,
-            exit_price=executed_exit_price,
-            reason=reason,
-        )
-
-        return trade
