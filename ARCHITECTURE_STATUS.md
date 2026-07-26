@@ -54,6 +54,7 @@
 - загрузка рыночных данных;
 - deterministic generated market data;
 - canonical market dataset provider;
+- explicit LegacyMarketDataFrameAdapter boundary for legacy OHLC columns;
 - интеграция сравнительного исследования с MetaTrader 5.
 
 ### Calculation

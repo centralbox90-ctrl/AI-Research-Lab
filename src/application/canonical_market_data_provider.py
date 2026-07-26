@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-import pandas as pd
-
 from src.application.market_data_provider import (
     MarketDataProvider,
+)
+from src.application.legacy_market_data_frame_adapter import (
+    LegacyMarketDataFrameAdapter,
 )
 from src.research.market_dataset_fingerprint import (
     DatasetFingerprintContext,
@@ -33,11 +34,16 @@ class CanonicalMarketDataProvider:
     def __init__(
          self,
          provider: MarketDataProvider,
+         legacy_adapter: LegacyMarketDataFrameAdapter | None = None,
          canonicalizer: MarketDatasetCanonicalizer | None = None,
          fingerprinter: MarketDatasetFingerprinter | None = None,
         quality_analyzer: MarketDatasetQualityAnalyzer | None = None,
     ) -> None:
         self._provider = provider
+        self._legacy_adapter = (
+            legacy_adapter
+            or LegacyMarketDataFrameAdapter()
+        )
         self._canonicalizer = (
             canonicalizer
             or MarketDatasetCanonicalizer()
@@ -57,7 +63,7 @@ class CanonicalMarketDataProvider:
     ) -> CanonicalMarketDataset:
         source_data = self._provider.load(specification)
 
-        canonical_input = self._map_source_data(
+        canonical_input = self._legacy_adapter.adapt(
             source_data
         )
 
@@ -94,63 +100,3 @@ class CanonicalMarketDataProvider:
             canonical.attrs["provenance"] = provenance
 
         return dataset
-
-    def _map_source_data(
-        self,
-        data: pd.DataFrame,
-    ) -> pd.DataFrame:
-        """
-        Convert the current legacy provider format into the
-        canonicalizer input contract.
-
-        Temporary compatibility mapping:
-
-        DateTimeIndex -> timestamp
-        Open -> open
-        High -> high
-        Low -> low
-        Close -> close
-        Volume -> tick_volume
-        """
-
-        required_legacy_columns = (
-            "Open",
-            "High",
-            "Low",
-            "Close",
-            "Volume",
-        )
-
-        missing = [
-            column
-            for column in required_legacy_columns
-            if column not in data.columns
-        ]
-
-        if missing:
-            raise ValueError(
-                "market data provider returned unsupported "
-                "columns. Missing legacy columns: "
-                + ", ".join(missing)
-            )
-
-        if not isinstance(
-            data.index,
-            pd.DatetimeIndex,
-        ):
-            raise ValueError(
-                "market data provider must return a "
-                "DatetimeIndex until the provider contract "
-                "is migrated to canonical timestamps"
-            )
-
-        return pd.DataFrame(
-            {
-                "timestamp": data.index,
-                "open": data["Open"],
-                "high": data["High"],
-                "low": data["Low"],
-                "close": data["Close"],
-                "tick_volume": data["Volume"],
-            }
-        )

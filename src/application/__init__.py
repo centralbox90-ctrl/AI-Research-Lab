@@ -4,6 +4,9 @@ from src.application.canonical_market_dataset import (
 from src.application.canonical_market_data_provider import (
     CanonicalMarketDataProvider,
 )
+from src.application.legacy_market_data_frame_adapter import (
+    LegacyMarketDataFrameAdapter,
+)
 from src.application.campaign_design_loader import (
     CampaignDesignLoader,
 )
@@ -157,6 +160,7 @@ __all__ = [
     "GitCodeVersionProvider",
     "InMemoryMarketExperimentSpecificationResolver",
     "InMemoryResearchCycleRepository",
+    "LegacyMarketDataFrameAdapter",
     "ListStoredResearchCycles",
     "ListStoredResearchCampaigns",
     "MappedMarketExperiment",
