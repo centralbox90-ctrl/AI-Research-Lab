@@ -38,7 +38,11 @@ class FakeSignalProvider:
         return result
 
 
-def build_specification() -> MarketExperimentSpecification:
+def build_specification(
+    *,
+    commission_percent: float = 0.0,
+    slippage_percent: float = 0.0,
+) -> MarketExperimentSpecification:
     return MarketExperimentSpecification(
         executor_type="market_backtest",
         question_title="Prepared executor question",
@@ -75,6 +79,8 @@ def build_specification() -> MarketExperimentSpecification:
         stop_loss_percent=2.0,
         take_profit_percent=2.0,
         max_holding_bars=10,
+        commission_percent=commission_percent,
+        slippage_percent=slippage_percent,
     )
 
 
@@ -120,6 +126,25 @@ def test_prepared_executor_runs_without_data_provider() -> None:
     assert result.observations["exit_reasons"] == [
         "take_profit",
     ]
+
+
+def test_prepared_executor_applies_registered_trading_costs() -> None:
+    executor = PreparedMarketBacktestExecutor(
+        specification=build_specification(
+            commission_percent=0.2,
+            slippage_percent=0.1,
+        ),
+        market_data=build_market_data(),
+        signal_provider=FakeSignalProvider(),
+    )
+
+    result = executor(
+        Experiment(title="cost-aware executor test")
+    )
+
+    assert result.observations["profit_percent"] == (
+        pytest.approx([1.698])
+    )
 
 
 def test_prepared_executor_rejects_empty_market_data() -> None:

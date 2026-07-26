@@ -61,6 +61,12 @@ class PreparedMarketBacktestExecutor:
             max_holding_bars=(
                 self.specification.max_holding_bars
             ),
+            commission_percent=(
+                self.specification.commission_percent
+            ),
+            slippage_percent=(
+                self.specification.slippage_percent
+            ),
         )
 
         trades = BacktestEngine().run(
