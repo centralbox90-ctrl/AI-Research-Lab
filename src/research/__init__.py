@@ -44,6 +44,10 @@ from src.research.knowledge import Knowledge
 from src.research.knowledge_candidate import (
     KnowledgeCandidate,
 )
+from src.research.knowledge_candidate_validator import (
+    KnowledgeCandidateValidationError,
+    KnowledgeCandidateValidator,
+)
 from src.research.knowledge_item import (
     KnowledgeItem,
 )
@@ -81,6 +85,8 @@ __all__ = [
     "HypothesisDecision",
     "Knowledge",
     "KnowledgeCandidate",
+    "KnowledgeCandidateValidationError",
+    "KnowledgeCandidateValidator",
     "KnowledgeItem",
     "NextExperimentResearchCycleResult",
     "NextExperimentSelection",
