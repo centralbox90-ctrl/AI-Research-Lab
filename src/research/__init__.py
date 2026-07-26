@@ -41,6 +41,10 @@ from src.research.experiment_result import ExperimentResult
 from src.research.hypothesis import Hypothesis
 from src.research.hypothesis_decision import HypothesisDecision
 from src.research.knowledge import Knowledge
+from src.research.knowledge_applicability_query import (
+    ApplicabilityMatchMode,
+    KnowledgeApplicabilityQuery,
+)
 from src.research.knowledge_candidate import (
     KnowledgeCandidate,
 )
@@ -68,6 +72,7 @@ from src.research.research_context import ResearchContext
 
 __all__ = [
     "Analysis",
+    "ApplicabilityMatchMode",
     "Assumption",
     "AssumptionSet",
     "AssumptionStatus",
@@ -92,6 +97,7 @@ __all__ = [
     "Hypothesis",
     "HypothesisDecision",
     "Knowledge",
+    "KnowledgeApplicabilityQuery",
     "KnowledgeCandidate",
     "KnowledgeCandidateValidationError",
     "KnowledgeCandidateValidator",
