@@ -35,6 +35,9 @@ from src.application.get_stored_research_campaign import (
 from src.application.git_code_version_provider import (
     GitCodeVersionProvider,
 )
+from src.application.in_memory_knowledge_relation_repository import (
+    InMemoryKnowledgeRelationRepository,
+)
 from src.application.in_memory_knowledge_repository import (
     InMemoryKnowledgeRepository,
 )
@@ -163,6 +166,7 @@ __all__ = [
     "GetStoredResearchCycle",
     "GetStoredResearchCampaign",
     "GitCodeVersionProvider",
+    "InMemoryKnowledgeRelationRepository",
     "InMemoryKnowledgeRepository",
     "InMemoryMarketExperimentSpecificationResolver",
     "InMemoryResearchCycleRepository",

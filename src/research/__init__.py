@@ -68,6 +68,10 @@ from src.research.knowledge_relation import (
     KnowledgeRelation,
     KnowledgeRelationType,
 )
+from src.research.knowledge_relation_repository import (
+    KnowledgeRelationReferenceError,
+    KnowledgeRelationRepository,
+)
 from src.research.knowledge_repository import (
     KnowledgeItemConflictError,
     KnowledgeRepository,
@@ -119,6 +123,8 @@ __all__ = [
     "KnowledgeContradictionRule",
     "KnowledgeItem",
     "KnowledgeRelation",
+    "KnowledgeRelationReferenceError",
+    "KnowledgeRelationRepository",
     "KnowledgeRelationType",
     "KnowledgeItemConflictError",
     "KnowledgeRepository",
