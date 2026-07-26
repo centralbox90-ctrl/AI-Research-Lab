@@ -1,6 +1,9 @@
 from src.research.knowledge_applicability_query import (
     KnowledgeApplicabilityQuery,
 )
+from src.research.knowledge_contradiction import (
+    KnowledgeContradiction,
+)
 from src.research.knowledge_item import KnowledgeItem
 from src.research.knowledge_repository import (
     KnowledgeItemConflictError,
@@ -20,6 +23,10 @@ class InMemoryKnowledgeRepository:
         self._revisions: dict[
             str,
             dict[int, KnowledgeRevision],
+        ] = {}
+        self._contradictions: dict[
+            str,
+            KnowledgeContradiction,
         ] = {}
 
     def save(
@@ -166,6 +173,89 @@ class InMemoryKnowledgeRepository:
             item
             for item in self.list_all()
             if query.matches(item)
+        )
+
+    def save_contradiction(
+        self,
+        contradiction: KnowledgeContradiction,
+    ) -> None:
+        if not isinstance(
+            contradiction,
+            KnowledgeContradiction,
+        ):
+            raise TypeError(
+                "contradiction must be a "
+                "KnowledgeContradiction"
+            )
+
+        for item in contradiction.items:
+            revisions = self._revisions.get(
+                item.id
+            )
+            stored_revision = (
+                None
+                if revisions is None
+                else revisions.get(item.version)
+            )
+
+            if (
+                stored_revision is None
+                or stored_revision.item.fingerprint
+                != item.fingerprint
+            ):
+                raise ValueError(
+                    "contradiction items must "
+                    "reference stored knowledge versions"
+                )
+
+        self._contradictions.setdefault(
+            contradiction.fingerprint,
+            contradiction,
+        )
+
+    def list_contradictions(
+        self,
+    ) -> tuple[KnowledgeContradiction, ...]:
+        return tuple(
+            sorted(
+                self._contradictions.values(),
+                key=self._contradiction_sort_key,
+            )
+        )
+
+    def contradictions_for(
+        self,
+        item_id: str,
+    ) -> tuple[KnowledgeContradiction, ...]:
+        normalized_item_id = (
+            self._normalize_item_id(item_id)
+        )
+
+        return tuple(
+            contradiction
+            for contradiction
+            in self.list_contradictions()
+            if any(
+                item.id == normalized_item_id
+                for item in contradiction.items
+            )
+        )
+
+    @staticmethod
+    def _contradiction_sort_key(
+        contradiction: KnowledgeContradiction,
+    ) -> tuple[object, ...]:
+        return (
+            tuple(
+                (
+                    item.id,
+                    item.version,
+                    item.fingerprint,
+                )
+                for item in contradiction.items
+            ),
+            contradiction.reason,
+            contradiction.fingerprint,
         )
 
     @staticmethod

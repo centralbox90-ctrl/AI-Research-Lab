@@ -3,6 +3,9 @@ from typing import Protocol, runtime_checkable
 from src.research.knowledge_applicability_query import (
     KnowledgeApplicabilityQuery,
 )
+from src.research.knowledge_contradiction import (
+    KnowledgeContradiction,
+)
 from src.research.knowledge_item import KnowledgeItem
 from src.research.knowledge_revision import (
     KnowledgeRevision,
@@ -104,3 +107,20 @@ class KnowledgeRepository(Protocol):
         query: KnowledgeApplicabilityQuery,
     ) -> tuple[KnowledgeItem, ...]:
         """Return matching latest items in deterministic ID order."""
+
+    def save_contradiction(
+        self,
+        contradiction: KnowledgeContradiction,
+    ) -> None:
+        """Append a contradiction without replacing prior records."""
+
+    def list_contradictions(
+        self,
+    ) -> tuple[KnowledgeContradiction, ...]:
+        """Return contradictions in deterministic item order."""
+
+    def contradictions_for(
+        self,
+        item_id: str,
+    ) -> tuple[KnowledgeContradiction, ...]:
+        """Return deterministic contradictions for one item ID."""

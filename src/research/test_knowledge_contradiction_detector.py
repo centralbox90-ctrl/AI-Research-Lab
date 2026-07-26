@@ -434,6 +434,23 @@ class RepositoryStub:
     ) -> tuple[KnowledgeItem, ...]:
         return ()
 
+    def save_contradiction(
+        self,
+        contradiction: object,
+    ) -> None:
+        raise NotImplementedError
+
+    def list_contradictions(
+        self,
+    ) -> tuple[object, ...]:
+        return ()
+
+    def contradictions_for(
+        self,
+        item_id: str,
+    ) -> tuple[object, ...]:
+        return ()
+
 
 def test_rejects_non_tuple_repository_result(
 ) -> None:

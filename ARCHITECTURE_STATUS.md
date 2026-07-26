@@ -24,7 +24,7 @@
 | Signal | Core | Confirmed | Генерация сигналов и интеграция с существующим execution-контуром присутствуют. Декларативная композиция правил ограничена. |
 | Execution | Core | Confirmed | Technical Execution Stabilization завершена: BacktestEngine координирует жизненный цикл позиции, PositionFactory создаёт открытые LONG/SHORT позиции, PositionExitEvaluator определяет выход, TradeFactory формирует закрытые сделки. |
 | Analysis | Core | Confirmed | Реализован и протестирован полный сценарий Observation → Evidence → Finding → HypothesisEvaluation. Строгий JSON loader, CLI-команда, presenters, composition roots и пользовательский маршрут общего ResearchCli подключены. |
-| Knowledge | Core | Partial | Реализован и протестирован поток KnowledgeCandidate → validation → immutable KnowledgeItem → KnowledgeRevision → versioned InMemoryKnowledgeRepository. Repository сохраняет append-only историю, возвращает latest/version/history и проверяет последовательность версий и UTC-хронологию. KnowledgeApplicabilityQuery поддерживает режимы ALL/ANY, а repository выполняет детерминированный поиск по последним KnowledgeItem. Добавлены immutable KnowledgeContradiction, KnowledgeContradictionRule и KnowledgeContradictionDetector. Detector применяет явные rules только к latest KnowledgeItem, учитывает пересечение applicability и возвращает результат в детерминированном порядке ID. Repository registration ещё не реализован. |
+| Knowledge | Core | Partial | Реализован и протестирован поток KnowledgeCandidate → validation → immutable KnowledgeItem → KnowledgeRevision → versioned InMemoryKnowledgeRepository. Repository сохраняет append-only историю, возвращает latest/version/history и проверяет последовательность версий и UTC-хронологию. KnowledgeApplicabilityQuery поддерживает режимы ALL/ANY, а repository выполняет детерминированный поиск по последним KnowledgeItem. Добавлены immutable KnowledgeContradiction, KnowledgeContradictionRule и KnowledgeContradictionDetector. Detector применяет явные rules только к latest KnowledgeItem, учитывает пересечение applicability и возвращает результат в детерминированном порядке ID. InMemoryKnowledgeRepository выполняет append-only регистрацию KnowledgeContradiction, проверяет точные сохранённые версии и fingerprints и возвращает детерминированные списки. Persistent repository ещё не реализован. |
 | Infrastructure | Supporting | Partial | Реализованы composition roots, CLI-компоненты, presenters, артефакты и CI. Границы инфраструктурных адаптеров продолжают уточняться. |
 
 ## Подтверждённый вертикальный срез
@@ -135,6 +135,10 @@
 - точный case-insensitive rule matching без semantic heuristics;
 - KnowledgeContradictionDetector над latest KnowledgeRepository.list_all();
 - детерминированный pair enumeration с applicability overlap filtering;
+- append-only регистрация KnowledgeContradiction по fingerprint;
+- идемпотентное повторное сохранение одинакового противоречия;
+- проверка точных сохранённых версий и fingerprints ссылочных KnowledgeItem;
+- детерминированные list_contradictions и contradictions_for;
 - обязательная область применимости;
 - ссылки на supporting Findings и HypothesisEvaluation;
 - обязательный provenance;
@@ -170,11 +174,11 @@ Conclusion и HypothesisDecision используются существующи
 
 ### Knowledge
 
-Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandidateValidator и KnowledgeRepository реализованы как специализированные контракты Knowledge Domain. Существующий mutable Knowledge остаётся legacy-моделью ResearchEngine. InMemoryKnowledgeRepository хранит все KnowledgeRevision без удаления, возвращает latest/version/history, проверяет линейную последовательность и монотонный UTC valid_from. Repository-level find_applicable применяет типизированный KnowledgeApplicabilityQuery только к latest KnowledgeItem и возвращает результат в детерминированном порядке ID. Immutable KnowledgeContradiction регистрирует каноническую пару точных версий KnowledgeItem, их fingerprints, обязательную reason и пересечение applicability. KnowledgeContradictionRule явно задаёт две несовместимые нормализованные формулировки и выполняет точный case-insensitive matching. KnowledgeContradictionDetector получает latest items через KnowledgeRepository, проверяет уникальность knowledge ID и rules, учитывает applicability overlap и возвращает канонически упорядоченные KnowledgeContradiction. Persistent repository и repository registration ещё не реализованы.
+Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandidateValidator и KnowledgeRepository реализованы как специализированные контракты Knowledge Domain. Существующий mutable Knowledge остаётся legacy-моделью ResearchEngine. InMemoryKnowledgeRepository хранит все KnowledgeRevision без удаления, возвращает latest/version/history, проверяет линейную последовательность и монотонный UTC valid_from. Repository-level find_applicable применяет типизированный KnowledgeApplicabilityQuery только к latest KnowledgeItem и возвращает результат в детерминированном порядке ID. Immutable KnowledgeContradiction регистрирует каноническую пару точных версий KnowledgeItem, их fingerprints, обязательную reason и пересечение applicability. KnowledgeContradictionRule явно задаёт две несовместимые нормализованные формулировки и выполняет точный case-insensitive matching. KnowledgeContradictionDetector получает latest items через KnowledgeRepository, проверяет уникальность knowledge ID и rules, учитывает applicability overlap и возвращает канонически упорядоченные KnowledgeContradiction. InMemoryKnowledgeRepository хранит KnowledgeContradiction append-only по fingerprint, проверяет точные версии и fingerprints ссылочных KnowledgeItem, сохраняет противоречия после superseding и предоставляет детерминированные list_contradictions/contradictions_for. Persistent repository ещё не реализован.
 
 ## Приоритеты развития
 
-1. Добавить repository registration и append-only хранение KnowledgeContradiction.
+1. Добавить типизированные связи Knowledge Graph для supports/contradicts/extends/refines/supersedes.
 2. Продолжить внедрение canonical market data через адаптеры.
 3. Продолжить изоляцию и поэтапное удаление Legacy Analysis Pipeline.
 4. Унифицировать ExperimentExecution для остальных типов экспериментов.

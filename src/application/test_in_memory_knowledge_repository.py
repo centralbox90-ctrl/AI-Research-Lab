@@ -15,6 +15,9 @@ from src.research.knowledge_candidate import (
 from src.research.knowledge_candidate_validator import (
     KnowledgeCandidateValidator,
 )
+from src.research.knowledge_contradiction import (
+    KnowledgeContradiction,
+)
 from src.research.knowledge_item import KnowledgeItem
 from src.research.knowledge_repository import (
     KnowledgeItemConflictError,
@@ -90,6 +93,18 @@ def build_revision(
             if version == 1
             else version - 1
         ),
+    )
+
+
+def build_contradiction(
+    left: KnowledgeRevision,
+    right: KnowledgeRevision,
+    *,
+    reason: str = "Opposing conclusions.",
+) -> KnowledgeContradiction:
+    return KnowledgeContradiction(
+        items=(left.item, right.item),
+        reason=reason,
     )
 
 
@@ -332,6 +347,238 @@ def test_find_applicable_rejects_non_query(
         ),
     ):
         repository.find_applicable(
+            object(),  # type: ignore[arg-type]
+        )
+
+
+def test_registers_contradictions_in_item_order(
+) -> None:
+    repository = InMemoryKnowledgeRepository()
+    item_c = build_revision(
+        item_id="knowledge-c",
+        statement="Statement C.",
+    )
+    item_b = build_revision(
+        item_id="knowledge-b",
+        statement="Statement B.",
+    )
+    item_a = build_revision(
+        item_id="knowledge-a",
+        statement="Statement A.",
+    )
+    repository.save(item_c)
+    repository.save(item_b)
+    repository.save(item_a)
+    contradiction_bc = build_contradiction(
+        item_b,
+        item_c,
+        reason="Conflict B-C.",
+    )
+    contradiction_ab = build_contradiction(
+        item_a,
+        item_b,
+        reason="Conflict A-B.",
+    )
+
+    repository.save_contradiction(
+        contradiction_bc
+    )
+    repository.save_contradiction(
+        contradiction_ab
+    )
+
+    assert repository.list_contradictions() == (
+        contradiction_ab,
+        contradiction_bc,
+    )
+    assert repository.contradictions_for(
+        " knowledge-b "
+    ) == (
+        contradiction_ab,
+        contradiction_bc,
+    )
+
+
+def test_contradiction_registration_is_idempotent(
+) -> None:
+    repository = InMemoryKnowledgeRepository()
+    left = build_revision(
+        item_id="knowledge-a",
+        statement="Statement A.",
+    )
+    right = build_revision(
+        item_id="knowledge-b",
+        statement="Statement B.",
+    )
+    repository.save(left)
+    repository.save(right)
+    contradiction = build_contradiction(
+        left,
+        right,
+    )
+
+    repository.save_contradiction(contradiction)
+    repository.save_contradiction(contradiction)
+
+    assert repository.list_contradictions() == (
+        contradiction,
+    )
+
+
+def test_retains_contradiction_for_superseded_item(
+) -> None:
+    repository = InMemoryKnowledgeRepository()
+    left_v1 = build_revision(
+        item_id="knowledge-a",
+        statement="Statement A.",
+    )
+    right = build_revision(
+        item_id="knowledge-b",
+        statement="Statement B.",
+    )
+    left_v2 = build_revision(
+        item_id="knowledge-a",
+        statement="Updated statement A.",
+        version=2,
+        day=27,
+    )
+    repository.save(left_v1)
+    repository.save(right)
+    contradiction = build_contradiction(
+        left_v1,
+        right,
+    )
+    repository.save_contradiction(contradiction)
+
+    repository.save(left_v2)
+
+    assert repository.get(left_v1.item.id) is (
+        left_v2.item
+    )
+    assert repository.list_contradictions() == (
+        contradiction,
+    )
+    assert contradiction.items[0] is left_v1.item
+
+
+def test_preserves_distinct_contradiction_reasons(
+) -> None:
+    repository = InMemoryKnowledgeRepository()
+    left = build_revision(
+        item_id="knowledge-a",
+        statement="Statement A.",
+    )
+    right = build_revision(
+        item_id="knowledge-b",
+        statement="Statement B.",
+    )
+    repository.save(left)
+    repository.save(right)
+    first = build_contradiction(
+        left,
+        right,
+        reason="First reason.",
+    )
+    second = build_contradiction(
+        left,
+        right,
+        reason="Second reason.",
+    )
+
+    repository.save_contradiction(second)
+    repository.save_contradiction(first)
+
+    assert repository.list_contradictions() == (
+        first,
+        second,
+    )
+
+
+def test_returns_empty_contradictions_for_unknown_item(
+) -> None:
+    repository = InMemoryKnowledgeRepository()
+
+    assert repository.list_contradictions() == ()
+    assert repository.contradictions_for(
+        "unknown-item"
+    ) == ()
+
+
+def test_rejects_unstored_contradiction_item(
+) -> None:
+    repository = InMemoryKnowledgeRepository()
+    left = build_revision(
+        item_id="knowledge-a",
+        statement="Statement A.",
+    )
+    right = build_revision(
+        item_id="knowledge-b",
+        statement="Statement B.",
+    )
+    repository.save(left)
+    contradiction = build_contradiction(
+        left,
+        right,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "contradiction items must reference "
+            "stored knowledge versions"
+        ),
+    ):
+        repository.save_contradiction(
+            contradiction
+        )
+
+
+def test_rejects_mismatched_contradiction_item(
+) -> None:
+    repository = InMemoryKnowledgeRepository()
+    stored_left = build_revision(
+        item_id="knowledge-a",
+        statement="Stored statement A.",
+    )
+    incoming_left = build_revision(
+        item_id="knowledge-a",
+        statement="Different statement A.",
+    )
+    right = build_revision(
+        item_id="knowledge-b",
+        statement="Statement B.",
+    )
+    repository.save(stored_left)
+    repository.save(right)
+    contradiction = build_contradiction(
+        incoming_left,
+        right,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "contradiction items must reference "
+            "stored knowledge versions"
+        ),
+    ):
+        repository.save_contradiction(
+            contradiction
+        )
+
+
+def test_rejects_non_knowledge_contradiction(
+) -> None:
+    repository = InMemoryKnowledgeRepository()
+
+    with pytest.raises(
+        TypeError,
+        match=(
+            "contradiction must be a "
+            "KnowledgeContradiction"
+        ),
+    ):
+        repository.save_contradiction(
             object(),  # type: ignore[arg-type]
         )
 
