@@ -3,13 +3,14 @@ from datetime import datetime, timezone
 import pandas as pd
 
 from src.application import (
+    LegacyMarketDataProvider,
     MarketDataProvider,
     MarketExperimentSpecification,
     MarketPositionDirection,
 )
 
 
-class MarketDataProviderImplementation:
+class LegacyMarketDataProviderImplementation:
     def load(
         self,
         specification: MarketExperimentSpecification,
@@ -66,8 +67,10 @@ def build_specification() -> MarketExperimentSpecification:
     )
 
 
-def test_market_data_provider_defines_data_boundary() -> None:
-    provider: MarketDataProvider = MarketDataProviderImplementation()
+def test_legacy_market_data_provider_defines_data_boundary() -> None:
+    provider: LegacyMarketDataProvider = (
+        LegacyMarketDataProviderImplementation()
+    )
 
     specification = build_specification()
     data = provider.load(specification)
@@ -81,3 +84,7 @@ def test_market_data_provider_defines_data_boundary() -> None:
     ]
     assert len(data) == 1
     assert data.iloc[0]["Close"] == 100.5
+
+
+def test_market_data_provider_alias_preserves_compatibility() -> None:
+    assert MarketDataProvider is LegacyMarketDataProvider

@@ -6,7 +6,7 @@ from src.backtest import (
     Statistics,
 )
 from src.application.market_data_provider import (
-    MarketDataProvider,
+    LegacyMarketDataProvider,
 )
 from src.application.market_experiment_specification import (
     MarketExperimentSpecification,
@@ -41,7 +41,7 @@ class MarketBacktestExecutor:
     def __init__(
         self,
         specification: MarketExperimentSpecification,
-        data_provider: MarketDataProvider,
+        data_provider: LegacyMarketDataProvider,
         signal_provider: MarketSignalProvider,
     ) -> None:
 

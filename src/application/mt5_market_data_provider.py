@@ -10,7 +10,7 @@ import MetaTrader5 as mt5
 import pandas as pd
 
 from src.application.market_data_provider import (
-    MarketDataProvider,
+    LegacyMarketDataProvider,
 )
 from src.application.market_experiment_specification import (
     MarketExperimentSpecification,
@@ -24,7 +24,7 @@ class Mt5MarketDataProviderError(RuntimeError):
 
 
 class Mt5MarketDataProvider(
-    MarketDataProvider,
+    LegacyMarketDataProvider,
 ):
     """
     Loads closed historical candles from an installed MT5 terminal.

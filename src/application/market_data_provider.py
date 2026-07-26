@@ -11,9 +11,9 @@ from src.application.market_experiment_specification import (
 )
 
 
-class MarketDataProvider(Protocol):
+class LegacyMarketDataProvider(Protocol):
     """
-    Provides market data for one validated market experiment.
+    Provides legacy DataFrame data for one validated market experiment.
 
     Implementations may read historical files, databases, or external
     market-data APIs.
@@ -29,6 +29,11 @@ class MarketDataProvider(Protocol):
         """
         Load market data for the supplied specification.
         """
+
+
+# Compatibility alias for existing integrations.
+MarketDataProvider = LegacyMarketDataProvider
+
 
 class CanonicalMarketDatasetProvider(Protocol):
     """

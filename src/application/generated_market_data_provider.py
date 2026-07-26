@@ -1,7 +1,7 @@
 import pandas as pd
 
 from src.application.market_data_provider import (
-    MarketDataProvider,
+    LegacyMarketDataProvider,
 )
 from src.application.market_experiment_specification import (
     MarketExperimentSpecification,
@@ -10,13 +10,13 @@ from src.data.loader import generate_market_data
 
 
 class GeneratedMarketDataProvider(
-    MarketDataProvider,
+    LegacyMarketDataProvider,
 ):
     """
     Provides deterministic development market data.
 
     This adapter wraps the existing market-data generator and exposes it
-    through the MarketDataProvider application boundary.
+    through the LegacyMarketDataProvider application boundary.
 
     It does not create signals, execute trades, or run experiments.
     """

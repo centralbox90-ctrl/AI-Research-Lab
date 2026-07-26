@@ -52,6 +52,7 @@ from src.application.market_backtest_executor import (
 )
 from src.application.market_data_provider import (
     CanonicalMarketDatasetProvider,
+    LegacyMarketDataProvider,
     MarketDataProvider,
 )
 from src.application.market_experiment_executor import (
@@ -161,6 +162,7 @@ __all__ = [
     "InMemoryMarketExperimentSpecificationResolver",
     "InMemoryResearchCycleRepository",
     "LegacyMarketDataFrameAdapter",
+    "LegacyMarketDataProvider",
     "ListStoredResearchCycles",
     "ListStoredResearchCampaigns",
     "MappedMarketExperiment",

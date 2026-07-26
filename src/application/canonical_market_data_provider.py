@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from src.application.market_data_provider import (
-    MarketDataProvider,
+    LegacyMarketDataProvider,
 )
 from src.application.legacy_market_data_frame_adapter import (
     LegacyMarketDataFrameAdapter,
@@ -24,7 +24,7 @@ from src.application.market_dataset_quality import (
 
 class CanonicalMarketDataProvider:
     """
-    Decorates any MarketDataProvider with canonicalization and
+    Decorates any LegacyMarketDataProvider with canonicalization and
     fingerprinting.
 
     The wrapped provider remains responsible only for loading
@@ -33,7 +33,7 @@ class CanonicalMarketDataProvider:
 
     def __init__(
          self,
-         provider: MarketDataProvider,
+         provider: LegacyMarketDataProvider,
          legacy_adapter: LegacyMarketDataFrameAdapter | None = None,
          canonicalizer: MarketDatasetCanonicalizer | None = None,
          fingerprinter: MarketDatasetFingerprinter | None = None,

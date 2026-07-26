@@ -9,7 +9,7 @@ from src.application.git_command_runner import (
     GitCommandRunner,
 )
 from src.application.market_data_provider import (
-    MarketDataProvider,
+    LegacyMarketDataProvider,
 )
 from src.application.market_research_context_factory import (
     MarketResearchContextFactory,
@@ -34,7 +34,7 @@ from src.application.serialized_research_cycle_store import (
 )
 
 def build_market_research_application(
-    data_provider: MarketDataProvider,
+    data_provider: LegacyMarketDataProvider,
     signal_provider: MarketSignalProvider,
     store: SerializedResearchCycleStore,
 ) -> RunMarketResearch:
