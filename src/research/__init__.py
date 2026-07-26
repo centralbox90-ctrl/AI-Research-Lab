@@ -55,6 +55,9 @@ from src.research.knowledge_repository import (
     KnowledgeItemConflictError,
     KnowledgeRepository,
 )
+from src.research.knowledge_revision import (
+    KnowledgeRevision,
+)
 from src.research.next_experiment_selection import NextExperimentSelection
 from src.research.question import Question
 from src.research.research_environment import ResearchEnvironmentRef
@@ -94,6 +97,7 @@ __all__ = [
     "KnowledgeItem",
     "KnowledgeItemConflictError",
     "KnowledgeRepository",
+    "KnowledgeRevision",
     "NextExperimentResearchCycleResult",
     "NextExperimentSelection",
     "Question",

@@ -24,7 +24,7 @@
 | Signal | Core | Confirmed | Генерация сигналов и интеграция с существующим execution-контуром присутствуют. Декларативная композиция правил ограничена. |
 | Execution | Core | Confirmed | Technical Execution Stabilization завершена: BacktestEngine координирует жизненный цикл позиции, PositionFactory создаёт открытые LONG/SHORT позиции, PositionExitEvaluator определяет выход, TradeFactory формирует закрытые сделки. |
 | Analysis | Core | Confirmed | Реализован и протестирован полный сценарий Observation → Evidence → Finding → HypothesisEvaluation. Строгий JSON loader, CLI-команда, presenters, composition roots и пользовательский маршрут общего ResearchCli подключены. |
-| Knowledge | Core | Partial | Реализован и протестирован минимальный поток KnowledgeCandidate → validation → immutable KnowledgeItem → append-only InMemoryKnowledgeRepository. Repository protocol запрещает скрытую замену содержимого по существующему ID. Repository-managed version history и contradiction detection ещё не реализованы. |
+| Knowledge | Core | Partial | Реализован и протестирован минимальный поток KnowledgeCandidate → validation → immutable KnowledgeItem → append-only InMemoryKnowledgeRepository. Добавлен immutable KnowledgeRevision с UTC valid_from, обязательной причиной изменения и последовательной связью supersedes_version. Repository-managd version history и contradiction detection ещё не реализованы. |
 | Infrastructure | Supporting | Partial | Реализованы composition roots, CLI-компоненты, presenters, артефакты и CI. Границы инфраструктурных адаптеров продолжают уточняться. |
 
 ## Подтверждённый вертикальный срез
@@ -115,6 +115,8 @@
 
 - immutable KnowledgeCandidate;
 - immutable KnowledgeItem с положительной версией;
+- immutable KnowledgeRevision с UTC valid_from и обязательной причиной изменения;
+- последовательная связь каждой новой revision с непосредственно предыдущей версией;
 - KnowledgeCandidateValidator с явными confidence и supporting Findings policy;
 - детерминированное преобразование принятого кандидата в KnowledgeItem версии 1;
 - KnowledgeRepository protocol;
@@ -157,11 +159,11 @@ Conclusion и HypothesisDecision используются существующи
 
 ### Knowledge
 
-Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeCandidateValidator и KnowledgeRepository реализованы как специализированные контракты Knowledge Domain. Существующий mutable Knowledge остаётся legacy-моделью ResearchEngine. Validator допускает кандидата только по явной policy и создаёт KnowledgeItem версии 1 с полной трассируемостью. InMemoryKnowledgeRepository завершает минимальный append-only маршрут и не допускает скрытой замены знания по ID. Repository-managed version history, superseding и contradiction detection ещё не реализованы.
+Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandidateValidator и KnowledgeRepository реализованы как специализированные контракты Knowledge Domain. Существующий mutable Knowledge остаётся legacy-моделью ResearchEngine. KnowledgeRevision фиксирует UTC valid_from, причину изменения, fingerprint item и последовательную ссылку supersedes_version. InMemoryKnowledgeRepository пока хранит только один item на ID и ещё не использует revision history. Repository-managed version history, superseding и contradiction detection ещё не реализованы.
 
 ## Приоритеты развития
 
-1. Добавить repository-managed version history и superseding без удаления предыдущих KnowledgeItem.
+1. Подключить KnowledgeRevision к KnowledgeRepository: хранить полную историю и возвращать latest/version/history без удаления предыдущих KnowledgeItem.
 2. Продолжить внедрение canonical market data через адаптеры.
 3. Продолжить изоляцию и поэтапное удаление Legacy Analysis Pipeline.
 4. Унифицировать ExperimentExecution для остальных типов экспериментов.
