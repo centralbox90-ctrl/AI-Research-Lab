@@ -22,7 +22,7 @@
 | Market Data | Core | Partial | Реализованы загрузчики, generated market data и canonical dataset provider. Legacy-представления используются не во всех сценариях через единый контракт. |
 | Calculation | Core | Confirmed | Реализованы индикаторы, их автоматическое обнаружение и вычислительные исследовательские сценарии. |
 | Signal | Core | Confirmed | Генерация сигналов и интеграция с существующим execution-контуром присутствуют. Декларативная композиция правил ограничена. |
-| Execution | Core | Confirmed | Backtest Engine остаётся основной реализацией исполнения. Его внутренние ответственности ещё не полностью разделены. |
+| Execution | Core | Confirmed | Technical Execution Stabilization завершена: BacktestEngine координирует жизненный цикл позиции, PositionFactory создаёт открытые LONG/SHORT позиции, PositionExitEvaluator определяет выход, TradeFactory формирует закрытые сделки. |
 | Analysis | Core | Confirmed | Реализован и протестирован полный сценарий Observation → Evidence → Finding → HypothesisEvaluation. Строгий JSON loader, CLI-команда, presenters, composition roots и пользовательский маршрут общего ResearchCli подключены. |
 | Knowledge | Core | Planned | Специализированные repository, versioning и contradiction detection пока отсутствуют. |
 | Infrastructure | Supporting | Partial | Реализованы composition roots, CLI-компоненты, presenters, артефакты и CI. Границы инфраструктурных адаптеров продолжают уточняться. |
@@ -132,7 +132,7 @@ Canonical market data ещё не является единственным вн
 
 ### Execution
 
-Production research sessions используют CanonicalMarketDatasetProvider и PreparedMarketBacktestExecutor. LegacyMarketBacktestExecutor сохранён только как compatibility-контракт. PositionExitEvaluator отделяет детерминированные правила выхода из позиции от orchestration движка. TradeFactory отделяет применение модели исполнения и формирование закрытой сделки. PreparedMarketBacktestExecutor передаёт зарегистрированные commission и slippage в ExecutionPolicy. Существующий Backtest Engine объединяет оставшиеся моделирование брокера, исполнение и управление портфелем. Это допустимое переходное состояние, но не конечная граница домена.
+Production research sessions используют CanonicalMarketDatasetProvider и PreparedMarketBacktestExecutor. LegacyMarketBacktestExecutor сохранён только как compatibility-контракт. PositionFactory применяет entry slippage и создаёт LONG/SHORT Position. PositionExitEvaluator владеет детерминированными правилами выхода. TradeFactory применяет exit execution и формирует закрытый Trade. PreparedMarketBacktestExecutor передаёт зарегистрированные commission и slippage через ExecutionPolicy. BacktestEngine остаётся orchestration-компонентом и больше не создаёт открытые или закрытые позиции напрямую. Technical Execution Stabilization завершена.
 
 ### Legacy Analysis Pipeline
 
@@ -144,10 +144,10 @@ Conclusion и HypothesisDecision используются существующи
 
 ## Приоритеты развития
 
-1. Продолжить внедрение canonical market data через адаптеры.
-2. Разделить оставшиеся ответственности Backtest Engine.
-3. Реализовать первый минимальный вертикальный срез Knowledge Domain.
-4. Продолжить изоляцию и поэтапное удаление Legacy Analysis Pipeline.
+1. Реализовать минимальный вертикальный срез Knowledge Domain: Knowledge Candidate → validation → immutable KnowledgeItem → repository.
+2. Продолжить внедрение canonical market data через адаптеры.
+3. Продолжить изоляцию и поэтапное удаление Legacy Analysis Pipeline.
+4. Унифицировать ExperimentExecution для остальных типов экспериментов.
 
 ## Критерий обновления
 

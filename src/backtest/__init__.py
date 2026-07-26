@@ -6,6 +6,7 @@ from src.backtest.execution_types import (
     PositionSide,
 )
 from src.backtest.position import Position
+from src.backtest.position_factory import PositionFactory
 from src.backtest.position_exit_evaluator import (
     ExitDecision,
     PositionExitEvaluator,
@@ -22,6 +23,7 @@ __all__ = [
     "ExitDecision",
     "ExitReason",
     "Position",
+    "PositionFactory",
     "PositionSide",
     "PositionExitEvaluator",
     "Statistics",
