@@ -17,7 +17,7 @@
 
 | Домен | Architecture Status | Implementation Status | Подтверждённое состояние |
 |---|---|---|---|
-| Research | Core | Partial | Реализованы сравнительные исследования и application-поток validated CampaignDesign JSON → ResearchCampaignPlan → validated registrations → resolved MarketExperimentSpecification → последовательное выполнение кампании. Composition root, presenter и CLI-маршрут кампании пока отсутствуют. |
+| Research | Core | Partial | Реализованы сравнительные исследования и полный пользовательский поток validated CampaignDesign JSON → ResearchCampaignPlan → validated registrations → resolved MarketExperimentSpecification → последовательное выполнение → версионированный JSON-артефакт через CLI. |
 | Experiment | Core | Partial | Поддерживаются воспроизводимые результаты, планы оценки и исследовательские артефакты. Унифицированный жизненный цикл всех типов экспериментов ещё не завершён. |
 | Market Data | Core | Partial | Реализованы загрузчики, generated market data и canonical dataset provider. Legacy-представления используются не во всех сценариях через единый контракт. |
 | Calculation | Core | Confirmed | Реализованы индикаторы, их автоматическое обнаружение и вычислительные исследовательские сценарии. |
@@ -77,6 +77,8 @@
 - строгий MarketExperimentRegistrationLoader с проверкой plan ID и полного набора;
 - RunMarketResearchCampaign с полным разрешением плана до начала выполнения;
 - типизированный результат кампании с сохранением порядка и связи с плановыми спецификациями;
+- MarketResearchCampaignPresenter и версионированный JSON-артефакт кампании;
+- RunMarketResearchCampaignCommand, общий CLI-маршрут и production composition root;
 - comparative research application;
 - воспроизводимый comparative research result;
 - версионированный формат research artifact;
@@ -120,7 +122,7 @@
 
 ### Research orchestration
 
-Существующий ResearchCampaign остаётся изменяемым runtime-контрактом совместимости. Новый поток CampaignDesignLoader, CampaignDesign, ResearchPlanner, строгий registration loader, resolver, adapter и RunMarketResearchCampaign выполняет запланированную кампанию через явные application-границы. Для пользовательского запуска ещё отсутствуют composition root, presenter и CLI-маршрут.
+Существующий ResearchCampaign остаётся изменяемым runtime-контрактом совместимости. Новый поток CampaignDesignLoader, CampaignDesign, ResearchPlanner, строгий registration loader, resolver, adapter и RunMarketResearchCampaign выполняет запланированную кампанию через явные application-границы. MarketResearchCampaignPresenter формирует версионированный JSON-артефакт, RunMarketResearchCampaignCommand загружает согласованные входные документы, а production composition root подключает команду к общему ResearchCli.
 
 ### Market Data
 
@@ -140,12 +142,11 @@ Conclusion и HypothesisDecision используются существующи
 
 ## Приоритеты развития
 
-1. Подключить campaign use case через composition root, presenter и CLI.
-2. Добавить примеры согласованных CampaignDesign и registration JSON.
-3. Продолжить внедрение canonical market data через адаптеры.
-4. Разделить оставшиеся ответственности Backtest Engine.
-5. Реализовать первый минимальный вертикальный срез Knowledge Domain.
-6. Продолжить изоляцию и поэтапное удаление Legacy Analysis Pipeline.
+1. Добавить примеры согласованных CampaignDesign и registration JSON.
+2. Продолжить внедрение canonical market data через адаптеры.
+3. Разделить оставшиеся ответственности Backtest Engine.
+4. Реализовать первый минимальный вертикальный срез Knowledge Domain.
+5. Продолжить изоляцию и поэтапное удаление Legacy Analysis Pipeline.
 
 ## Критерий обновления
 
