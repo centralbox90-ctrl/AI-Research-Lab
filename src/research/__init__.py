@@ -44,6 +44,9 @@ from src.research.knowledge import Knowledge
 from src.research.knowledge_candidate import (
     KnowledgeCandidate,
 )
+from src.research.knowledge_item import (
+    KnowledgeItem,
+)
 from src.research.next_experiment_selection import NextExperimentSelection
 from src.research.question import Question
 from src.research.research_environment import ResearchEnvironmentRef
@@ -78,6 +81,7 @@ __all__ = [
     "HypothesisDecision",
     "Knowledge",
     "KnowledgeCandidate",
+    "KnowledgeItem",
     "NextExperimentResearchCycleResult",
     "NextExperimentSelection",
     "Question",
