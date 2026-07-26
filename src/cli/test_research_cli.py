@@ -286,3 +286,180 @@ def test_research_cli_reports_comparative_error(
             "evaluation: invalid comparative request\n"
         )
     )
+
+
+class StubMarketResearchCampaignCommand:
+    def __init__(self) -> None:
+        self.calls: list[
+            tuple[Path, Path, int | None]
+        ] = []
+
+    def execute(
+        self,
+        design_path: str | Path,
+        registration_path: str | Path,
+        *,
+        indent: int | None = 2,
+    ) -> str:
+        normalized_design_path = Path(design_path)
+        normalized_registration_path = Path(
+            registration_path
+        )
+        self.calls.append(
+            (
+                normalized_design_path,
+                normalized_registration_path,
+                indent,
+            )
+        )
+
+        return json.dumps(
+            {
+                "artifact_type": "market_research_campaign",
+                "design_path": str(normalized_design_path),
+                "registration_path": str(
+                    normalized_registration_path
+                ),
+            },
+            indent=indent,
+        )
+
+
+class FailingMarketResearchCampaignCommand:
+    def execute(
+        self,
+        design_path: str | Path,
+        registration_path: str | Path,
+        *,
+        indent: int | None = 2,
+    ) -> str:
+        raise ValueError("invalid campaign design")
+
+
+def build_cli_with_campaign_command(
+    command: object,
+) -> ResearchCli:
+    base_cli, _ = build_cli_with_saved_cycle()
+
+    return ResearchCli(
+        base_cli.get_research_cycle_command,
+        run_market_research_campaign_command=command,
+    )
+
+
+def test_research_cli_runs_market_research_campaign(
+) -> None:
+    command = StubMarketResearchCampaignCommand()
+    cli = build_cli_with_campaign_command(command)
+    stdout = StringIO()
+    stderr = StringIO()
+
+    exit_code = cli.run(
+        [
+            "run-market-research-campaign",
+            "--design",
+            "campaign-design.json",
+            "--registrations",
+            "registrations.json",
+        ],
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 0
+    assert stderr.getvalue() == ""
+    assert command.calls == [
+        (
+            Path("campaign-design.json"),
+            Path("registrations.json"),
+            2,
+        )
+    ]
+    assert json.loads(stdout.getvalue())[
+        "artifact_type"
+    ] == "market_research_campaign"
+
+
+def test_research_cli_supports_compact_campaign_json(
+) -> None:
+    command = StubMarketResearchCampaignCommand()
+    cli = build_cli_with_campaign_command(command)
+    stdout = StringIO()
+    stderr = StringIO()
+
+    exit_code = cli.run(
+        [
+            "run-market-research-campaign",
+            "--design",
+            "campaign-design.json",
+            "--registrations",
+            "registrations.json",
+            "--compact",
+        ],
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 0
+    assert stderr.getvalue() == ""
+    assert command.calls[0][2] is None
+    assert "\n" not in stdout.getvalue().rstrip("\n")
+
+
+def test_research_cli_reports_campaign_error() -> None:
+    cli = build_cli_with_campaign_command(
+        FailingMarketResearchCampaignCommand()
+    )
+    stdout = StringIO()
+    stderr = StringIO()
+
+    exit_code = cli.run(
+        [
+            "run-market-research-campaign",
+            "--design",
+            "invalid.json",
+            "--registrations",
+            "registrations.json",
+        ],
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 1
+    assert stdout.getvalue() == ""
+    assert (
+        stderr.getvalue()
+        == (
+            "Unable to run market research campaign: "
+            "invalid campaign design\n"
+        )
+    )
+
+
+def test_research_cli_reports_unconfigured_campaign_command(
+) -> None:
+    base_cli, _ = build_cli_with_saved_cycle()
+    stdout = StringIO()
+    stderr = StringIO()
+
+    exit_code = base_cli.run(
+        [
+            "run-market-research-campaign",
+            "--design",
+            "campaign-design.json",
+            "--registrations",
+            "registrations.json",
+        ],
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 2
+    assert stdout.getvalue() == ""
+    assert (
+        stderr.getvalue()
+        == (
+            "Run market research campaign command "
+            "is not configured.\n"
+        )
+    )

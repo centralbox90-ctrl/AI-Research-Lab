@@ -141,6 +141,23 @@ class RunResearchCommand(Protocol):
         """
 
 
+class MarketResearchCampaignCommand(Protocol):
+    """
+    Command boundary for running a planned market campaign.
+    """
+
+    def execute(
+        self,
+        design_path: str | Path,
+        registration_path: str | Path,
+        *,
+        indent: int | None = 2,
+    ) -> str:
+        """
+        Run a campaign from versioned input documents.
+        """
+
+
 class ResearchCli:
     """
     Parses CLI arguments and delegates work to command handlers.
@@ -171,6 +188,9 @@ class ResearchCli:
         list_research_campaigns_command: (
             ListResearchCampaignsCommand | None
         ) = None,
+        run_market_research_campaign_command: (
+            MarketResearchCampaignCommand | None
+        ) = None,
     ) -> None:
         self.get_research_cycle_command = (
             get_research_cycle_command
@@ -189,6 +209,9 @@ class ResearchCli:
         )
         self.run_comparative_hypothesis_evaluation_command = (
             run_comparative_hypothesis_evaluation_command
+        )
+        self.run_market_research_campaign_command = (
+            run_market_research_campaign_command
         )
 
         self.get_research_artifact_command = (
@@ -277,6 +300,13 @@ class ResearchCli:
            )
         if arguments.command == "run-research":
             return self._run_market_research(
+                arguments,
+                output_stream,
+                error_stream,
+            )
+
+        if arguments.command == "run-market-research-campaign":
+            return self._run_market_research_campaign(
                 arguments,
                 output_stream,
                 error_stream,
@@ -524,6 +554,40 @@ class ResearchCli:
 
         return 0
        
+    def _run_market_research_campaign(
+        self,
+        arguments: argparse.Namespace,
+        stdout: TextIO,
+        stderr: TextIO,
+    ) -> int:
+        command = self.run_market_research_campaign_command
+
+        if command is None:
+            stderr.write(
+                "Run market research campaign command "
+                "is not configured.\n"
+            )
+            return 2
+
+        indent = None if arguments.compact else 2
+
+        try:
+            rendered = command.execute(
+                arguments.design_path,
+                arguments.registration_path,
+                indent=indent,
+            )
+        except (ValueError, LookupError) as error:
+            stderr.write(
+                f"Unable to run market research campaign: {error}\n"
+            )
+            return 1
+
+        stdout.write(rendered)
+        stdout.write("\n")
+
+        return 0
+
     def _run_comparative_hypothesis_evaluation(
         self,
         arguments: argparse.Namespace,
@@ -672,6 +736,30 @@ class ResearchCli:
         )
 
         run_research_parser.add_argument(
+            "--compact",
+            action="store_true",
+        )
+
+        campaign_parser = subparsers.add_parser(
+            "run-market-research-campaign",
+            help="Run a reproducible market research campaign.",
+        )
+
+        campaign_parser.add_argument(
+            "--design",
+            dest="design_path",
+            type=Path,
+            required=True,
+        )
+
+        campaign_parser.add_argument(
+            "--registrations",
+            dest="registration_path",
+            type=Path,
+            required=True,
+        )
+
+        campaign_parser.add_argument(
             "--compact",
             action="store_true",
         )
