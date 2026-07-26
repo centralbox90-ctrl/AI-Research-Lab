@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import pandas as pd
 
 from src.application.market_backtest_executor import (
+    LegacyMarketBacktestExecutor,
     MarketBacktestExecutor,
 )
 from src.application.market_experiment_specification import (
@@ -117,11 +118,11 @@ def build_specification():
     )
 
 
-def test_market_backtest_executor_runs_complete_execution():
+def test_legacy_market_backtest_executor_runs_complete_execution():
 
     specification = build_specification()
 
-    executor = MarketBacktestExecutor(
+    executor = LegacyMarketBacktestExecutor(
         specification=specification,
         data_provider=FakeMarketDataProvider(),
         signal_provider=FakeSignalProvider(),
@@ -139,3 +140,7 @@ def test_market_backtest_executor_runs_complete_execution():
     assert result.observations["exit_reasons"] == [
         "take_profit",
     ]
+
+
+def test_market_backtest_executor_alias_preserves_compatibility() -> None:
+    assert MarketBacktestExecutor is LegacyMarketBacktestExecutor

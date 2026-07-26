@@ -1,5 +1,3 @@
-from collections.abc import Callable
-
 from src.backtest import (
     BacktestEngine,
     ExecutionPolicy,
@@ -19,9 +17,9 @@ from src.research import (
     ExperimentResult,
 )
 
-class MarketBacktestExecutor:
+class LegacyMarketBacktestExecutor:
     """
-    Executes one market experiment through application boundaries.
+    Executes one legacy market experiment through compatibility boundaries.
 
     Flow:
 
@@ -117,3 +115,7 @@ class MarketBacktestExecutor:
             },
             conclusion=conclusion,
         )
+
+
+# Compatibility alias for existing integrations.
+MarketBacktestExecutor = LegacyMarketBacktestExecutor

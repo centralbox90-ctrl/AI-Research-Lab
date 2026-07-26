@@ -48,6 +48,7 @@ from src.application.list_stored_research_campaigns import (
     ListStoredResearchCampaigns,
 )
 from src.application.market_backtest_executor import (
+    LegacyMarketBacktestExecutor,
     MarketBacktestExecutor,
 )
 from src.application.market_data_provider import (
@@ -166,6 +167,7 @@ __all__ = [
     "ListStoredResearchCycles",
     "ListStoredResearchCampaigns",
     "MappedMarketExperiment",
+    "LegacyMarketBacktestExecutor",
     "MarketBacktestExecutor",
     "MarketDataProvider",
     "MarketExperimentExecutor",
