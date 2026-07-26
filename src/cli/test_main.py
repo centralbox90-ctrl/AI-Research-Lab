@@ -9,6 +9,9 @@ from src.cli import (
 from src.cli.run_indicator_comparative_hypothesis_evaluation_command import (
     RunIndicatorComparativeHypothesisEvaluationCommand,
 )
+from src.cli.run_market_research_campaign_command import (
+    RunMarketResearchCampaignCommand,
+)
 from src.storage import SqliteResearchCycleStore
 
 
@@ -112,4 +115,17 @@ def test_build_research_cli_configures_comparative_command(
     assert isinstance(
         cli.run_comparative_hypothesis_evaluation_command,
         RunIndicatorComparativeHypothesisEvaluationCommand,
+    )
+
+
+def test_build_research_cli_configures_campaign_command(
+    tmp_path: Path,
+) -> None:
+    cli = build_research_cli(
+        db_path=tmp_path / "research_cycles.db",
+    )
+
+    assert isinstance(
+        cli.run_market_research_campaign_command,
+        RunMarketResearchCampaignCommand,
     )

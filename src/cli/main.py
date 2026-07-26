@@ -47,6 +47,9 @@ from src.cli.indicator_comparative_hypothesis_evaluation_composition_root import
     build_default_indicator_comparative_hypothesis_evaluation_command,
 )
 from src.cli.research_cli import ResearchCli
+from src.cli.run_market_research_campaign_command import (
+    RunMarketResearchCampaignCommand,
+)
 from src.cli.run_market_research_command import (
     RunMarketResearchCommand,
 )
@@ -128,6 +131,10 @@ def build_research_cli(
         run_market_research=market_research_application,
     )
 
+    run_campaign_command = RunMarketResearchCampaignCommand(
+        runner=market_research_application,
+    )
+
     comparative_evaluation_command = (
         build_default_indicator_comparative_hypothesis_evaluation_command(
             data_provider=CanonicalMarketDataProvider(
@@ -147,6 +154,9 @@ def build_research_cli(
         ),
         list_research_cycles_command=list_command,
         run_research_command=run_command,
+        run_market_research_campaign_command=(
+            run_campaign_command
+        ),
         run_comparative_hypothesis_evaluation_command=(
             comparative_evaluation_command
         ),
