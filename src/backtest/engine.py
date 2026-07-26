@@ -9,6 +9,7 @@ from src.backtest.legacy_signal_mapper import (
     map_legacy_signal_to_action,
 )
 from src.backtest.position import Position
+from src.backtest.position_factory import PositionFactory
 from src.backtest.position_exit_evaluator import (
     PositionExitEvaluator,
 )
@@ -18,7 +19,7 @@ from src.backtest.trade_factory import TradeFactory
 
 class BacktestEngine:
     """
-    Executes deterministic historical backtests.
+    Orchestrates deterministic historical backtests.
 
     Supports:
     - LONG positions;
@@ -32,12 +33,17 @@ class BacktestEngine:
     def __init__(
         self,
         exit_evaluator: PositionExitEvaluator | None = None,
+        position_factory: PositionFactory | None = None,
         trade_factory: TradeFactory | None = None,
     ) -> None:
         self.trades: list[Trade] = []
         self._exit_evaluator = (
             exit_evaluator
             or PositionExitEvaluator()
+        )
+        self._position_factory = (
+            position_factory
+            or PositionFactory()
         )
         self._trade_factory = (
             trade_factory
