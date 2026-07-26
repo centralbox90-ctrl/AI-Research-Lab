@@ -79,6 +79,7 @@
 - типизированный результат кампании с сохранением порядка и связи с плановыми спецификациями;
 - MarketResearchCampaignPresenter и версионированный JSON-артефакт кампании;
 - RunMarketResearchCampaignCommand, общий CLI-маршрут и production composition root;
+- synchronized CampaignDesign and registration JSON examples with an end-to-end CLI test;
 - comparative research application;
 - воспроизводимый comparative research result;
 - версионированный формат research artifact;
@@ -142,11 +143,10 @@ Conclusion и HypothesisDecision используются существующи
 
 ## Приоритеты развития
 
-1. Добавить примеры согласованных CampaignDesign и registration JSON.
-2. Продолжить внедрение canonical market data через адаптеры.
-3. Разделить оставшиеся ответственности Backtest Engine.
-4. Реализовать первый минимальный вертикальный срез Knowledge Domain.
-5. Продолжить изоляцию и поэтапное удаление Legacy Analysis Pipeline.
+1. Продолжить внедрение canonical market data через адаптеры.
+2. Разделить оставшиеся ответственности Backtest Engine.
+3. Реализовать первый минимальный вертикальный срез Knowledge Domain.
+4. Продолжить изоляцию и поэтапное удаление Legacy Analysis Pipeline.
 
 ## Критерий обновления
 
