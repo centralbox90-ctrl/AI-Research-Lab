@@ -64,6 +64,10 @@ from src.research.knowledge_contradiction_rule import (
 from src.research.knowledge_item import (
     KnowledgeItem,
 )
+from src.research.knowledge_relation import (
+    KnowledgeRelation,
+    KnowledgeRelationType,
+)
 from src.research.knowledge_repository import (
     KnowledgeItemConflictError,
     KnowledgeRepository,
@@ -114,6 +118,8 @@ __all__ = [
     "KnowledgeContradictionDetector",
     "KnowledgeContradictionRule",
     "KnowledgeItem",
+    "KnowledgeRelation",
+    "KnowledgeRelationType",
     "KnowledgeItemConflictError",
     "KnowledgeRepository",
     "KnowledgeRevision",
