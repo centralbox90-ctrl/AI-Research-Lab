@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "campaign_plan_id": "research-campaign-plan:sha256:ead4a4a4851f50a9c1e257b68222ceb5b2eb0ec3d1208298934e8de04811d0d8",
+  "registrations": [
+    {
+      "planned_experiment_id": "campaign-experiment-specification:sha256:f48a565f2c4563cf93b1075a9f27118cca7dcba809ad76f3c162afa4f949cb5d",
+      "market_specification": {
+        "executor_type": "market_backtest",
+        "question_title": "Does RSI oversold predict positive returns?",
+        "question_description": "Run a reproducible campaign example with generated canonical market data.",
+        "hypothesis_title": "RSI oversold values precede positive returns",
+        "hypothesis_description": "The registered signal is expected to produce positive historical returns.",
+        "expected_result": "A completed reproducible research cycle.",
+        "experiment_title": "BTCUSDT H1 campaign example",
+        "experiment_description": "Execute one registered market experiment.",
+        "data_source": "generated",
+        "symbol": "BTCUSDT",
+        "timeframe": "H1",
+        "start_at": "2024-01-01T00:00:00Z",
+        "end_at": "2024-12-31T00:00:00Z",
+        "entry_rule": "simple-market-signal-v1",
+        "exit_rule": "stop-take-or-max-holding-v1",
+        "direction": "LONG",
+        "stop_loss_percent": 1.0,
+        "take_profit_percent": 2.0,
+        "max_holding_bars": 24,
+        "commission_percent": 0.1,
+        "slippage_percent": 0.05,
+        "strategy_parameters": {
+          "rsi_period": 14,
+          "oversold_level": 30
+        },
+        "tags": [
+          "repository-example",
+          "research-campaign-plan:sha256:ead4a4a4851f50a9c1e257b68222ceb5b2eb0ec3d1208298934e8de04811d0d8",
+          "campaign-experiment-specification:sha256:f48a565f2c4563cf93b1075a9f27118cca7dcba809ad76f3c162afa4f949cb5d"
+        ]
+      }
+    }
+  ]
+}

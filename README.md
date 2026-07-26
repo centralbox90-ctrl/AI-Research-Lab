@@ -90,6 +90,25 @@ python -m pytest -q
 
 Та же проверка автоматически выполняется в GitHub Actions при push и pull request в ветку `main`.
 
+## Пример исследовательской кампании
+
+Репозиторий содержит согласованные примеры входных документов:
+
+- `examples/campaign_design.json`;
+- `examples/campaign_registrations.json`.
+
+Запуск примера:
+
+```powershell
+python -m src.cli.main `
+    --database .research_lab/example-campaign.db `
+    run-market-research-campaign `
+    --design examples/campaign_design.json `
+    --registrations examples/campaign_registrations.json
+```
+
+Registration JSON содержит идентификаторы, детерминированно вычисленные из Campaign Design. Поэтому оба файла необходимо изменять и проверять совместно.
+
 ## Локальные данные и артефакты
 
 Каталоги локальных данных, исследовательского состояния и сгенерированных артефактов не публикуются в Git:
