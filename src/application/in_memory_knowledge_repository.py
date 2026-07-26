@@ -1,3 +1,6 @@
+from src.research.knowledge_applicability_query import (
+    KnowledgeApplicabilityQuery,
+)
 from src.research.knowledge_item import KnowledgeItem
 from src.research.knowledge_repository import (
     KnowledgeItemConflictError,
@@ -144,6 +147,25 @@ class InMemoryKnowledgeRepository:
                 max(self._revisions[item_id])
             ].item
             for item_id in sorted(self._revisions)
+        )
+
+    def find_applicable(
+        self,
+        query: KnowledgeApplicabilityQuery,
+    ) -> tuple[KnowledgeItem, ...]:
+        if not isinstance(
+            query,
+            KnowledgeApplicabilityQuery,
+        ):
+            raise TypeError(
+                "query must be a "
+                "KnowledgeApplicabilityQuery"
+            )
+
+        return tuple(
+            item
+            for item in self.list_all()
+            if query.matches(item)
         )
 
     @staticmethod

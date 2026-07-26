@@ -24,7 +24,7 @@
 | Signal | Core | Confirmed | Генерация сигналов и интеграция с существующим execution-контуром присутствуют. Декларативная композиция правил ограничена. |
 | Execution | Core | Confirmed | Technical Execution Stabilization завершена: BacktestEngine координирует жизненный цикл позиции, PositionFactory создаёт открытые LONG/SHORT позиции, PositionExitEvaluator определяет выход, TradeFactory формирует закрытые сделки. |
 | Analysis | Core | Confirmed | Реализован и протестирован полный сценарий Observation → Evidence → Finding → HypothesisEvaluation. Строгий JSON loader, CLI-команда, presenters, composition roots и пользовательский маршрут общего ResearchCli подключены. |
-| Knowledge | Core | Partial | Реализован и протестирован поток KnowledgeCandidate → validation → immutable KnowledgeItem → KnowledgeRevision → versioned InMemoryKnowledgeRepository. Repository сохраняет append-only историю, возвращает latest/version/history и проверяет последовательность версий и UTC-хронологию. Добавлен типизированный KnowledgeApplicabilityQuery с режимами ALL/ANY и детерминированным matching по обязательной области применимости. Поиск через repository и contradiction detection ещё не реализованы. |
+| Knowledge | Core | Partial | Реализован и протестирован поток KnowledgeCandidate → validation → immutable KnowledgeItem → KnowledgeRevision → versioned InMemoryKnowledgeRepository. Repository сохраняет append-only историю, возвращает latest/version/history и проверяет последовательность версий и UTC-хронологию. KnowledgeApplicabilityQuery поддерживает режимы ALL/ANY, а repository выполняет детерминированный поиск по последним KnowledgeItem. Contradiction detection ещё не реализован. |
 | Infrastructure | Supporting | Partial | Реализованы composition roots, CLI-компоненты, presenters, артефакты и CI. Границы инфраструктурных адаптеров продолжают уточняться. |
 
 ## Подтверждённый вертикальный срез
@@ -128,6 +128,7 @@
 - сквозной контрактный тест Candidate → validation → KnowledgeItem → KnowledgeRevision → repository;
 - типизированный KnowledgeApplicabilityQuery с режимами ALL и ANY;
 - нормализация applicability terms и детерминированный matching;
+- repository-level find_applicable по последним KnowledgeItem в детерминированном порядке ID;
 - обязательная область применимости;
 - ссылки на supporting Findings и HypothesisEvaluation;
 - обязательный provenance;
@@ -163,11 +164,11 @@ Conclusion и HypothesisDecision используются существующи
 
 ### Knowledge
 
-Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandidateValidator и KnowledgeRepository реализованы как специализированные контракты Knowledge Domain. Существующий mutable Knowledge остаётся legacy-моделью ResearchEngine. InMemoryKnowledgeRepository хранит все KnowledgeRevision без удаления, возвращает latest/version/history, проверяет линейную последовательность и монотонный UTC valid_from. Типизированный KnowledgeApplicabilityQuery реализован независимо от repository. Persistent repository, repository-level applicability search и contradiction detection ещё не реализованы.
+Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandidateValidator и KnowledgeRepository реализованы как специализированные контракты Knowledge Domain. Существующий mutable Knowledge остаётся legacy-моделью ResearchEngine. InMemoryKnowledgeRepository хранит все KnowledgeRevision без удаления, возвращает latest/version/history, проверяет линейную последовательность и монотонный UTC valid_from. Repository-level find_applicable применяет типизированный KnowledgeApplicabilityQuery только к latest KnowledgeItem и возвращает результат в детерминированном порядке ID. Persistent repository и contradiction detection ещё не реализованы.
 
 ## Приоритеты развития
 
-1. Подключить KnowledgeApplicabilityQuery к детерминированному поиску по последним KnowledgeItem.
+1. Добавить детерминированное contradiction detection для последних KnowledgeItem.
 2. Продолжить внедрение canonical market data через адаптеры.
 3. Продолжить изоляцию и поэтапное удаление Legacy Analysis Pipeline.
 4. Унифицировать ExperimentExecution для остальных типов экспериментов.

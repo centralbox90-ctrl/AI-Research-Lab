@@ -1,5 +1,8 @@
 from typing import Protocol, runtime_checkable
 
+from src.research.knowledge_applicability_query import (
+    KnowledgeApplicabilityQuery,
+)
 from src.research.knowledge_item import KnowledgeItem
 from src.research.knowledge_revision import (
     KnowledgeRevision,
@@ -95,3 +98,9 @@ class KnowledgeRepository(Protocol):
         self,
     ) -> tuple[KnowledgeItem, ...]:
         """Return latest items in deterministic ID order."""
+
+    def find_applicable(
+        self,
+        query: KnowledgeApplicabilityQuery,
+    ) -> tuple[KnowledgeItem, ...]:
+        """Return matching latest items in deterministic ID order."""

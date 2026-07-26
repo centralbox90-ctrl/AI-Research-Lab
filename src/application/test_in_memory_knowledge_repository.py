@@ -5,6 +5,10 @@ import pytest
 from src.application.in_memory_knowledge_repository import (
     InMemoryKnowledgeRepository,
 )
+from src.research.knowledge_applicability_query import (
+    ApplicabilityMatchMode,
+    KnowledgeApplicabilityQuery,
+)
 from src.research.knowledge_candidate import (
     KnowledgeCandidate,
 )
@@ -27,14 +31,15 @@ def build_item(
     item_id: str = "knowledge-a",
     statement: str = "Statement A.",
     version: int = 1,
+    applicability: tuple[str, ...] = (
+        "liquid markets",
+    ),
 ) -> KnowledgeItem:
     return KnowledgeItem(
         id=item_id,
         statement=statement,
         confidence=0.85,
-        applicability=(
-            "liquid markets",
-        ),
+        applicability=applicability,
         limitations=(
             "limited history",
         ),
@@ -58,12 +63,16 @@ def build_revision(
     statement: str = "Statement A.",
     version: int = 1,
     day: int = 26,
+    applicability: tuple[str, ...] = (
+        "liquid markets",
+    ),
 ) -> KnowledgeRevision:
     return KnowledgeRevision(
         item=build_item(
             item_id=item_id,
             statement=statement,
             version=version,
+            applicability=applicability,
         ),
         valid_from=datetime(
             2026,
@@ -215,6 +224,116 @@ def test_lists_latest_items_in_deterministic_id_order(
         item_a_v2.item,
         item_b_v1.item,
     )
+
+
+def test_finds_matching_latest_items_in_id_order(
+) -> None:
+    repository = InMemoryKnowledgeRepository()
+    item_b = build_revision(
+        item_id="knowledge-b",
+        applicability=(
+            "liquid markets",
+            "trend regime",
+        ),
+    )
+    item_a_v1 = build_revision(
+        item_id="knowledge-a",
+        applicability=(
+            "liquid markets",
+            "trend regime",
+        ),
+    )
+    item_a_v2 = build_revision(
+        item_id="knowledge-a",
+        statement="Updated statement A.",
+        version=2,
+        day=27,
+        applicability=(
+            "liquid markets",
+            "range regime",
+        ),
+    )
+    item_c = build_revision(
+        item_id="knowledge-c",
+        applicability=(
+            "trend regime",
+            "liquid markets",
+        ),
+    )
+    repository.save(item_c)
+    repository.save(item_a_v1)
+    repository.save(item_b)
+    repository.save(item_a_v2)
+    query = KnowledgeApplicabilityQuery(
+        terms=(
+            "TREND REGIME",
+            " liquid markets ",
+        ),
+    )
+
+    assert repository.find_applicable(query) == (
+        item_b.item,
+        item_c.item,
+    )
+
+
+def test_finds_latest_items_with_any_match_mode(
+) -> None:
+    repository = InMemoryKnowledgeRepository()
+    item_b = build_revision(
+        item_id="knowledge-b",
+        applicability=("trend regime",),
+    )
+    item_a = build_revision(
+        item_id="knowledge-a",
+        applicability=("crisis regime",),
+    )
+    item_c = build_revision(
+        item_id="knowledge-c",
+        applicability=("range regime",),
+    )
+    repository.save(item_c)
+    repository.save(item_b)
+    repository.save(item_a)
+    query = KnowledgeApplicabilityQuery(
+        terms=(
+            "crisis regime",
+            "trend regime",
+        ),
+        match_mode=ApplicabilityMatchMode.ANY,
+    )
+
+    assert repository.find_applicable(query) == (
+        item_a.item,
+        item_b.item,
+    )
+
+
+def test_find_applicable_returns_empty_tuple(
+) -> None:
+    repository = InMemoryKnowledgeRepository()
+    repository.save(build_revision())
+    query = KnowledgeApplicabilityQuery(
+        terms=("crisis regime",),
+    )
+
+    assert repository.find_applicable(query) == ()
+
+
+def test_find_applicable_rejects_non_query(
+) -> None:
+    repository = InMemoryKnowledgeRepository()
+
+    with pytest.raises(
+        TypeError,
+        match=(
+            "query must be a "
+            "KnowledgeApplicabilityQuery"
+        ),
+    ):
+        repository.find_applicable(
+            object(),  # type: ignore[arg-type]
+        )
 
 
 def test_repeated_save_of_same_revision_is_idempotent(
