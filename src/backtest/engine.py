@@ -124,34 +124,26 @@ class BacktestEngine:
 
             if position is None:
 
-                if action == DecisionAction.OPEN_LONG:
-                    entry_price = execution_model.entry_price(
-                        price=close_price,
-                        side=PositionSide.LONG,
+                if action in (
+                    DecisionAction.OPEN_LONG,
+                    DecisionAction.OPEN_SHORT,
+                ):
+                    side = (
+                        PositionSide.LONG
+                        if action == DecisionAction.OPEN_LONG
+                        else PositionSide.SHORT
                     )
 
-                    position = Position(
-                        symbol=symbol,
-                        timeframe=timeframe,
-                        side=PositionSide.LONG,
-                        entry_time=timestamp,
-                        entry_price=entry_price,
-                        entry_signal=signal,
-                    )
-
-                elif action == DecisionAction.OPEN_SHORT:
-                    entry_price = execution_model.entry_price(
-                        price=close_price,
-                        side=PositionSide.SHORT,
-                    )
-
-                    position = Position(
-                        symbol=symbol,
-                        timeframe=timeframe,
-                        side=PositionSide.SHORT,
-                        entry_time=timestamp,
-                        entry_price=entry_price,
-                        entry_signal=signal,
+                    position = (
+                        self._position_factory.open_position(
+                            symbol=symbol,
+                            timeframe=timeframe,
+                            side=side,
+                            entry_time=timestamp,
+                            requested_entry_price=close_price,
+                            entry_signal=signal,
+                            execution_model=execution_model,
+                        )
                     )
 
         if position is not None:
