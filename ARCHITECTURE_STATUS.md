@@ -24,7 +24,7 @@
 | Signal | Core | Confirmed | Генерация сигналов и интеграция с существующим execution-контуром присутствуют. Декларативная композиция правил ограничена. |
 | Execution | Core | Confirmed | Technical Execution Stabilization завершена: BacktestEngine координирует жизненный цикл позиции, PositionFactory создаёт открытые LONG/SHORT позиции, PositionExitEvaluator определяет выход, TradeFactory формирует закрытые сделки. |
 | Analysis | Core | Confirmed | Реализован и протестирован полный сценарий Observation → Evidence → Finding → HypothesisEvaluation. Строгий JSON loader, CLI-команда, presenters, composition roots и пользовательский маршрут общего ResearchCli подключены. |
-| Knowledge | Core | Partial | Реализован и протестирован поток KnowledgeCandidate → validation → immutable KnowledgeItem → KnowledgeRevision → versioned InMemoryKnowledgeRepository. Repository сохраняет append-only историю, возвращает latest/version/history и проверяет последовательность версий и UTC-хронологию. KnowledgeApplicabilityQuery поддерживает режимы ALL/ANY, а repository выполняет детерминированный поиск по последним KnowledgeItem. Добавлен immutable KnowledgeContradiction с точными ссылками на версии, fingerprint и конфликтующую applicability. Contradiction detector и repository registration ещё не реализованы. |
+| Knowledge | Core | Partial | Реализован и протестирован поток KnowledgeCandidate → validation → immutable KnowledgeItem → KnowledgeRevision → versioned InMemoryKnowledgeRepository. Repository сохраняет append-only историю, возвращает latest/version/history и проверяет последовательность версий и UTC-хронологию. KnowledgeApplicabilityQuery поддерживает режимы ALL/ANY, а repository выполняет детерминированный поиск по последним KnowledgeItem. Добавлены immutable KnowledgeContradiction и KnowledgeContradictionRule. Rule явно задаёт две несовместимые нормализованные формулировки без текстовых эвристик. Contradiction detector и repository registration ещё не реализованы. |
 | Infrastructure | Supporting | Partial | Реализованы composition roots, CLI-компоненты, presenters, артефакты и CI. Границы инфраструктурных адаптеров продолжают уточняться. |
 
 ## Подтверждённый вертикальный срез
@@ -131,6 +131,8 @@
 - repository-level find_applicable по последним KnowledgeItem в детерминированном порядке ID;
 - immutable KnowledgeContradiction с канонической парой версионированных KnowledgeItem;
 - обязательные reason и пересечение conflicting applicability;
+- immutable KnowledgeContradictionRule с канонической парой нормализованных statements;
+- точный case-insensitive rule matching без semantic heuristics;
 - обязательная область применимости;
 - ссылки на supporting Findings и HypothesisEvaluation;
 - обязательный provenance;
@@ -166,11 +168,11 @@ Conclusion и HypothesisDecision используются существующи
 
 ### Knowledge
 
-Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandidateValidator и KnowledgeRepository реализованы как специализированные контракты Knowledge Domain. Существующий mutable Knowledge остаётся legacy-моделью ResearchEngine. InMemoryKnowledgeRepository хранит все KnowledgeRevision без удаления, возвращает latest/version/history, проверяет линейную последовательность и монотонный UTC valid_from. Repository-level find_applicable применяет типизированный KnowledgeApplicabilityQuery только к latest KnowledgeItem и возвращает результат в детерминированном порядке ID. Immutable KnowledgeContradiction регистрирует каноническую пару точных версий KnowledgeItem, их fingerprints, обязательную reason и пересечение applicability. Persistent repository, contradiction rules, detector и repository registration ещё не реализованы.
+Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandidateValidator и KnowledgeRepository реализованы как специализированные контракты Knowledge Domain. Существующий mutable Knowledge остаётся legacy-моделью ResearchEngine. InMemoryKnowledgeRepository хранит все KnowledgeRevision без удаления, возвращает latest/version/history, проверяет линейную последовательность и монотонный UTC valid_from. Repository-level find_applicable применяет типизированный KnowledgeApplicabilityQuery только к latest KnowledgeItem и возвращает результат в детерминированном порядке ID. Immutable KnowledgeContradiction регистрирует каноническую пару точных версий KnowledgeItem, их fingerprints, обязательную reason и пересечение applicability. KnowledgeContradictionRule явно задаёт две несовместимые нормализованные формулировки и выполняет точный case-insensitive matching. Persistent repository, detector и repository registration ещё не реализованы.
 
 ## Приоритеты развития
 
-1. Добавить явные contradiction rules и детерминированный detector для последних KnowledgeItem.
+1. Добавить детерминированный KnowledgeContradictionDetector для последних KnowledgeItem.
 2. Продолжить внедрение canonical market data через адаптеры.
 3. Продолжить изоляцию и поэтапное удаление Legacy Analysis Pipeline.
 4. Унифицировать ExperimentExecution для остальных типов экспериментов.
