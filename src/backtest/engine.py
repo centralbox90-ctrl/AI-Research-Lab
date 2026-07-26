@@ -9,6 +9,9 @@ from src.backtest.legacy_signal_mapper import (
     map_legacy_signal_to_action,
 )
 from src.backtest.position import Position
+from src.backtest.position_exit_evaluator import (
+    PositionExitEvaluator,
+)
 from src.backtest.trade import Trade
 
 
@@ -25,8 +28,15 @@ class BacktestEngine:
     - explicit decision exits.
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        exit_evaluator: PositionExitEvaluator | None = None,
+    ) -> None:
         self.trades: list[Trade] = []
+        self._exit_evaluator = (
+            exit_evaluator
+            or PositionExitEvaluator()
+        )
 
     def run(
         self,
@@ -76,19 +86,27 @@ class BacktestEngine:
                     low=low_price,
                 )
 
-                trade = self._check_exit(
+                exit_decision = self._exit_evaluator.evaluate(
                     position=position,
-                    index=timestamp,
                     close_price=close_price,
                     high_price=high_price,
                     low_price=low_price,
                     action=action,
                     policy=policy,
-                    execution_model=execution_model,
                 )
 
-                if trade is not None:
-                    self.trades.append(trade)
+                if exit_decision is not None:
+                    self.trades.append(
+                        self._create_trade(
+                            position=position,
+                            exit_time=timestamp,
+                            requested_exit_price=(
+                                exit_decision.requested_price
+                            ),
+                            reason=exit_decision.reason,
+                            execution_model=execution_model,
+                        )
+                    )
                     position = None
                     continue
 
@@ -139,112 +157,6 @@ class BacktestEngine:
             )
 
         return self.trades
-
-    def _check_exit(
-        self,
-        position: Position,
-        index,
-        close_price: float,
-        high_price: float,
-        low_price: float,
-        action: DecisionAction,
-        policy: ExecutionPolicy,
-        execution_model: ExecutionModel,
-    ) -> Trade | None:
-
-        if position.side == PositionSide.LONG:
-
-            stop_price = (
-                position.entry_price
-                * (
-                    1
-                    - policy.stop_loss_percent / 100
-                )
-            )
-
-            take_price = (
-                position.entry_price
-                * (
-                    1
-                    + policy.take_profit_percent / 100
-                )
-            )
-
-            if low_price <= stop_price:
-                return self._create_trade(
-                    position=position,
-                    exit_time=index,
-                    requested_exit_price=stop_price,
-                    reason=ExitReason.STOP_LOSS,
-                    execution_model=execution_model,
-                )
-
-            if high_price >= take_price:
-                return self._create_trade(
-                    position=position,
-                    exit_time=index,
-                    requested_exit_price=take_price,
-                    reason=ExitReason.TAKE_PROFIT,
-                    execution_model=execution_model,
-                )
-
-        elif position.side == PositionSide.SHORT:
-
-            stop_price = (
-                position.entry_price
-                * (
-                    1
-                    + policy.stop_loss_percent / 100
-                )
-            )
-
-            take_price = (
-                position.entry_price
-                * (
-                    1
-                    - policy.take_profit_percent / 100
-                )
-            )
-
-            if high_price >= stop_price:
-                return self._create_trade(
-                    position=position,
-                    exit_time=index,
-                    requested_exit_price=stop_price,
-                    reason=ExitReason.STOP_LOSS,
-                    execution_model=execution_model,
-                )
-
-            if low_price <= take_price:
-                return self._create_trade(
-                    position=position,
-                    exit_time=index,
-                    requested_exit_price=take_price,
-                    reason=ExitReason.TAKE_PROFIT,
-                    execution_model=execution_model,
-                )
-
-        if position.bars_held >= policy.max_holding_bars:
-
-            return self._create_trade(
-                position=position,
-                exit_time=index,
-                requested_exit_price=close_price,
-                reason=ExitReason.MAX_HOLDING,
-                execution_model=execution_model,
-            )
-
-        if action == DecisionAction.CLOSE:
-
-            return self._create_trade(
-                position=position,
-                exit_time=index,
-                requested_exit_price=close_price,
-                reason=ExitReason.DECISION_EXIT,
-                execution_model=execution_model,
-            )
-
-        return None
 
     def _create_trade(
         self,
