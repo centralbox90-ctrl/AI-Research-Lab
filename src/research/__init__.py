@@ -55,6 +55,9 @@ from src.research.knowledge_candidate_validator import (
 from src.research.knowledge_contradiction import (
     KnowledgeContradiction,
 )
+from src.research.knowledge_contradiction_detector import (
+    KnowledgeContradictionDetector,
+)
 from src.research.knowledge_contradiction_rule import (
     KnowledgeContradictionRule,
 )
@@ -108,6 +111,7 @@ __all__ = [
     "KnowledgeCandidateValidationError",
     "KnowledgeCandidateValidator",
     "KnowledgeContradiction",
+    "KnowledgeContradictionDetector",
     "KnowledgeContradictionRule",
     "KnowledgeItem",
     "KnowledgeItemConflictError",
