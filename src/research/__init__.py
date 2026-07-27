@@ -45,6 +45,9 @@ from src.research.knowledge_gap import (
     KnowledgeGap,
     KnowledgeGapType,
 )
+from src.research.knowledge_gap_detector import (
+    KnowledgeGapDetector,
+)
 from src.research.knowledge_graph import (
     KnowledgeGraph,
     KnowledgeTraversalDirection,
@@ -126,6 +129,7 @@ __all__ = [
     "HypothesisDecision",
     "Knowledge",
     "KnowledgeGap",
+    "KnowledgeGapDetector",
     "KnowledgeGapType",
     "KnowledgeGraph",
     "KnowledgeGraphSnapshot",
