@@ -45,6 +45,9 @@ from src.research.knowledge_graph import (
     KnowledgeGraph,
     KnowledgeTraversalDirection,
 )
+from src.research.knowledge_graph_snapshot import (
+    KnowledgeGraphSnapshot,
+)
 from src.research.knowledge_applicability_query import (
     ApplicabilityMatchMode,
     KnowledgeApplicabilityQuery,
@@ -119,6 +122,7 @@ __all__ = [
     "HypothesisDecision",
     "Knowledge",
     "KnowledgeGraph",
+    "KnowledgeGraphSnapshot",
     "KnowledgeTraversalDirection",
     "KnowledgeApplicabilityQuery",
     "KnowledgeCandidate",
