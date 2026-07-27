@@ -44,6 +44,9 @@ from src.application.in_memory_knowledge_repository import (
 from src.application.knowledge_graph_relation_registrar import (
     KnowledgeGraphRelationRegistrar,
 )
+from src.application.research_recommendation_question_adapter import (
+    ResearchRecommendationQuestionAdapter,
+)
 from src.application.in_memory_market_experiment_specification_resolver import (
     InMemoryMarketExperimentSpecificationResolver,
 )
@@ -207,6 +210,7 @@ __all__ = [
     "ResearchCycleRepository",
     "ResearchCycleRunner",
     "ResearchCycleSerializer",
+    "ResearchRecommendationQuestionAdapter",
     "ResearchRuntimeConfiguration",
     "RunAndStoreResearchArtifact",
     "RunAndStoreSerializedResearchCycle",
