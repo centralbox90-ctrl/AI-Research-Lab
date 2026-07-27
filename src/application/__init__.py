@@ -17,6 +17,9 @@ from src.application.code_version_provider import (
 from src.application.export_stored_research_artifact import (
     ExportStoredResearchArtifact,
 )
+from src.application.generate_research_questions_from_knowledge_snapshot import (
+    GenerateResearchQuestionsFromKnowledgeSnapshot,
+)
 from src.application.get_research_cycle import (
     GetResearchCycle,
 )
@@ -166,6 +169,7 @@ __all__ = [
     "CampaignDesignLoader",
     "CodeVersionProvider",
     "ExportStoredResearchArtifact",
+    "GenerateResearchQuestionsFromKnowledgeSnapshot",
     "GetResearchCycle",
     "GetSerializedResearchCycle",
     "GetStoredResearchArtifact",
