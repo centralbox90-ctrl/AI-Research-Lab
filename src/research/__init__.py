@@ -100,6 +100,10 @@ from src.research.research_environment import ResearchEnvironmentRef
 from src.research.robustness_evaluation import RobustnessEvaluation
 from src.research.statistical_evaluation import StatisticalEvaluation
 from src.research.research_context import ResearchContext
+from src.research.research_recommendation import (
+    ResearchRecommendation,
+    ResearchRecommendationPriority,
+)
 
 __all__ = [
     "Analysis",
@@ -166,4 +170,6 @@ __all__ = [
     "UnsupportedFingerprintSchemaError",
     "ResearchContext",
     "ResearchGraph",
+    "ResearchRecommendation",
+    "ResearchRecommendationPriority",
 ]
