@@ -6,6 +6,9 @@ from src.cli import (
     build_research_cli,
     main,
 )
+from src.cli.generate_research_questions_from_knowledge_snapshot_command import (
+    GenerateResearchQuestionsFromKnowledgeSnapshotCommand,
+)
 from src.cli.run_indicator_comparative_hypothesis_evaluation_command import (
     RunIndicatorComparativeHypothesisEvaluationCommand,
 )
@@ -129,3 +132,64 @@ def test_build_research_cli_configures_campaign_command(
         cli.run_market_research_campaign_command,
         RunMarketResearchCampaignCommand,
     )
+
+
+def test_build_research_cli_configures_knowledge_command(
+    tmp_path: Path,
+) -> None:
+    cli = build_research_cli(
+        db_path=tmp_path / "research_cycles.db",
+    )
+
+    assert isinstance(
+        cli.generate_research_questions_command,
+        GenerateResearchQuestionsFromKnowledgeSnapshotCommand,
+    )
+
+
+def test_main_generates_questions_from_knowledge_snapshot(
+    tmp_path: Path,
+) -> None:
+    snapshot_path = (
+        tmp_path / "knowledge-snapshot.json"
+    )
+    snapshot_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "items": [],
+                "relations": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    stdout = StringIO()
+    stderr = StringIO()
+
+    exit_code = main(
+        [
+            "--database",
+            str(tmp_path / "research-cycles.db"),
+            "generate-knowledge-research-questions",
+            "--snapshot",
+            str(snapshot_path),
+            "--compact",
+        ],
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 0
+    assert stderr.getvalue() == ""
+
+    payload = json.loads(stdout.getvalue())
+
+    assert payload["artifact_type"] == (
+        "knowledge_research_questions"
+    )
+    assert payload["artifact_version"] == 1
+    assert payload["question_count"] == 0
+    assert payload["questions"] == []
+    assert len(
+        payload["snapshot_fingerprint"]
+    ) == 64

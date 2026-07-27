@@ -125,6 +125,22 @@ class ComparativeHypothesisEvaluationCommand(Protocol):
         """
 
 
+class KnowledgeResearchQuestionsCommand(Protocol):
+    """
+    Command boundary for generating questions from knowledge.
+    """
+
+    def execute(
+        self,
+        snapshot_path: str | Path,
+        *,
+        indent: int | None = 2,
+    ) -> str:
+        """
+        Generate research questions and return JSON.
+        """
+
+
 class RunResearchCommand(Protocol):
     """
     Command boundary for running market research.
@@ -188,6 +204,9 @@ class ResearchCli:
         list_research_campaigns_command: (
             ListResearchCampaignsCommand | None
         ) = None,
+        generate_research_questions_command: (
+            KnowledgeResearchQuestionsCommand | None
+        ) = None,
         run_market_research_campaign_command: (
             MarketResearchCampaignCommand | None
         ) = None,
@@ -206,6 +225,9 @@ class ResearchCli:
         )
         self.run_research_command = (
             run_research_command
+        )
+        self.generate_research_questions_command = (
+            generate_research_questions_command
         )
         self.run_comparative_hypothesis_evaluation_command = (
             run_comparative_hypothesis_evaluation_command
@@ -298,6 +320,17 @@ class ResearchCli:
                 output_stream,
                 error_stream,
            )
+        if arguments.command == (
+            "generate-knowledge-research-questions"
+        ):
+            return (
+                self._run_generate_knowledge_research_questions(
+                    arguments,
+                    output_stream,
+                    error_stream,
+                )
+            )
+
         if arguments.command == "run-research":
             return self._run_market_research(
                 arguments,
@@ -524,6 +557,42 @@ class ResearchCli:
 
         return 0
 
+    def _run_generate_knowledge_research_questions(
+        self,
+        arguments: argparse.Namespace,
+        stdout: TextIO,
+        stderr: TextIO,
+    ) -> int:
+        command = (
+            self.generate_research_questions_command
+        )
+
+        if command is None:
+            stderr.write(
+                "Generate knowledge research questions "
+                "command is not configured.\n"
+            )
+            return 2
+
+        indent = None if arguments.compact else 2
+
+        try:
+            rendered = command.execute(
+                arguments.snapshot_path,
+                indent=indent,
+            )
+        except (ValueError, LookupError) as error:
+            stderr.write(
+                "Unable to generate knowledge research "
+                f"questions: {error}\n"
+            )
+            return 1
+
+        stdout.write(rendered)
+        stdout.write("\n")
+
+        return 0
+
     def _run_market_research(
         self,
         arguments: argparse.Namespace,
@@ -720,6 +789,28 @@ class ResearchCli:
         )
 
         list_cycles_parser.add_argument(
+            "--compact",
+            action="store_true",
+        )
+
+        knowledge_questions_parser = (
+            subparsers.add_parser(
+                "generate-knowledge-research-questions",
+                help=(
+                    "Generate research questions from a "
+                    "knowledge graph snapshot."
+                ),
+            )
+        )
+
+        knowledge_questions_parser.add_argument(
+            "--snapshot",
+            dest="snapshot_path",
+            type=Path,
+            required=True,
+        )
+
+        knowledge_questions_parser.add_argument(
             "--compact",
             action="store_true",
         )

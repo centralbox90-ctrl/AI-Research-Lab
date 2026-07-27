@@ -463,3 +463,175 @@ def test_research_cli_reports_unconfigured_campaign_command(
             "is not configured.\n"
         )
     )
+
+
+class StubKnowledgeResearchQuestionsCommand:
+    def __init__(self) -> None:
+        self.calls: list[
+            tuple[Path, int | None]
+        ] = []
+
+    def execute(
+        self,
+        snapshot_path: str | Path,
+        *,
+        indent: int | None = 2,
+    ) -> str:
+        normalized_path = Path(snapshot_path)
+        self.calls.append(
+            (
+                normalized_path,
+                indent,
+            )
+        )
+
+        return json.dumps(
+            {
+                "artifact_type": (
+                    "knowledge_research_questions"
+                ),
+                "snapshot_path": str(
+                    normalized_path
+                ),
+            },
+            indent=indent,
+        )
+
+
+class FailingKnowledgeResearchQuestionsCommand:
+    def execute(
+        self,
+        snapshot_path: str | Path,
+        *,
+        indent: int | None = 2,
+    ) -> str:
+        raise ValueError(
+            "invalid knowledge snapshot"
+        )
+
+
+def build_cli_with_knowledge_question_command(
+    command: object,
+) -> ResearchCli:
+    base_cli, _ = build_cli_with_saved_cycle()
+
+    return ResearchCli(
+        base_cli.get_research_cycle_command,
+        generate_research_questions_command=command,
+    )
+
+
+def test_research_cli_generates_knowledge_questions(
+) -> None:
+    command = StubKnowledgeResearchQuestionsCommand()
+    cli = build_cli_with_knowledge_question_command(
+        command
+    )
+    stdout = StringIO()
+    stderr = StringIO()
+
+    exit_code = cli.run(
+        [
+            "generate-knowledge-research-questions",
+            "--snapshot",
+            "knowledge-snapshot.json",
+        ],
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 0
+    assert stderr.getvalue() == ""
+    assert command.calls == [
+        (
+            Path("knowledge-snapshot.json"),
+            2,
+        )
+    ]
+    assert json.loads(stdout.getvalue())[
+        "artifact_type"
+    ] == "knowledge_research_questions"
+
+
+def test_research_cli_supports_compact_knowledge_questions(
+) -> None:
+    command = StubKnowledgeResearchQuestionsCommand()
+    cli = build_cli_with_knowledge_question_command(
+        command
+    )
+    stdout = StringIO()
+    stderr = StringIO()
+
+    exit_code = cli.run(
+        [
+            "generate-knowledge-research-questions",
+            "--snapshot",
+            "knowledge-snapshot.json",
+            "--compact",
+        ],
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 0
+    assert stderr.getvalue() == ""
+    assert command.calls[0][1] is None
+    assert "\n" not in stdout.getvalue().rstrip(
+        "\n"
+    )
+
+
+def test_research_cli_reports_knowledge_question_error(
+) -> None:
+    cli = build_cli_with_knowledge_question_command(
+        FailingKnowledgeResearchQuestionsCommand()
+    )
+    stdout = StringIO()
+    stderr = StringIO()
+
+    exit_code = cli.run(
+        [
+            "generate-knowledge-research-questions",
+            "--snapshot",
+            "invalid.json",
+        ],
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 1
+    assert stdout.getvalue() == ""
+    assert (
+        stderr.getvalue()
+        == (
+            "Unable to generate knowledge research "
+            "questions: invalid knowledge snapshot\n"
+        )
+    )
+
+
+def test_research_cli_reports_unconfigured_knowledge_command(
+) -> None:
+    base_cli, _ = build_cli_with_saved_cycle()
+    stdout = StringIO()
+    stderr = StringIO()
+
+    exit_code = base_cli.run(
+        [
+            "generate-knowledge-research-questions",
+            "--snapshot",
+            "knowledge-snapshot.json",
+        ],
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 2
+    assert stdout.getvalue() == ""
+    assert (
+        stderr.getvalue()
+        == (
+            "Generate knowledge research questions "
+            "command is not configured.\n"
+        )
+    )

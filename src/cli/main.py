@@ -22,6 +22,9 @@ from src.application.canonical_market_data_provider import (
 from src.application.generated_market_data_provider import (
     GeneratedMarketDataProvider,
 )
+from src.application.knowledge_research_question_application import (
+    build_knowledge_research_question_application,
+)
 from src.application.market_research_application import (
     build_market_research_application,
 )
@@ -33,6 +36,9 @@ from src.cli.compare_research_artifacts_command import (
 )
 from src.cli.export_research_artifact_command import (
     ExportResearchArtifactCommand,
+)
+from src.cli.generate_research_questions_from_knowledge_snapshot_command import (
+    GenerateResearchQuestionsFromKnowledgeSnapshotCommand,
 )
 from src.cli.get_stored_research_artifact_command import (
     GetStoredResearchArtifactCommand,
@@ -135,6 +141,14 @@ def build_research_cli(
         runner=market_research_application,
     )
 
+    knowledge_question_command = (
+        GenerateResearchQuestionsFromKnowledgeSnapshotCommand(
+            application=(
+                build_knowledge_research_question_application()
+            ),
+        )
+    )
+
     comparative_evaluation_command = (
         build_default_indicator_comparative_hypothesis_evaluation_command(
             data_provider=CanonicalMarketDataProvider(
@@ -154,6 +168,9 @@ def build_research_cli(
         ),
         list_research_cycles_command=list_command,
         run_research_command=run_command,
+        generate_research_questions_command=(
+            knowledge_question_command
+        ),
         run_market_research_campaign_command=(
             run_campaign_command
         ),
