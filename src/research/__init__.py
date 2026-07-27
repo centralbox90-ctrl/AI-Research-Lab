@@ -104,6 +104,9 @@ from src.research.research_recommendation import (
     ResearchRecommendation,
     ResearchRecommendationPriority,
 )
+from src.research.research_recommendation_generator import (
+    ResearchRecommendationGenerator,
+)
 
 __all__ = [
     "Analysis",
@@ -171,5 +174,6 @@ __all__ = [
     "ResearchContext",
     "ResearchGraph",
     "ResearchRecommendation",
+    "ResearchRecommendationGenerator",
     "ResearchRecommendationPriority",
 ]
