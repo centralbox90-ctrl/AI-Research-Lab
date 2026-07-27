@@ -41,6 +41,10 @@ from src.research.experiment_result import ExperimentResult
 from src.research.hypothesis import Hypothesis
 from src.research.hypothesis_decision import HypothesisDecision
 from src.research.knowledge import Knowledge
+from src.research.knowledge_gap import (
+    KnowledgeGap,
+    KnowledgeGapType,
+)
 from src.research.knowledge_graph import (
     KnowledgeGraph,
     KnowledgeTraversalDirection,
@@ -121,6 +125,8 @@ __all__ = [
     "Hypothesis",
     "HypothesisDecision",
     "Knowledge",
+    "KnowledgeGap",
+    "KnowledgeGapType",
     "KnowledgeGraph",
     "KnowledgeGraphSnapshot",
     "KnowledgeTraversalDirection",
