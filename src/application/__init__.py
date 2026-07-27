@@ -47,6 +47,11 @@ from src.application.in_memory_knowledge_repository import (
 from src.application.knowledge_graph_relation_registrar import (
     KnowledgeGraphRelationRegistrar,
 )
+from src.application.knowledge_research_question_application import (
+    build_knowledge_research_question_application,
+    fingerprint_research_question_id,
+    system_utc_clock,
+)
 from src.application.research_recommendation_question_adapter import (
     ResearchRecommendationQuestionAdapter,
 )
@@ -223,7 +228,10 @@ __all__ = [
     "RunResearchCycle",
     "SerializedResearchCycleStore",
     "StaticCodeVersionProvider",
+    "build_knowledge_research_question_application",
     "build_market_research_application",
+    "fingerprint_research_question_id",
+    "system_utc_clock",
     "SerializedResearchCampaignStore",
     "RunAndStoreSerializedResearchCampaign",
 ]
