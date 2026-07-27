@@ -1,6 +1,9 @@
 from src.cli.export_research_artifact_command import (
     ExportResearchArtifactCommand,
 )
+from src.cli.generate_research_questions_from_knowledge_snapshot_command import (
+    GenerateResearchQuestionsFromKnowledgeSnapshotCommand,
+)
 from src.cli.get_research_cycle_command import (
     GetResearchCycleCommand,
 )
@@ -26,6 +29,9 @@ from src.cli.research_cli import (
 from src.cli.research_cycle_json import (
     ResearchCycleJsonPresenter,
 )
+from src.cli.research_questions_presenter import (
+    present_research_questions,
+)
 from src.cli.run_market_research_command import (
     RunMarketResearchCommand,
 )
@@ -44,6 +50,7 @@ from src.cli.get_stored_research_campaign_command import (
 
 __all__ = [
     "ExportResearchArtifactCommand",
+    "GenerateResearchQuestionsFromKnowledgeSnapshotCommand",
     "GetResearchCycleCommand",
     "GetStoredResearchArtifactCommand",
     "GetStoredResearchCycleCommand",
@@ -54,6 +61,7 @@ __all__ = [
     "ResearchCli",
     "ResearchCycleJsonPresenter",
     "RunMarketResearchCommand",
+    "present_research_questions",
     "RunMarketResearchCampaignCommand",
     "RunIndicatorComparativeHypothesisEvaluationCommand",
     "build_research_cli",
