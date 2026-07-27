@@ -47,6 +47,9 @@ from src.application.in_memory_knowledge_repository import (
 from src.application.knowledge_graph_relation_registrar import (
     KnowledgeGraphRelationRegistrar,
 )
+from src.application.knowledge_graph_snapshot_loader import (
+    KnowledgeGraphSnapshotLoader,
+)
 from src.application.knowledge_research_question_application import (
     build_knowledge_research_question_application,
     fingerprint_research_question_id,
@@ -184,6 +187,7 @@ __all__ = [
     "InMemoryKnowledgeRelationRepository",
     "InMemoryKnowledgeRepository",
     "KnowledgeGraphRelationRegistrar",
+    "KnowledgeGraphSnapshotLoader",
     "InMemoryMarketExperimentSpecificationResolver",
     "InMemoryResearchCycleRepository",
     "LegacyMarketDataFrameAdapter",
