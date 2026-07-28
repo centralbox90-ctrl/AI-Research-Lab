@@ -177,8 +177,13 @@ def test_run_market_research_command_executes_json_specification(
     assert result_id in store.saved_cycles
 
     assert (
-        store.saved_cycles[result_id]["cycle"]["result"]["id"]
+        store.saved_cycles[result_id]["payload"]
+        ["cycle"]["result"]["id"]
         == result_id
+    )
+    assert (
+        store.saved_cycles[result_id]["artifact_type"]
+        == "market_research_cycle"
     )
 
 

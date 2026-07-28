@@ -10,6 +10,9 @@ from src.application import (
     RunMarketResearch,
     build_market_research_application,
 )
+from src.application.research_artifact_envelope import (
+    fingerprint_research_artifact_payload,
+)
 from src.research.experiment_execution import (
     ExperimentExecutionStatus,
 )
@@ -146,8 +149,10 @@ def test_build_market_research_application_creates_ready_use_case(
         RunMarketResearch,
     )
 
+    specification = build_specification()
+
     cycle = application.execute(
-        build_specification(),
+        specification,
     )
 
     assert cycle.result.success is True
@@ -157,8 +162,31 @@ def test_build_market_research_application_creates_ready_use_case(
     stored = store.get(cycle.result.id)
 
     assert stored is not None
-    assert stored["cycle"]["result"]["id"] == cycle.result.id
-    assert stored["cycle"]["result"]["success"] is True
+    assert stored["schema_version"] == 1
+    assert stored["artifact_type"] == (
+        "market_research_cycle"
+    )
+    assert stored["payload_schema_version"] == 1
+    assert stored["producer"] == (
+        "market_research_application"
+    )
+    assert stored["producer_version"]
+    assert stored["correlation_id"] is None
+
+    payload = stored["payload"]
+
+    assert payload["cycle"]["result"]["id"] == (
+        cycle.result.id
+    )
+    assert payload["cycle"]["result"]["success"] is True
+    assert stored["payload_fingerprint"] == (
+        fingerprint_research_artifact_payload(
+            payload
+        )
+    )
+    assert stored["provenance"][
+        "specification_fingerprint"
+    ] == specification.fingerprint
 
     with sqlite3.connect(db_path) as connection:
         row = connection.execute(
@@ -185,3 +213,23 @@ def test_build_market_research_application_creates_ready_use_case(
         ExperimentExecutionStatus.SUCCEEDED,
     ]
     assert history[-1].result_id == cycle.result.id
+    assert stored["source_references"] == [
+        {
+            "reference_type": (
+                "experiment_execution"
+            ),
+            "reference_id": (
+                history[-1].execution_id
+            ),
+            "reference_version": None,
+            "reference_fingerprint": None,
+        },
+        {
+            "reference_type": (
+                "experiment_result"
+            ),
+            "reference_id": cycle.result.id,
+            "reference_version": None,
+            "reference_fingerprint": None,
+        },
+    ]

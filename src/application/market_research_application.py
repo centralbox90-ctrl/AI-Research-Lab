@@ -7,6 +7,9 @@ from src.application.experiment_execution_factory import (
 from src.application.experiment_execution_recorder import (
     ExperimentExecutionRecorder,
 )
+from src.application.research_artifact_envelope import (
+    ResearchArtifactEnvelopeFactory,
+)
 from src.application.git_code_version_provider import (
     GitCodeVersionProvider,
 )
@@ -92,6 +95,17 @@ def build_market_research_application(
 
     run_and_store = RunAndStoreResearchArtifact(
         store=store,
+        envelope_factory=(
+            ResearchArtifactEnvelopeFactory(
+                producer=(
+                    "market_research_application"
+                ),
+                producer_version=(
+                    runtime_configuration.code_version
+                ),
+                clock=clock,
+            )
+        ),
     )
 
     return RunMarketResearch(
