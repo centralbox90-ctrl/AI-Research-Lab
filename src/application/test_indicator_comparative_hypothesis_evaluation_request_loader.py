@@ -9,6 +9,7 @@ from src.application.indicator_comparative_hypothesis_evaluation_application imp
 from src.application.indicator_comparative_hypothesis_evaluation_request_loader import (
     IndicatorComparativeHypothesisEvaluationRequest,
     IndicatorComparativeHypothesisEvaluationRequestLoader,
+    KnowledgePromotionRequest,
 )
 from src.application.market_experiment_specification import (
     MarketPositionDirection,
@@ -91,6 +92,7 @@ def test_loader_creates_typed_request_from_dictionary(
     )
     assert loaded.hypothesis_id == "hypothesis-rsi"
     assert len(loaded.requests) == 1
+    assert loaded.knowledge_promotion is None
 
     request = loaded.requests[0]
 
@@ -297,6 +299,106 @@ def test_loader_rejects_non_array_market_collections(
     with pytest.raises(
         ValueError,
         match="applicable_markets must be an array",
+    ):
+        (
+            IndicatorComparativeHypothesisEvaluationRequestLoader()
+            .from_dict(payload)
+        )
+
+def test_loader_parses_knowledge_promotion(
+) -> None:
+    payload = build_payload()
+    payload["knowledge_promotion"] = {
+        "knowledge_id": " knowledge-rsi ",
+        "statement": (
+            " RSI effect persists across markets. "
+        ),
+        "applicability": [
+            "EURUSD:H1",
+            "liquid FX",
+        ],
+        "limitations": [
+            "generated data",
+        ],
+        "provenance": {
+            "producer": "comparative-test",
+        },
+    }
+
+    loaded = (
+        IndicatorComparativeHypothesisEvaluationRequestLoader()
+        .from_dict(payload)
+    )
+    promotion = loaded.knowledge_promotion
+
+    assert isinstance(
+        promotion,
+        KnowledgePromotionRequest,
+    )
+    assert promotion.knowledge_id == (
+        "knowledge-rsi"
+    )
+    assert promotion.statement == (
+        "RSI effect persists across markets."
+    )
+    assert promotion.applicability == (
+        "EURUSD:H1",
+        "liquid FX",
+    )
+    assert promotion.limitations == (
+        "generated data",
+    )
+    assert promotion.provenance == (
+        ("producer", "comparative-test"),
+    )
+
+
+def test_loader_rejects_invalid_promotion_collection(
+) -> None:
+    payload = build_payload()
+    payload["knowledge_promotion"] = {
+        "knowledge_id": "knowledge-rsi",
+        "statement": "RSI effect persists.",
+        "applicability": "EURUSD:H1",
+        "limitations": [],
+        "provenance": {
+            "producer": "comparative-test",
+        },
+    }
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "knowledge_promotion.applicability "
+            "must be an array"
+        ),
+    ):
+        (
+            IndicatorComparativeHypothesisEvaluationRequestLoader()
+            .from_dict(payload)
+        )
+
+
+def test_loader_rejects_unknown_promotion_field(
+) -> None:
+    payload = build_payload()
+    payload["knowledge_promotion"] = {
+        "knowledge_id": "knowledge-rsi",
+        "statement": "RSI effect persists.",
+        "applicability": ["EURUSD:H1"],
+        "limitations": [],
+        "provenance": {
+            "producer": "comparative-test",
+        },
+        "automatic_override": True,
+    }
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "knowledge_promotion unknown fields: "
+            "automatic_override"
+        ),
     ):
         (
             IndicatorComparativeHypothesisEvaluationRequestLoader()

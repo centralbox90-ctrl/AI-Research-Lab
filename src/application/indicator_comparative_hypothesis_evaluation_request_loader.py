@@ -21,6 +21,20 @@ from src.research.outcome_specification import (
 
 
 @dataclass(frozen=True, slots=True)
+class KnowledgePromotionRequest:
+    """Explicit input required for Knowledge promotion."""
+
+    knowledge_id: str
+    statement: str
+    applicability: tuple[str, ...]
+    limitations: tuple[str, ...]
+    provenance: tuple[
+        tuple[str, str],
+        ...,
+    ]
+
+
+@dataclass(frozen=True, slots=True)
 class IndicatorComparativeHypothesisEvaluationRequest:
     """
     Typed input for one comparative hypothesis evaluation run.
@@ -31,6 +45,9 @@ class IndicatorComparativeHypothesisEvaluationRequest:
         IndicatorComparativeFindingRequest,
         ...,
     ]
+    knowledge_promotion: (
+        KnowledgePromotionRequest | None
+    ) = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.hypothesis_id, str):
@@ -69,6 +86,18 @@ class IndicatorComparativeHypothesisEvaluationRequest:
                 "IndicatorComparativeFindingRequest"
             )
 
+        if (
+            self.knowledge_promotion is not None
+            and not isinstance(
+                self.knowledge_promotion,
+                KnowledgePromotionRequest,
+            )
+        ):
+            raise TypeError(
+                "knowledge_promotion must be a "
+                "KnowledgePromotionRequest or None"
+            )
+
         object.__setattr__(
             self,
             "hypothesis_id",
@@ -84,6 +113,16 @@ class IndicatorComparativeHypothesisEvaluationRequestLoader:
     _REQUIRED_FIELDS = {
         "hypothesis_id",
         "requests",
+    }
+    _OPTIONAL_FIELDS = {
+        "knowledge_promotion",
+    }
+    _PROMOTION_REQUIRED_FIELDS = {
+        "knowledge_id",
+        "statement",
+        "applicability",
+        "limitations",
+        "provenance",
     }
     _REQUEST_REQUIRED_FIELDS = {
         "market_specifications",
@@ -153,7 +192,7 @@ class IndicatorComparativeHypothesisEvaluationRequestLoader:
         self._validate_fields(
             payload,
             required=self._REQUIRED_FIELDS,
-            optional=set(),
+            optional=self._OPTIONAL_FIELDS,
             label="comparative evaluation request",
         )
 
@@ -177,11 +216,22 @@ class IndicatorComparativeHypothesisEvaluationRequestLoader:
             for index, request in enumerate(requests)
         )
 
+        knowledge_promotion = (
+            self._parse_knowledge_promotion(
+                payload.get(
+                    "knowledge_promotion"
+                )
+            )
+        )
+
         try:
             return (
                 IndicatorComparativeHypothesisEvaluationRequest(
                     hypothesis_id=payload["hypothesis_id"],
                     requests=parsed_requests,
+                    knowledge_promotion=(
+                        knowledge_promotion
+                    ),
                 )
             )
         except (TypeError, ValueError) as error:
@@ -189,6 +239,158 @@ class IndicatorComparativeHypothesisEvaluationRequestLoader:
                 "invalid comparative evaluation request: "
                 f"{error}"
             ) from error
+
+    def _parse_knowledge_promotion(
+        self,
+        payload: Any,
+    ) -> KnowledgePromotionRequest | None:
+        if payload is None:
+            return None
+
+        if not isinstance(payload, dict):
+            raise ValueError(
+                "knowledge_promotion must be an object"
+            )
+
+        self._validate_fields(
+            payload,
+            required=(
+                self._PROMOTION_REQUIRED_FIELDS
+            ),
+            optional=set(),
+            label="knowledge_promotion",
+        )
+
+        knowledge_id = self._require_text(
+            payload["knowledge_id"],
+            label=(
+                "knowledge_promotion.knowledge_id"
+            ),
+        )
+        statement = self._require_text(
+            payload["statement"],
+            label=(
+                "knowledge_promotion.statement"
+            ),
+        )
+        applicability = (
+            self._require_text_array(
+                payload["applicability"],
+                label=(
+                    "knowledge_promotion.applicability"
+                ),
+                require_nonempty=True,
+            )
+        )
+        limitations = self._require_text_array(
+            payload["limitations"],
+            label=(
+                "knowledge_promotion.limitations"
+            ),
+            require_nonempty=False,
+        )
+        provenance_payload = payload[
+            "provenance"
+        ]
+
+        if not isinstance(
+            provenance_payload,
+            dict,
+        ):
+            raise ValueError(
+                "knowledge_promotion.provenance "
+                "must be an object"
+            )
+
+        if not provenance_payload:
+            raise ValueError(
+                "knowledge_promotion.provenance "
+                "must not be empty"
+            )
+
+        provenance = tuple(
+            (
+                self._require_text(
+                    key,
+                    label=(
+                        "knowledge_promotion "
+                        "provenance key"
+                    ),
+                ),
+                self._require_text(
+                    value,
+                    label=(
+                        "knowledge_promotion "
+                        "provenance value"
+                    ),
+                ),
+            )
+            for key, value
+            in provenance_payload.items()
+        )
+
+        return KnowledgePromotionRequest(
+            knowledge_id=knowledge_id,
+            statement=statement,
+            applicability=applicability,
+            limitations=limitations,
+            provenance=tuple(
+                sorted(provenance)
+            ),
+        )
+
+    @classmethod
+    def _require_text_array(
+        cls,
+        value: Any,
+        *,
+        label: str,
+        require_nonempty: bool,
+    ) -> tuple[str, ...]:
+        if not isinstance(value, list):
+            raise ValueError(
+                f"{label} must be an array"
+            )
+
+        if require_nonempty and not value:
+            raise ValueError(
+                f"{label} must not be empty"
+            )
+
+        normalized = tuple(
+            cls._require_text(
+                item,
+                label=label,
+            )
+            for item in value
+        )
+
+        if len(normalized) != len(set(normalized)):
+            raise ValueError(
+                f"{label} must not contain duplicates"
+            )
+
+        return tuple(sorted(normalized))
+
+    @staticmethod
+    def _require_text(
+        value: Any,
+        *,
+        label: str,
+    ) -> str:
+        if not isinstance(value, str):
+            raise ValueError(
+                f"{label} must be a string"
+            )
+
+        normalized = value.strip()
+
+        if not normalized:
+            raise ValueError(
+                f"{label} must not be empty"
+            )
+
+        return normalized
 
     def _parse_request(
         self,
