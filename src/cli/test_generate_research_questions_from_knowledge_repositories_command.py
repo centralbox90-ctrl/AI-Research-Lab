@@ -5,11 +5,9 @@ from datetime import UTC, datetime
 
 import pytest
 
-from src.application.build_knowledge_graph_snapshot import (
-    BuildKnowledgeGraphSnapshot,
-)
-from src.application.generate_research_questions_from_knowledge_snapshot import (
-    GenerateResearchQuestionsFromKnowledgeSnapshot,
+from src.application.generate_research_questions_from_knowledge_repositories import (
+    GenerateResearchQuestionsFromKnowledgeRepositories,
+    KnowledgeResearchQuestionsResult,
 )
 from src.cli.generate_research_questions_from_knowledge_repositories_command import (
     GenerateResearchQuestionsFromKnowledgeRepositoriesCommand,
@@ -17,52 +15,28 @@ from src.cli.generate_research_questions_from_knowledge_repositories_command imp
 from src.research.knowledge_graph_snapshot import (
     KnowledgeGraphSnapshot,
 )
-from src.research.knowledge_item import (
-    KnowledgeItem,
-)
-from src.research.question import (
-    ResearchQuestion,
-)
+from src.research.knowledge_item import KnowledgeItem
+from src.research.question import ResearchQuestion
 
 
-class StubSnapshotBuilder(
-    BuildKnowledgeGraphSnapshot
+class StubApplication(
+    GenerateResearchQuestionsFromKnowledgeRepositories
 ):
     def __init__(
         self,
-        result: KnowledgeGraphSnapshot,
+        result: KnowledgeResearchQuestionsResult,
     ) -> None:
         self.result = result
         self.call_count = 0
 
     def execute(
         self,
-    ) -> KnowledgeGraphSnapshot:
+    ) -> KnowledgeResearchQuestionsResult:
         self.call_count += 1
         return self.result
 
 
-class StubApplication(
-    GenerateResearchQuestionsFromKnowledgeSnapshot
-):
-    def __init__(
-        self,
-        result: tuple[ResearchQuestion, ...],
-    ) -> None:
-        self.result = result
-        self.snapshots: list[
-            KnowledgeGraphSnapshot
-        ] = []
-
-    def execute(
-        self,
-        snapshot: KnowledgeGraphSnapshot,
-    ) -> tuple[ResearchQuestion, ...]:
-        self.snapshots.append(snapshot)
-        return self.result
-
-
-def _snapshot() -> KnowledgeGraphSnapshot:
+def build_snapshot() -> KnowledgeGraphSnapshot:
     item = KnowledgeItem(
         id="knowledge-1",
         statement="Momentum persists.",
@@ -83,7 +57,7 @@ def _snapshot() -> KnowledgeGraphSnapshot:
     )
 
 
-def _question() -> ResearchQuestion:
+def build_question() -> ResearchQuestion:
     return ResearchQuestion(
         id="question-1",
         statement="What evidence is missing?",
@@ -101,47 +75,44 @@ def _question() -> ResearchQuestion:
     )
 
 
-def _command(
+def build_result(
+) -> KnowledgeResearchQuestionsResult:
+    return KnowledgeResearchQuestionsResult(
+        snapshot=build_snapshot(),
+        questions=(build_question(),),
+    )
+
+
+def build_command(
 ) -> tuple[
     GenerateResearchQuestionsFromKnowledgeRepositoriesCommand,
-    StubSnapshotBuilder,
     StubApplication,
 ]:
-    builder = StubSnapshotBuilder(
-        _snapshot()
-    )
     application = StubApplication(
-        (_question(),)
+        build_result()
     )
 
     return (
         GenerateResearchQuestionsFromKnowledgeRepositoriesCommand(
-            snapshot_builder=builder,
             application=application,
         ),
-        builder,
         application,
     )
 
 
-def test_builds_snapshot_generates_and_renders():
-    command, builder, application = (
-        _command()
-    )
+def test_renders_application_result() -> None:
+    command, application = build_command()
 
     rendered = command.execute()
     payload = json.loads(rendered)
 
-    assert builder.call_count == 1
-    assert application.snapshots == [
-        builder.result
-    ]
+    assert application.call_count == 1
     assert payload["artifact_type"] == (
         "knowledge_research_questions"
     )
     assert payload["artifact_version"] == 1
     assert payload["snapshot_fingerprint"] == (
-        builder.result.fingerprint
+        application.result.snapshot.fingerprint
     )
     assert payload["question_count"] == 1
     assert payload["questions"][0]["id"] == (
@@ -149,40 +120,29 @@ def test_builds_snapshot_generates_and_renders():
     )
 
 
-def test_supports_compact_json():
-    command, _, _ = _command()
+def test_supports_compact_json() -> None:
+    command, application = build_command()
 
     rendered = command.execute(
         indent=None
     )
 
+    assert application.call_count == 1
     assert "\n" not in rendered
     assert json.loads(rendered)[
         "question_count"
     ] == 1
 
 
-@pytest.mark.parametrize(
-    "dependency",
-    (
-        "snapshot_builder",
-        "application",
-    ),
-)
-def test_requires_application_dependencies(
-    dependency: str,
-):
-    builder = StubSnapshotBuilder(
-        _snapshot()
-    )
-    application = StubApplication(())
-    arguments = {
-        "snapshot_builder": builder,
-        "application": application,
-    }
-    arguments[dependency] = object()
-
-    with pytest.raises(TypeError):
+def test_requires_application_dependency(
+) -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "application must be a "
+            "GenerateResearchQuestionsFromKnowledgeRepositories"
+        ),
+    ):
         GenerateResearchQuestionsFromKnowledgeRepositoriesCommand(
-            **arguments
+            application=object(),
         )

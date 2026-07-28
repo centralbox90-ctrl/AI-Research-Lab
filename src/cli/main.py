@@ -28,6 +28,9 @@ from src.application.canonical_market_data_provider import (
 from src.application.generated_market_data_provider import (
     GeneratedMarketDataProvider,
 )
+from src.application.generate_research_questions_from_knowledge_repositories import (
+    GenerateResearchQuestionsFromKnowledgeRepositories,
+)
 from src.application.knowledge_research_question_application import (
     build_knowledge_research_question_application,
 )
@@ -233,13 +236,21 @@ def build_research_cli(
         )
     )
 
-    knowledge_question_command = (
-        GenerateResearchQuestionsFromKnowledgeRepositoriesCommand(
+    knowledge_question_application = (
+        GenerateResearchQuestionsFromKnowledgeRepositories(
             snapshot_builder=(
                 knowledge_snapshot_builder
             ),
-            application=(
+            question_generator=(
                 build_knowledge_research_question_application()
+            ),
+        )
+    )
+
+    knowledge_question_command = (
+        GenerateResearchQuestionsFromKnowledgeRepositoriesCommand(
+            application=(
+                knowledge_question_application
             ),
         )
     )

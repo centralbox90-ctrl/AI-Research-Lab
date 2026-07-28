@@ -148,6 +148,7 @@ def test_build_research_cli_configures_comparative_command(
         ._knowledge_repository
         is
         cli.generate_research_questions_command
+        ._application
         ._snapshot_builder
         ._knowledge_repository
     )
