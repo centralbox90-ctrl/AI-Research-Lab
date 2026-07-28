@@ -1,6 +1,6 @@
 # ADR-001: Knowledge Feature Freeze
 
-Дата: 28 июля 2026 года  
+Дата: 28 июля 2026 года
 Статус: Accepted
 
 ## Контекст
