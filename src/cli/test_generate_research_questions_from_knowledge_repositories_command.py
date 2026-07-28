@@ -9,6 +9,12 @@ from src.application.generate_research_questions_from_knowledge_repositories imp
     GenerateResearchQuestionsFromKnowledgeRepositories,
     KnowledgeResearchQuestionsResult,
 )
+from src.application.knowledge_research_questions_artifact_envelope_factory import (
+    KnowledgeResearchQuestionsArtifactEnvelopeFactory,
+)
+from src.application.research_artifact_envelope import (
+    ResearchArtifactEnvelopeFactory,
+)
 from src.cli.generate_research_questions_from_knowledge_repositories_command import (
     GenerateResearchQuestionsFromKnowledgeRepositoriesCommand,
 )
@@ -17,6 +23,23 @@ from src.research.knowledge_graph_snapshot import (
 )
 from src.research.knowledge_item import KnowledgeItem
 from src.research.question import ResearchQuestion
+
+
+class FixedClock:
+    def now(self) -> datetime:
+        return datetime(
+            2026,
+            7,
+            28,
+            14,
+            0,
+            tzinfo=UTC,
+        )
+
+
+class FixedIdGenerator:
+    def generate(self) -> str:
+        return "artifact-knowledge-command"
 
 
 class StubApplication(
@@ -83,6 +106,24 @@ def build_result(
     )
 
 
+def build_envelope_factory(
+) -> KnowledgeResearchQuestionsArtifactEnvelopeFactory:
+    return (
+        KnowledgeResearchQuestionsArtifactEnvelopeFactory(
+            envelope_factory=(
+                ResearchArtifactEnvelopeFactory(
+                    producer=(
+                        "knowledge-question-command-test"
+                    ),
+                    producer_version="git:test",
+                    clock=FixedClock(),
+                    id_generator=FixedIdGenerator(),
+                )
+            )
+        )
+    )
+
+
 def build_command(
 ) -> tuple[
     GenerateResearchQuestionsFromKnowledgeRepositoriesCommand,
@@ -132,6 +173,75 @@ def test_supports_compact_json() -> None:
     assert json.loads(rendered)[
         "question_count"
     ] == 1
+
+
+def test_renders_enveloped_application_result(
+) -> None:
+    application = StubApplication(
+        build_result()
+    )
+    command = (
+        GenerateResearchQuestionsFromKnowledgeRepositoriesCommand(
+            application=application,
+            artifact_envelope_factory=(
+                build_envelope_factory()
+            ),
+        )
+    )
+
+    rendered = command.execute(
+        indent=None,
+        correlation_id=" lifecycle-42 ",
+    )
+    envelope = json.loads(rendered)
+
+    assert application.call_count == 1
+    assert "\n" not in rendered
+    assert envelope["schema_version"] == 1
+    assert envelope["artifact_type"] == (
+        "knowledge_research_questions"
+    )
+    assert envelope[
+        "payload_schema_version"
+    ] == 1
+    assert envelope["artifact_id"] == (
+        "artifact-knowledge-command"
+    )
+    assert envelope["correlation_id"] == (
+        "lifecycle-42"
+    )
+    assert envelope["payload"][
+        "snapshot_fingerprint"
+    ] == application.result.snapshot.fingerprint
+    assert envelope["payload"][
+        "snapshot"
+    ] == application.result.snapshot.to_dict()
+    assert envelope["payload"][
+        "question_count"
+    ] == 1
+    assert envelope["payload"][
+        "questions"
+    ][0]["id"] == "question-1"
+
+
+def test_rejects_invalid_envelope_factory(
+) -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "artifact_envelope_factory must be a "
+            "KnowledgeResearchQuestionsArtifactEnvelopeFactory "
+            "or None"
+        ),
+    ):
+        (
+            GenerateResearchQuestionsFromKnowledgeRepositoriesCommand(
+                application=StubApplication(
+                    build_result()
+                ),
+                artifact_envelope_factory=object(),
+            )
+        )
 
 
 def test_requires_application_dependency(

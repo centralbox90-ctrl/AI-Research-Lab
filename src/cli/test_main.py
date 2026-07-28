@@ -6,6 +6,9 @@ from pathlib import Path
 from src.application.hypothesis_evaluation_artifact_envelope_factory import (
     HypothesisEvaluationArtifactEnvelopeFactory,
 )
+from src.application.knowledge_research_questions_artifact_envelope_factory import (
+    KnowledgeResearchQuestionsArtifactEnvelopeFactory,
+)
 from src.application.promote_hypothesis_evaluation_to_knowledge import (
     PromoteHypothesisEvaluationToKnowledge,
 )
@@ -185,6 +188,11 @@ def test_build_research_cli_configures_knowledge_command(
         cli.generate_research_questions_command,
         GenerateResearchQuestionsFromKnowledgeRepositoriesCommand,
     )
+    assert isinstance(
+        cli.generate_research_questions_command
+        ._artifact_envelope_factory,
+        KnowledgeResearchQuestionsArtifactEnvelopeFactory,
+    )
 
 
 def test_main_generates_questions_from_stored_knowledge(
@@ -245,15 +253,28 @@ def test_main_generates_questions_from_stored_knowledge(
 
     payload = json.loads(stdout.getvalue())
 
+    assert payload["schema_version"] == 1
     assert payload["artifact_type"] == (
         "knowledge_research_questions"
     )
-    assert payload["artifact_version"] == 1
-    assert payload["question_count"] == 1
-    assert len(payload["questions"]) == 1
+    assert payload[
+        "payload_schema_version"
+    ] == 1
+    assert payload["correlation_id"] is None
+    assert payload["payload"][
+        "question_count"
+    ] == 1
     assert len(
-        payload["snapshot_fingerprint"]
+        payload["payload"]["questions"]
+    ) == 1
+    assert len(
+        payload["payload"][
+            "snapshot_fingerprint"
+        ]
     ) == 64
+    assert payload["payload"]["snapshot"][
+        "schema_version"
+    ] == 1
 
 
 def test_promoted_evaluation_generates_questions_from_shared_repository(

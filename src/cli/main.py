@@ -37,6 +37,9 @@ from src.application.git_command_runner import (
 from src.application.hypothesis_evaluation_artifact_envelope_factory import (
     HypothesisEvaluationArtifactEnvelopeFactory,
 )
+from src.application.knowledge_research_questions_artifact_envelope_factory import (
+    KnowledgeResearchQuestionsArtifactEnvelopeFactory,
+)
 from src.application.research_artifact_envelope import (
     ResearchArtifactEnvelopeFactory,
 )
@@ -259,19 +262,37 @@ def build_research_cli(
         )
     )
 
+    application_code_version = (
+        GitCodeVersionProvider(
+            git_commit_reader=GitCommandRunner(),
+            fallback="development",
+        ).get_code_version()
+    )
+
+    knowledge_question_envelope_factory = (
+        KnowledgeResearchQuestionsArtifactEnvelopeFactory(
+            envelope_factory=(
+                ResearchArtifactEnvelopeFactory(
+                    producer=(
+                        "knowledge-question-generator"
+                    ),
+                    producer_version=(
+                        application_code_version
+                    ),
+                )
+            )
+        )
+    )
+
     knowledge_question_command = (
         GenerateResearchQuestionsFromKnowledgeRepositoriesCommand(
             application=(
                 knowledge_question_application
             ),
+            artifact_envelope_factory=(
+                knowledge_question_envelope_factory
+            ),
         )
-    )
-
-    comparative_code_version = (
-        GitCodeVersionProvider(
-            git_commit_reader=GitCommandRunner(),
-            fallback="development",
-        ).get_code_version()
     )
 
     hypothesis_evaluation_envelope_factory = (
@@ -282,7 +303,7 @@ def build_research_cli(
                         "comparative-hypothesis-evaluation"
                     ),
                     producer_version=(
-                        comparative_code_version
+                        application_code_version
                     ),
                 )
             )
