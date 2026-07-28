@@ -1,10 +1,14 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
 from src.application import (
     MarketExperimentSpecification,
     MarketPositionDirection,
+)
+from src.research.specification import (
+    IndicatorReference,
+    ResearchSpecification,
 )
 
 
@@ -245,4 +249,187 @@ def test_market_experiment_specification_rejects_invalid_research_specification(
     ):
         build_specification(
             research_specification=object(),
+        )
+
+
+def build_research_specification(
+    signal_rule_id: str,
+) -> ResearchSpecification:
+    return ResearchSpecification.create(
+        indicator=IndicatorReference(
+            indicator_id="williams_r",
+            indicator_version=1,
+        ),
+        output="williams_r",
+        profile=None,
+        observation_type="threshold",
+        signal_rule_id=signal_rule_id,
+        calculation_parameters={
+            "period": 14,
+        },
+        observation_parameters={
+            "threshold": -80,
+        },
+    )
+
+
+def test_fingerprint_is_deterministic() -> None:
+    first = build_specification()
+    second = build_specification()
+
+    assert first.fingerprint == second.fingerprint
+    assert len(first.fingerprint) == 64
+
+
+def test_fingerprint_ignores_mapping_and_tag_order() -> None:
+    first = build_specification(
+        strategy_parameters={
+            "period": 14,
+            "threshold": -80,
+        },
+        tags=(
+            "btc",
+            "williams",
+        ),
+    )
+    second = build_specification(
+        strategy_parameters={
+            "threshold": -80,
+            "period": 14,
+        },
+        tags=(
+            "williams",
+            "btc",
+        ),
+    )
+
+    assert first.fingerprint == second.fingerprint
+
+
+def test_fingerprint_normalizes_aware_datetimes_to_utc() -> None:
+    offset = timezone(
+        timedelta(hours=2)
+    )
+    offset_specification = build_specification(
+        start_at=datetime(
+            2024,
+            1,
+            1,
+            2,
+            0,
+            tzinfo=offset,
+        ),
+        end_at=datetime(
+            2024,
+            12,
+            31,
+            2,
+            0,
+            tzinfo=offset,
+        ),
+    )
+
+    assert build_specification().fingerprint == (
+        offset_specification.fingerprint
+    )
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    (
+        {"question_title": "Different question"},
+        {"hypothesis_title": "Different hypothesis"},
+        {"experiment_title": "Different experiment"},
+        {"data_source": "mt5"},
+        {"symbol": "ETHUSDT"},
+        {"timeframe": "4h"},
+        {"entry_rule": "different_entry"},
+        {"exit_rule": "different_exit"},
+        {"direction": MarketPositionDirection.SHORT},
+        {"stop_loss_percent": 1.5},
+        {"take_profit_percent": 3.0},
+        {"max_holding_bars": 48},
+        {"commission_percent": 0.2},
+        {"slippage_percent": 0.1},
+        {
+            "strategy_parameters": {
+                "williams_period": 21,
+            },
+        },
+        {
+            "tags": (
+                "eth",
+                "williams",
+            ),
+        },
+    ),
+)
+def test_fingerprint_changes_with_contract(
+    overrides: dict[str, object],
+) -> None:
+    assert build_specification().fingerprint != (
+        build_specification(
+            **overrides,
+        ).fingerprint
+    )
+
+
+def test_fingerprint_includes_full_research_specification() -> None:
+    first = build_specification(
+        research_specification=(
+            build_research_specification(
+                "indicator_direction"
+            )
+        ),
+    )
+    second = build_specification(
+        research_specification=(
+            build_research_specification(
+                "threshold_cross"
+            )
+        ),
+    )
+
+    assert first.fingerprint != second.fingerprint
+
+
+@pytest.mark.parametrize(
+    "strategy_parameters",
+    (
+        {"callback": object()},
+        {"threshold": float("nan")},
+    ),
+)
+def test_rejects_non_json_strategy_parameters(
+    strategy_parameters: dict[str, object],
+) -> None:
+    with pytest.raises(
+        ValueError,
+        match="strategy_parameters must be JSON-compatible",
+    ):
+        build_specification(
+            strategy_parameters=strategy_parameters,
+        )
+
+
+def test_rejects_duplicate_normalized_tags() -> None:
+    with pytest.raises(
+        ValueError,
+        match="tags must not contain duplicates",
+    ):
+        build_specification(
+            tags=(
+                "btc",
+                " btc ",
+            ),
+        )
+
+
+def test_rejects_untyped_direction() -> None:
+    with pytest.raises(
+        TypeError,
+        match="direction must be a MarketPositionDirection",
+    ):
+        build_specification(
+            direction="LONG",
         )
