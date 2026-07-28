@@ -19,6 +19,10 @@ from src.cli.run_indicator_comparative_hypothesis_evaluation_command import (
 from src.cli.run_market_research_campaign_command import (
     RunMarketResearchCampaignCommand,
 )
+from src.research.hypothesis_evaluation import (
+    HypothesisEvaluation,
+    HypothesisEvaluationState,
+)
 from src.research.knowledge_item import KnowledgeItem
 from src.research.knowledge_revision import (
     KnowledgeRevision,
@@ -237,6 +241,139 @@ def test_main_generates_questions_from_stored_knowledge(
         "knowledge_research_questions"
     )
     assert payload["artifact_version"] == 1
+    assert payload["question_count"] == 1
+    assert len(payload["questions"]) == 1
+    assert len(
+        payload["snapshot_fingerprint"]
+    ) == 64
+
+def test_promoted_evaluation_generates_questions_from_shared_repository(
+    tmp_path: Path,
+) -> None:
+    cli = build_research_cli(
+        db_path=tmp_path / "research-cycles.db",
+    )
+    evaluation = HypothesisEvaluation(
+        id=(
+            "hypothesis-evaluation:"
+            "sha256:production-vertical-path"
+        ),
+        hypothesis_id="hypothesis-rsi",
+        state=HypothesisEvaluationState.SUPPORTED,
+        confidence=0.82,
+        finding_refs=(
+            "finding-a",
+            "finding-b",
+        ),
+        rationale=(
+            "Replicated findings support the hypothesis.",
+        ),
+        limitations=(),
+        provenance=(
+            (
+                "evaluation_plan_version",
+                "hypothesis-evaluation-v1",
+            ),
+        ),
+    )
+
+    revision = (
+        cli
+        .run_comparative_hypothesis_evaluation_command
+        ._promotion_application
+        .run(
+            evaluation=evaluation,
+            knowledge_id="knowledge-rsi",
+            statement=(
+                "RSI effect persists across markets."
+            ),
+            applicability=("liquid FX",),
+            limitations=("generated data",),
+            provenance=(
+                ("producer", "production-test"),
+            ),
+        )
+    )
+
+    rendered = (
+        cli
+        .generate_research_questions_command
+        .execute(indent=None)
+    )
+    payload = json.loads(rendered)
+
+    assert revision.item.id == "knowledge-rsi"
+    assert revision.item.version == 1
+    assert payload["artifact_type"] == (
+        "knowledge_research_questions"
+    )
+    assert payload["question_count"] == 1
+    assert len(payload["questions"]) == 1
+    assert len(
+        payload["snapshot_fingerprint"]
+    ) == 64
+
+
+def test_promoted_evaluation_generates_questions_from_shared_repository(
+    tmp_path: Path,
+) -> None:
+    cli = build_research_cli(
+        db_path=tmp_path / "research-cycles.db",
+    )
+    evaluation = HypothesisEvaluation(
+        id=(
+            "hypothesis-evaluation:"
+            "sha256:production-vertical-path"
+        ),
+        hypothesis_id="hypothesis-rsi",
+        state=HypothesisEvaluationState.SUPPORTED,
+        confidence=0.82,
+        finding_refs=(
+            "finding-a",
+            "finding-b",
+        ),
+        rationale=(
+            "Replicated findings support the hypothesis.",
+        ),
+        limitations=(),
+        provenance=(
+            (
+                "evaluation_plan_version",
+                "hypothesis-evaluation-v1",
+            ),
+        ),
+    )
+
+    revision = (
+        cli
+        .run_comparative_hypothesis_evaluation_command
+        ._promotion_application
+        .run(
+            evaluation=evaluation,
+            knowledge_id="knowledge-rsi",
+            statement=(
+                "RSI effect persists across markets."
+            ),
+            applicability=("liquid FX",),
+            limitations=("generated data",),
+            provenance=(
+                ("producer", "production-test"),
+            ),
+        )
+    )
+
+    rendered = (
+        cli
+        .generate_research_questions_command
+        .execute(indent=None)
+    )
+    payload = json.loads(rendered)
+
+    assert revision.item.id == "knowledge-rsi"
+    assert revision.item.version == 1
+    assert payload["artifact_type"] == (
+        "knowledge_research_questions"
+    )
     assert payload["question_count"] == 1
     assert len(payload["questions"]) == 1
     assert len(
