@@ -375,3 +375,87 @@ production snapshot/question route нет composition root.
 - artifact producers используют несколько envelope shapes;
 - общий workflow, lifecycle, pipeline или orchestration abstraction
   инвентаризацией не добавлялся.
+## 15. Consolidation checkpoint
+
+Commit checkpoint: `21f855a`.
+
+Этот раздел фиксирует фактическую дельту после baseline commit
+`9001efec`. Разделы 1–14 остаются исходным architecture inventory.
+
+### 15.1 ExperimentExecution
+
+Для одиночного production market experiment реализован отдельный
+технический lifecycle:
+
+- immutable `ExperimentExecution`;
+- состояния `PENDING`, `RUNNING`, `SUCCEEDED`, `FAILED` и `CANCELLED`;
+- deterministic fingerprint полной `MarketExperimentSpecification`;
+- `ExperimentExecutionFactory`;
+- `ExperimentExecutionTrackingExecutor`;
+- append-only `SqliteExperimentExecutionRecorder`;
+- SQLite-таблица `experiment_execution_snapshots`;
+- wiring в обоих market composition roots.
+
+Execution переводится в `SUCCEEDED` сразу после получения валидного
+`ExperimentResult`. Ошибки последующего analysis, serialization или
+artifact persistence не изменяют технический outcome выполнения.
+
+Pending execution пока создаётся после mapping, загрузки dataset и
+построения `ResearchContext`. Поэтому preparation failures до создания
+session ещё не имеют persistent execution record.
+
+### 15.2 ResearchArtifactEnvelope
+
+Для одиночного production market path реализованы:
+
+- `ResearchArtifactEnvelope`;
+- `ResearchArtifactSourceReference`;
+- `ResearchArtifactEnvelopeFactory`;
+- canonical SHA-256 fingerprint payload;
+- immutable JSON snapshots payload и provenance;
+- integrity-aware envelope loader;
+- совместимое чтение legacy и envelope artifacts.
+
+Envelope `market_research_cycle` содержит отдельный `artifact_id`,
+producer metadata, execution и result source references, specification
+и environment provenance, payload fingerprint и существующий
+типизированный market research payload.
+
+Legacy writer сохраняется для немигрированных вызовов.
+`ArtifactComparisonInputExtractor` принимает оба формата и использует
+внешний envelope artifact ID для новых artifacts.
+
+Campaign, comparative Evidence, Finding, HypothesisEvaluation,
+Knowledge snapshot и research-question artifacts пока не мигрированы.
+
+### 15.3 Production market path
+
+Specification JSON
+→ `RunMarketResearch`
+→ `MarketResearchSessionFactory`
+→ canonical dataset и `ResearchContext`
+→ `ExperimentExecution`
+→ tracking executor
+→ prepared market executor
+→ execution snapshots в SQLite
+→ legacy `ResearchEngine`
+→ typed market research payload
+→ `ResearchArtifactEnvelope`
+→ `SqliteResearchCycleStore`.
+
+### 15.4 Сохраняющиеся разрывы
+
+На commit `21f855a`:
+
+- preparation failures ещё не сохраняются;
+- lifecycle-level `correlation_id` пока не передаётся;
+- campaign execution не использует единый execution lifecycle;
+- большинство artifact types остаются legacy;
+- HypothesisEvaluation → KnowledgeCandidate не имеет production use case;
+- Knowledge repositories не подключены к production composition root;
+- Knowledge snapshot поступает через ручной JSON-файл;
+- Analysis → Knowledge → Recommendation не является единым
+  in-process production path.
+
+Общий workflow, lifecycle, pipeline или orchestration engine не
+добавлялся.
