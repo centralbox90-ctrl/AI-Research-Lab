@@ -134,6 +134,7 @@ class KnowledgeResearchQuestionsCommand(Protocol):
         self,
         *,
         indent: int | None = 2,
+        correlation_id: str | None = None,
     ) -> str:
         """
         Generate research questions and return JSON.
@@ -578,6 +579,9 @@ class ResearchCli:
         try:
             rendered = command.execute(
                 indent=indent,
+                correlation_id=(
+                    arguments.correlation_id
+                ),
             )
         except (ValueError, LookupError) as error:
             stderr.write(
@@ -804,6 +808,11 @@ class ResearchCli:
         knowledge_questions_parser.add_argument(
             "--compact",
             action="store_true",
+        )
+
+        knowledge_questions_parser.add_argument(
+            "--correlation-id",
+            dest="correlation_id",
         )
 
         run_research_parser = subparsers.add_parser(

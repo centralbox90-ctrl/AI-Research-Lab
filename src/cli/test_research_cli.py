@@ -467,14 +467,22 @@ def test_research_cli_reports_unconfigured_campaign_command(
 
 class StubKnowledgeResearchQuestionsCommand:
     def __init__(self) -> None:
-        self.calls: list[int | None] = []
+        self.calls: list[
+            tuple[int | None, str | None]
+        ] = []
 
     def execute(
         self,
         *,
         indent: int | None = 2,
+        correlation_id: str | None = None,
     ) -> str:
-        self.calls.append(indent)
+        self.calls.append(
+            (
+                indent,
+                correlation_id,
+            )
+        )
 
         return json.dumps(
             {
@@ -491,6 +499,7 @@ class FailingKnowledgeResearchQuestionsCommand:
         self,
         *,
         indent: int | None = 2,
+        correlation_id: str | None = None,
     ) -> str:
         raise ValueError(
             "stored Knowledge is unavailable"
@@ -520,6 +529,8 @@ def test_research_cli_generates_knowledge_questions(
     exit_code = cli.run(
         [
             "generate-knowledge-research-questions",
+            "--correlation-id",
+            "research-lifecycle-42",
         ],
         stdout=stdout,
         stderr=stderr,
@@ -527,7 +538,12 @@ def test_research_cli_generates_knowledge_questions(
 
     assert exit_code == 0
     assert stderr.getvalue() == ""
-    assert command.calls == [2]
+    assert command.calls == [
+        (
+            2,
+            "research-lifecycle-42",
+        ),
+    ]
     assert json.loads(stdout.getvalue())[
         "artifact_type"
     ] == "knowledge_research_questions"
@@ -553,7 +569,12 @@ def test_research_cli_supports_compact_knowledge_questions(
 
     assert exit_code == 0
     assert stderr.getvalue() == ""
-    assert command.calls == [None]
+    assert command.calls == [
+        (
+            None,
+            None,
+        ),
+    ]
     assert "\n" not in stdout.getvalue().rstrip(
         "\n"
     )

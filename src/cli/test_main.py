@@ -243,6 +243,8 @@ def test_main_generates_questions_from_stored_knowledge(
             str(db_path),
             "generate-knowledge-research-questions",
             "--compact",
+            "--correlation-id",
+            "knowledge-lifecycle-42",
         ],
         stdout=stdout,
         stderr=stderr,
@@ -260,7 +262,9 @@ def test_main_generates_questions_from_stored_knowledge(
     assert payload[
         "payload_schema_version"
     ] == 1
-    assert payload["correlation_id"] is None
+    assert payload["correlation_id"] == (
+        "knowledge-lifecycle-42"
+    )
     assert payload["payload"][
         "question_count"
     ] == 1
