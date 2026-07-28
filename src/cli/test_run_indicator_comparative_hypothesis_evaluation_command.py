@@ -7,6 +7,12 @@ from pathlib import Path
 
 import pytest
 
+from src.application.hypothesis_evaluation_artifact_envelope_factory import (
+    HypothesisEvaluationArtifactEnvelopeFactory,
+)
+from src.application.research_artifact_envelope import (
+    ResearchArtifactEnvelopeFactory,
+)
 from src.application.indicator_comparative_hypothesis_evaluation_application import (
     IndicatorComparativeHypothesisEvaluationApplication,
 )
@@ -30,6 +36,39 @@ from src.research.knowledge_item import (
 from src.research.knowledge_revision import (
     KnowledgeRevision,
 )
+
+
+class FixedClock:
+    def now(self) -> datetime:
+        return datetime(
+            2026,
+            7,
+            28,
+            12,
+            0,
+            tzinfo=UTC,
+        )
+
+
+class FixedIdGenerator:
+    def generate(self) -> str:
+        return "artifact-hypothesis-command"
+
+
+def build_envelope_factory(
+) -> HypothesisEvaluationArtifactEnvelopeFactory:
+    return HypothesisEvaluationArtifactEnvelopeFactory(
+        envelope_factory=(
+            ResearchArtifactEnvelopeFactory(
+                producer=(
+                    "comparative-hypothesis-evaluation-test"
+                ),
+                producer_version="git:test",
+                clock=FixedClock(),
+                id_generator=FixedIdGenerator(),
+            )
+        )
+    )
 
 
 @dataclass(frozen=True)
@@ -393,4 +432,97 @@ def test_rejects_unconfigured_requested_promotion(
     ):
         command.execute(
             "evaluation-request.json"
+        )
+
+def test_returns_promoted_envelope_when_configured(
+) -> None:
+    promotion = KnowledgePromotionRequest(
+        knowledge_id="knowledge-rsi",
+        statement=(
+            "RSI effect persists across markets."
+        ),
+        applicability=("liquid FX",),
+        limitations=("generated data",),
+        provenance=((
+            "producer",
+            "request",
+        ),),
+    )
+    loaded_request = StubLoadedRequest(
+        hypothesis_id="hypothesis-rsi",
+        requests=("request-a",),
+        knowledge_promotion=promotion,
+    )
+    loader = StubRequestLoader(
+        loaded_request
+    )
+    evaluation_application = StubApplication(
+        build_evaluation()
+    )
+    promotion_application = (
+        StubPromotionApplication(
+            build_revision()
+        )
+    )
+    command = (
+        RunIndicatorComparativeHypothesisEvaluationCommand(
+            application=evaluation_application,
+            promotion_application=(
+                promotion_application
+            ),
+            artifact_envelope_factory=(
+                build_envelope_factory()
+            ),
+            request_loader=loader,
+        )
+    )
+
+    rendered = command.execute(
+        "evaluation-request.json",
+        indent=None,
+    )
+    envelope = json.loads(rendered)
+
+    assert envelope["schema_version"] == 1
+    assert envelope["artifact_type"] == (
+        "hypothesis_evaluation"
+    )
+    assert envelope["payload_schema_version"] == 2
+    assert envelope["artifact_id"] == (
+        "artifact-hypothesis-command"
+    )
+    assert envelope["producer"] == (
+        "comparative-hypothesis-evaluation-test"
+    )
+    assert envelope["payload"]["evaluation"][
+        "id"
+    ] == evaluation_application.result.id
+    assert envelope["payload"][
+        "knowledge_revision"
+    ]["item"]["id"] == "knowledge-rsi"
+    assert len(envelope["source_references"]) == 2
+    assert envelope["source_references"][1][
+        "reference_type"
+    ] == "knowledge_revision"
+    assert envelope["source_references"][1][
+        "reference_version"
+    ] == 1
+    assert "\n" not in rendered
+
+
+def test_rejects_invalid_artifact_envelope_factory(
+) -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "artifact_envelope_factory must be a "
+            "HypothesisEvaluationArtifactEnvelopeFactory "
+            "or None"
+        ),
+    ):
+        RunIndicatorComparativeHypothesisEvaluationCommand(
+            application=StubApplication(
+                build_evaluation()
+            ),
+            artifact_envelope_factory=object(),
         )

@@ -3,6 +3,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from src.application.hypothesis_evaluation_artifact_envelope_factory import (
+    HypothesisEvaluationArtifactEnvelopeFactory,
+)
 from src.application.indicator_comparative_hypothesis_evaluation_application import (
     IndicatorComparativeHypothesisEvaluationApplication,
 )
@@ -30,6 +33,10 @@ class RunIndicatorComparativeHypothesisEvaluationCommand:
         ),
         promotion_application: (
             PromoteHypothesisEvaluationToKnowledge
+            | None
+        ) = None,
+        artifact_envelope_factory: (
+            HypothesisEvaluationArtifactEnvelopeFactory
             | None
         ) = None,
         request_loader: (
@@ -60,6 +67,19 @@ class RunIndicatorComparativeHypothesisEvaluationCommand:
             )
 
         if (
+            artifact_envelope_factory is not None
+            and not isinstance(
+                artifact_envelope_factory,
+                HypothesisEvaluationArtifactEnvelopeFactory,
+            )
+        ):
+            raise TypeError(
+                "artifact_envelope_factory must be a "
+                "HypothesisEvaluationArtifactEnvelopeFactory "
+                "or None"
+            )
+
+        if (
             request_loader is not None
             and not isinstance(
                 request_loader,
@@ -74,6 +94,9 @@ class RunIndicatorComparativeHypothesisEvaluationCommand:
         self._application = application
         self._promotion_application = (
             promotion_application
+        )
+        self._artifact_envelope_factory = (
+            artifact_envelope_factory
         )
         self._request_loader = (
             request_loader
@@ -97,10 +120,8 @@ class RunIndicatorComparativeHypothesisEvaluationCommand:
             hypothesis_id=request.hypothesis_id,
             requests=request.requests,
         )
-        payload = present_hypothesis_evaluation(
-            evaluation
-        )
         promotion = request.knowledge_promotion
+        revision = None
 
         if promotion is not None:
             if self._promotion_application is None:
@@ -124,6 +145,27 @@ class RunIndicatorComparativeHypothesisEvaluationCommand:
                     provenance=promotion.provenance,
                 )
             )
+
+        if self._artifact_envelope_factory is not None:
+            envelope = (
+                self._artifact_envelope_factory.create(
+                    evaluation=evaluation,
+                    knowledge_revision=revision,
+                )
+            )
+
+            return json.dumps(
+                envelope.to_dict(),
+                ensure_ascii=False,
+                sort_keys=True,
+                indent=indent,
+            )
+
+        payload = present_hypothesis_evaluation(
+            evaluation
+        )
+
+        if revision is not None:
             payload["artifact_version"] = 2
             payload["knowledge_revision"] = {
                 **revision.to_dict(),
