@@ -21,6 +21,7 @@ from src.indicators.discovery import (
 
 from src.storage import (
     RESEARCH_CYCLE_DATABASE_PATH,
+    SqliteExperimentExecutionRecorder,
     SqliteResearchCycleStore,
 )
 from src.application.market_signal_provider_factory import (
@@ -39,6 +40,12 @@ def build_default_market_research_application(
 
     store = SqliteResearchCycleStore(
         db_path=RESEARCH_CYCLE_DATABASE_PATH,
+    )
+
+    execution_recorder = (
+        SqliteExperimentExecutionRecorder(
+            db_path=RESEARCH_CYCLE_DATABASE_PATH,
+        )
     )
 
     indicator_catalog = IndicatorCatalog(
@@ -63,4 +70,5 @@ def build_default_market_research_application(
         data_provider=GeneratedMarketDataProvider(),
         signal_provider=signal_provider,
         store=store,
+        execution_recorder=execution_recorder,
     )

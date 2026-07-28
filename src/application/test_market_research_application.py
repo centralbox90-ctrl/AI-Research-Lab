@@ -1,3 +1,4 @@
+import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -9,7 +10,13 @@ from src.application import (
     RunMarketResearch,
     build_market_research_application,
 )
-from src.storage import SqliteResearchCycleStore
+from src.research.experiment_execution import (
+    ExperimentExecutionStatus,
+)
+from src.storage import (
+    SqliteExperimentExecutionRecorder,
+    SqliteResearchCycleStore,
+)
 
 class FakeMarketDataProvider:
     def load(
@@ -116,14 +123,22 @@ def build_specification() -> MarketExperimentSpecification:
 def test_build_market_research_application_creates_ready_use_case(
     tmp_path: Path,
 ) -> None:
+    db_path = tmp_path / "research_cycles.db"
+
     store = SqliteResearchCycleStore(
-        db_path=tmp_path / "research_cycles.db",
+        db_path=db_path,
+    )
+    execution_recorder = (
+        SqliteExperimentExecutionRecorder(
+            db_path=db_path,
+        )
     )
 
     application = build_market_research_application(
         data_provider=FakeMarketDataProvider(),
         signal_provider=FakeMarketSignalProvider(),
         store=store,
+        execution_recorder=execution_recorder,
     )
 
     assert isinstance(
@@ -144,3 +159,29 @@ def test_build_market_research_application_creates_ready_use_case(
     assert stored is not None
     assert stored["cycle"]["result"]["id"] == cycle.result.id
     assert stored["cycle"]["result"]["success"] is True
+
+    with sqlite3.connect(db_path) as connection:
+        row = connection.execute(
+            """
+            SELECT execution_id
+            FROM experiment_execution_snapshots
+            ORDER BY execution_id
+            LIMIT 1
+            """
+        ).fetchone()
+
+    assert row is not None
+
+    history = execution_recorder.history(
+        str(row[0])
+    )
+
+    assert [
+        execution.status
+        for execution in history
+    ] == [
+        ExperimentExecutionStatus.PENDING,
+        ExperimentExecutionStatus.RUNNING,
+        ExperimentExecutionStatus.SUCCEEDED,
+    ]
+    assert history[-1].result_id == cycle.result.id

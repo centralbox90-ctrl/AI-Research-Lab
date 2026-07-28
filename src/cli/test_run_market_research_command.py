@@ -71,6 +71,17 @@ class InMemorySerializedResearchCycleStore:
         self.saved_cycles[result_id] = serialized_cycle
 
 
+class RecordingExecutionRecorder:
+    def __init__(self) -> None:
+        self.executions: list[object] = []
+
+    def record(
+        self,
+        execution: object,
+    ) -> None:
+        self.executions.append(execution)
+
+
 def write_specification(
     path: Path,
 ) -> None:
@@ -144,6 +155,7 @@ def test_run_market_research_command_executes_json_specification(
         data_provider=FakeMarketDataProvider(),
         signal_provider=FakeMarketSignalProvider(),
         store=store,
+        execution_recorder=RecordingExecutionRecorder(),
     )
 
     command = RunMarketResearchCommand(
@@ -183,6 +195,7 @@ def test_run_market_research_command_supports_compact_json(
         data_provider=FakeMarketDataProvider(),
         signal_provider=FakeMarketSignalProvider(),
         store=InMemorySerializedResearchCycleStore(),
+        execution_recorder=RecordingExecutionRecorder(),
     )
 
     command = RunMarketResearchCommand(
@@ -212,6 +225,7 @@ def test_run_market_research_command_reports_invalid_specification(
         data_provider=FakeMarketDataProvider(),
         signal_provider=FakeMarketSignalProvider(),
         store=InMemorySerializedResearchCycleStore(),
+        execution_recorder=RecordingExecutionRecorder(),
     )
 
     command = RunMarketResearchCommand(

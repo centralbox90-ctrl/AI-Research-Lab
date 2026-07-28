@@ -1,4 +1,4 @@
-﻿from datetime import datetime, timezone
+from datetime import datetime, timezone
 
 import pandas as pd
 
@@ -138,6 +138,17 @@ class FakeSignalProvider:
         return prepared
 
 
+class RecordingExecutionRecorder:
+    def __init__(self) -> None:
+        self.executions: list[object] = []
+
+    def record(
+        self,
+        execution: object,
+    ) -> None:
+        self.executions.append(execution)
+
+
 def build_specification() -> MarketExperimentSpecification:
     return MarketExperimentSpecification(
         executor_type="market_backtest",
@@ -206,6 +217,7 @@ def test_factory_loads_market_data_once() -> None:
         data_provider=data_provider,
         signal_provider=FakeSignalProvider(),
         context_factory=build_context_factory(),
+        execution_recorder=RecordingExecutionRecorder(),
     )
 
     session = factory.create(
@@ -219,10 +231,9 @@ def test_factory_loads_market_data_once() -> None:
         is data_provider.last_data
     )
 
-    assert (
-        session.executor.market_data
-        is data_provider.last_data
-    )
+    session.execute()
+
+    assert data_provider.load_count == 1
 
 
 def test_factory_builds_matching_environment() -> None:
@@ -230,6 +241,7 @@ def test_factory_builds_matching_environment() -> None:
         data_provider=CountingMarketDataProvider(),
         signal_provider=FakeSignalProvider(),
         context_factory=build_context_factory(),
+        execution_recorder=RecordingExecutionRecorder(),
     )
 
     session = factory.create(
@@ -276,6 +288,7 @@ def test_created_session_executes_experiment() -> None:
         data_provider=CountingMarketDataProvider(),
         signal_provider=FakeSignalProvider(),
         context_factory=build_context_factory(),
+        execution_recorder=RecordingExecutionRecorder(),
     )
 
     session = factory.create(

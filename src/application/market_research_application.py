@@ -1,7 +1,12 @@
-﻿from src.application.canonical_market_data_provider import (
+from src.application.canonical_market_data_provider import (
     CanonicalMarketDataProvider,
 )
-
+from src.application.experiment_execution_factory import (
+    ExperimentExecutionFactory,
+)
+from src.application.experiment_execution_recorder import (
+    ExperimentExecutionRecorder,
+)
 from src.application.git_code_version_provider import (
     GitCodeVersionProvider,
 )
@@ -32,11 +37,14 @@ from src.application.run_market_research import (
 from src.application.serialized_research_cycle_store import (
     SerializedResearchCycleStore,
 )
+from src.application.system_clock import SystemClock
+
 
 def build_market_research_application(
     data_provider: LegacyMarketDataProvider,
     signal_provider: MarketSignalProvider,
     store: SerializedResearchCycleStore,
+    execution_recorder: ExperimentExecutionRecorder,
 ) -> RunMarketResearch:
     """
     Build the market-research application dependency graph.
@@ -69,10 +77,17 @@ def build_market_research_application(
         code_version_provider=code_version_provider,
     )
 
+    clock = SystemClock()
+
     session_factory = MarketResearchSessionFactory(
         data_provider=canonical_data_provider,
         signal_provider=signal_provider,
         context_factory=context_factory,
+        execution_recorder=execution_recorder,
+        clock=clock,
+        execution_factory=ExperimentExecutionFactory(
+            clock=clock,
+        ),
     )
 
     run_and_store = RunAndStoreResearchArtifact(

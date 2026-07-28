@@ -61,6 +61,7 @@ from src.cli.run_market_research_command import (
 )
 from src.storage import (
     RESEARCH_CYCLE_DATABASE_PATH,
+    SqliteExperimentExecutionRecorder,
     SqliteResearchCycleStore,
 )
 
@@ -76,6 +77,12 @@ def build_research_cli(
 
     store = SqliteResearchCycleStore(
         db_path=db_path,
+    )
+
+    execution_recorder = (
+        SqliteExperimentExecutionRecorder(
+            db_path=db_path,
+        )
     )
 
     get_stored_cycle = GetStoredResearchCycle(
@@ -130,6 +137,7 @@ def build_research_cli(
             data_provider=GeneratedMarketDataProvider(),
             signal_provider=SimpleMarketSignalProvider(),
             store=store,
+            execution_recorder=execution_recorder,
         )
     )
 

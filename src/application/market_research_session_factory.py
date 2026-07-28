@@ -1,5 +1,14 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
+from src.application.experiment_execution_factory import (
+    ExperimentExecutionFactory,
+)
+from src.application.experiment_execution_recorder import (
+    ExperimentExecutionRecorder,
+)
+from src.application.experiment_execution_tracking_executor import (
+    ExperimentExecutionTrackingExecutor,
+)
 from src.application.market_data_provider import (
     CanonicalMarketDatasetProvider,
 )
@@ -18,9 +27,11 @@ from src.application.market_research_session import (
 from src.application.market_signal_provider import (
     MarketSignalProvider,
 )
+from src.application.ports.clock import Clock
 from src.application.prepared_market_backtest_executor import (
     PreparedMarketBacktestExecutor,
 )
+from src.application.system_clock import SystemClock
 from src.research.research_graph import (
     ResearchGraph,
 )
@@ -37,11 +48,36 @@ class MarketResearchSessionFactory:
         data_provider: CanonicalMarketDatasetProvider,
         signal_provider: MarketSignalProvider,
         context_factory: MarketResearchContextFactory,
+        execution_recorder: ExperimentExecutionRecorder,
         mapper: MarketExperimentMapper | None = None,
+        clock: Clock | None = None,
+        execution_factory: (
+            ExperimentExecutionFactory | None
+        ) = None,
     ) -> None:
+        if not callable(
+            getattr(
+                execution_recorder,
+                "record",
+                None,
+            )
+        ):
+            raise TypeError(
+                "execution_recorder must provide "
+                "a callable record method"
+            )
+
         self._data_provider = data_provider
         self._signal_provider = signal_provider
         self._context_factory = context_factory
+        self._execution_recorder = execution_recorder
+        self._clock = clock or SystemClock()
+        self._execution_factory = (
+            execution_factory
+            or ExperimentExecutionFactory(
+                clock=self._clock,
+            )
+        )
         self._mapper = (
             mapper
             or MarketExperimentMapper()
@@ -70,10 +106,27 @@ class MarketResearchSessionFactory:
             experiment=mapped.experiment,
         )
 
-        executor = PreparedMarketBacktestExecutor(
+        prepared_executor = PreparedMarketBacktestExecutor(
             specification=specification,
             market_data=context.market_data,
             signal_provider=self._signal_provider,
+        )
+
+        execution = (
+            self._execution_factory.create_pending(
+                specification=specification,
+                experiment_id=graph.experiment.id,
+            )
+        )
+
+        executor = ExperimentExecutionTrackingExecutor(
+            executor=prepared_executor,
+            execution=execution,
+            environment_fingerprint=(
+                context.environment.fingerprint()
+            ),
+            recorder=self._execution_recorder,
+            clock=self._clock,
         )
 
         return MarketResearchSession(
