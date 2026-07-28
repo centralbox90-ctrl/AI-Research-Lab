@@ -334,11 +334,24 @@ def test_promoted_evaluation_generates_questions_from_shared_repository(
 
     assert revision.item.id == "knowledge-rsi"
     assert revision.item.version == 1
+    assert payload["schema_version"] == 1
     assert payload["artifact_type"] == (
         "knowledge_research_questions"
     )
-    assert payload["question_count"] == 1
-    assert len(payload["questions"]) == 1
+    assert payload[
+        "payload_schema_version"
+    ] == 1
+    assert payload["payload"][
+        "question_count"
+    ] == 1
     assert len(
-        payload["snapshot_fingerprint"]
+        payload["payload"]["questions"]
+    ) == 1
+    assert len(
+        payload["payload"][
+            "snapshot_fingerprint"
+        ]
     ) == 64
+    assert payload["payload"]["snapshot"][
+        "schema_version"
+    ] == 1
