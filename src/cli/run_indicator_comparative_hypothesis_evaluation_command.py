@@ -9,6 +9,9 @@ from src.application.indicator_comparative_hypothesis_evaluation_application imp
 from src.application.indicator_comparative_hypothesis_evaluation_request_loader import (
     IndicatorComparativeHypothesisEvaluationRequestLoader,
 )
+from src.application.promote_hypothesis_evaluation_to_knowledge import (
+    PromoteHypothesisEvaluationToKnowledge,
+)
 from src.cli.hypothesis_evaluation_presenter import (
     present_hypothesis_evaluation,
 )
@@ -25,6 +28,10 @@ class RunIndicatorComparativeHypothesisEvaluationCommand:
         application: (
             IndicatorComparativeHypothesisEvaluationApplication
         ),
+        promotion_application: (
+            PromoteHypothesisEvaluationToKnowledge
+            | None
+        ) = None,
         request_loader: (
             IndicatorComparativeHypothesisEvaluationRequestLoader
             | None
@@ -40,6 +47,19 @@ class RunIndicatorComparativeHypothesisEvaluationCommand:
             )
 
         if (
+            promotion_application is not None
+            and not isinstance(
+                promotion_application,
+                PromoteHypothesisEvaluationToKnowledge,
+            )
+        ):
+            raise TypeError(
+                "promotion_application must be a "
+                "PromoteHypothesisEvaluationToKnowledge "
+                "or None"
+            )
+
+        if (
             request_loader is not None
             and not isinstance(
                 request_loader,
@@ -52,6 +72,9 @@ class RunIndicatorComparativeHypothesisEvaluationCommand:
             )
 
         self._application = application
+        self._promotion_application = (
+            promotion_application
+        )
         self._request_loader = (
             request_loader
             or IndicatorComparativeHypothesisEvaluationRequestLoader()
@@ -77,6 +100,37 @@ class RunIndicatorComparativeHypothesisEvaluationCommand:
         payload = present_hypothesis_evaluation(
             evaluation
         )
+        promotion = request.knowledge_promotion
+
+        if promotion is not None:
+            if self._promotion_application is None:
+                raise ValueError(
+                    "Knowledge promotion is not configured"
+                )
+
+            revision = (
+                self._promotion_application.run(
+                    evaluation=evaluation,
+                    knowledge_id=(
+                        promotion.knowledge_id
+                    ),
+                    statement=promotion.statement,
+                    applicability=(
+                        promotion.applicability
+                    ),
+                    limitations=(
+                        promotion.limitations
+                    ),
+                    provenance=promotion.provenance,
+                )
+            )
+            payload["artifact_version"] = 2
+            payload["knowledge_revision"] = {
+                **revision.to_dict(),
+                "fingerprint": (
+                    revision.fingerprint
+                ),
+            }
 
         return json.dumps(
             payload,

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -11,6 +12,10 @@ from src.application.indicator_comparative_hypothesis_evaluation_application imp
 )
 from src.application.indicator_comparative_hypothesis_evaluation_request_loader import (
     IndicatorComparativeHypothesisEvaluationRequestLoader,
+    KnowledgePromotionRequest,
+)
+from src.application.promote_hypothesis_evaluation_to_knowledge import (
+    PromoteHypothesisEvaluationToKnowledge,
 )
 from src.cli.run_indicator_comparative_hypothesis_evaluation_command import (
     RunIndicatorComparativeHypothesisEvaluationCommand,
@@ -19,12 +24,21 @@ from src.research.hypothesis_evaluation import (
     HypothesisEvaluation,
     HypothesisEvaluationState,
 )
+from src.research.knowledge_item import (
+    KnowledgeItem,
+)
+from src.research.knowledge_revision import (
+    KnowledgeRevision,
+)
 
 
 @dataclass(frozen=True)
 class StubLoadedRequest:
     hypothesis_id: str
     requests: tuple[object, ...]
+    knowledge_promotion: (
+        KnowledgePromotionRequest | None
+    ) = None
 
 
 class StubRequestLoader(
@@ -74,6 +88,45 @@ class StubApplication(
         return self.result
 
 
+class StubPromotionApplication(
+    PromoteHypothesisEvaluationToKnowledge
+):
+    def __init__(
+        self,
+        result: KnowledgeRevision,
+    ) -> None:
+        self.result = result
+        self.calls: list[
+            dict[str, object]
+        ] = []
+
+    def run(
+        self,
+        *,
+        evaluation: HypothesisEvaluation,
+        knowledge_id: str,
+        statement: str,
+        applicability: tuple[str, ...],
+        limitations: tuple[str, ...],
+        provenance: tuple[
+            tuple[str, str],
+            ...,
+        ],
+    ) -> KnowledgeRevision:
+        self.calls.append(
+            {
+                "evaluation": evaluation,
+                "knowledge_id": knowledge_id,
+                "statement": statement,
+                "applicability": applicability,
+                "limitations": limitations,
+                "provenance": provenance,
+            }
+        )
+
+        return self.result
+
+
 def build_evaluation() -> HypothesisEvaluation:
     return HypothesisEvaluation(
         id=(
@@ -97,6 +150,38 @@ def build_evaluation() -> HypothesisEvaluation:
                 "hypothesis-evaluation-v1",
             ),
         ),
+    )
+
+
+def build_revision() -> KnowledgeRevision:
+    return KnowledgeRevision(
+        item=KnowledgeItem(
+            id="knowledge-rsi",
+            statement=(
+                "RSI effect persists across markets."
+            ),
+            confidence=0.82,
+            applicability=("liquid FX",),
+            limitations=("generated data",),
+            supporting_findings=(
+                "finding-a",
+                "finding-b",
+            ),
+            version=1,
+            provenance=(("producer", "test"),),
+        ),
+        valid_from=datetime(
+            2026,
+            7,
+            28,
+            12,
+            0,
+            tzinfo=UTC,
+        ),
+        change_reason=(
+            "Promoted from hypothesis evaluation."
+        ),
+        supersedes_version=None,
     )
 
 
@@ -205,4 +290,107 @@ def test_rejects_invalid_request_loader() -> None:
                 build_evaluation()
             ),
             request_loader=object(),
+        )
+
+def test_executes_requested_knowledge_promotion(
+) -> None:
+    promotion = KnowledgePromotionRequest(
+        knowledge_id="knowledge-rsi",
+        statement=(
+            "RSI effect persists across markets."
+        ),
+        applicability=("liquid FX",),
+        limitations=("generated data",),
+        provenance=(("producer", "request"),),
+    )
+    loaded_request = StubLoadedRequest(
+        hypothesis_id="hypothesis-rsi",
+        requests=("request-a",),
+        knowledge_promotion=promotion,
+    )
+    loader = StubRequestLoader(
+        loaded_request
+    )
+    evaluation_application = StubApplication(
+        build_evaluation()
+    )
+    promotion_application = (
+        StubPromotionApplication(
+            build_revision()
+        )
+    )
+    command = (
+        RunIndicatorComparativeHypothesisEvaluationCommand(
+            application=evaluation_application,
+            promotion_application=(
+                promotion_application
+            ),
+            request_loader=loader,
+        )
+    )
+
+    rendered = command.execute(
+        "evaluation-request.json"
+    )
+    payload = json.loads(rendered)
+
+    assert len(promotion_application.calls) == 1
+    call = promotion_application.calls[0]
+    assert call["evaluation"] is (
+        evaluation_application.result
+    )
+    assert call["knowledge_id"] == (
+        "knowledge-rsi"
+    )
+    assert call["statement"] == (
+        "RSI effect persists across markets."
+    )
+    assert call["applicability"] == (
+        "liquid FX",
+    )
+    assert payload["artifact_version"] == 2
+    assert payload["knowledge_revision"][
+        "item"
+    ]["id"] == "knowledge-rsi"
+    assert payload["knowledge_revision"][
+        "fingerprint"
+    ] == promotion_application.result.fingerprint
+
+
+def test_rejects_unconfigured_requested_promotion(
+) -> None:
+    loaded_request = StubLoadedRequest(
+        hypothesis_id="hypothesis-rsi",
+        requests=("request-a",),
+        knowledge_promotion=(
+            KnowledgePromotionRequest(
+                knowledge_id="knowledge-rsi",
+                statement="RSI effect persists.",
+                applicability=("liquid FX",),
+                limitations=(),
+                provenance=(
+                    ("producer", "request"),
+                ),
+            )
+        ),
+    )
+    command = (
+        RunIndicatorComparativeHypothesisEvaluationCommand(
+            application=StubApplication(
+                build_evaluation()
+            ),
+            request_loader=StubRequestLoader(
+                loaded_request
+            ),
+        )
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "Knowledge promotion is not configured"
+        ),
+    ):
+        command.execute(
+            "evaluation-request.json"
         )
