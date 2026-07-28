@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
 
@@ -6,8 +7,8 @@ from src.cli import (
     build_research_cli,
     main,
 )
-from src.cli.generate_research_questions_from_knowledge_snapshot_command import (
-    GenerateResearchQuestionsFromKnowledgeSnapshotCommand,
+from src.cli.generate_research_questions_from_knowledge_repositories_command import (
+    GenerateResearchQuestionsFromKnowledgeRepositoriesCommand,
 )
 from src.cli.run_indicator_comparative_hypothesis_evaluation_command import (
     RunIndicatorComparativeHypothesisEvaluationCommand,
@@ -15,7 +16,14 @@ from src.cli.run_indicator_comparative_hypothesis_evaluation_command import (
 from src.cli.run_market_research_campaign_command import (
     RunMarketResearchCampaignCommand,
 )
-from src.storage import SqliteResearchCycleStore
+from src.research.knowledge_item import KnowledgeItem
+from src.research.knowledge_revision import (
+    KnowledgeRevision,
+)
+from src.storage import (
+    SqliteKnowledgeRepository,
+    SqliteResearchCycleStore,
+)
 
 
 def test_main_reads_research_cycle_from_sqlite_database(
@@ -143,25 +151,48 @@ def test_build_research_cli_configures_knowledge_command(
 
     assert isinstance(
         cli.generate_research_questions_command,
-        GenerateResearchQuestionsFromKnowledgeSnapshotCommand,
+        GenerateResearchQuestionsFromKnowledgeRepositoriesCommand,
     )
 
 
-def test_main_generates_questions_from_knowledge_snapshot(
+def test_main_generates_questions_from_stored_knowledge(
     tmp_path: Path,
 ) -> None:
-    snapshot_path = (
-        tmp_path / "knowledge-snapshot.json"
+    db_path = (
+        tmp_path / "research-cycles.db"
     )
-    snapshot_path.write_text(
-        json.dumps(
-            {
-                "schema_version": 1,
-                "items": [],
-                "relations": [],
-            }
+    knowledge_repository = (
+        SqliteKnowledgeRepository(
+            db_path=db_path,
+        )
+    )
+    item = KnowledgeItem(
+        id="knowledge-1",
+        statement="Momentum persists.",
+        confidence=0.85,
+        applicability=("liquid markets",),
+        limitations=("limited history",),
+        supporting_findings=(
+            "finding-1",
+            "finding-2",
         ),
-        encoding="utf-8",
+        version=1,
+        provenance=(("producer", "test"),),
+    )
+    knowledge_repository.save(
+        KnowledgeRevision(
+            item=item,
+            valid_from=datetime(
+                2026,
+                7,
+                28,
+                12,
+                0,
+                tzinfo=timezone.utc,
+            ),
+            change_reason="Initial knowledge.",
+            supersedes_version=None,
+        )
     )
     stdout = StringIO()
     stderr = StringIO()
@@ -169,10 +200,8 @@ def test_main_generates_questions_from_knowledge_snapshot(
     exit_code = main(
         [
             "--database",
-            str(tmp_path / "research-cycles.db"),
+            str(db_path),
             "generate-knowledge-research-questions",
-            "--snapshot",
-            str(snapshot_path),
             "--compact",
         ],
         stdout=stdout,
@@ -188,8 +217,8 @@ def test_main_generates_questions_from_knowledge_snapshot(
         "knowledge_research_questions"
     )
     assert payload["artifact_version"] == 1
-    assert payload["question_count"] == 0
-    assert payload["questions"] == []
+    assert payload["question_count"] == 1
+    assert len(payload["questions"]) == 1
     assert len(
         payload["snapshot_fingerprint"]
     ) == 64

@@ -13,6 +13,9 @@ from src.application import (
 from src.application.artifact_comparison_input_extractor import (
     ArtifactComparisonInputExtractor,
 )
+from src.application.build_knowledge_graph_snapshot import (
+    BuildKnowledgeGraphSnapshot,
+)
 from src.application.compare_stored_research_artifacts import (
     CompareStoredResearchArtifacts,
 )
@@ -37,8 +40,8 @@ from src.cli.compare_research_artifacts_command import (
 from src.cli.export_research_artifact_command import (
     ExportResearchArtifactCommand,
 )
-from src.cli.generate_research_questions_from_knowledge_snapshot_command import (
-    GenerateResearchQuestionsFromKnowledgeSnapshotCommand,
+from src.cli.generate_research_questions_from_knowledge_repositories_command import (
+    GenerateResearchQuestionsFromKnowledgeRepositoriesCommand,
 )
 from src.cli.get_stored_research_artifact_command import (
     GetStoredResearchArtifactCommand,
@@ -62,6 +65,8 @@ from src.cli.run_market_research_command import (
 from src.storage import (
     RESEARCH_CYCLE_DATABASE_PATH,
     SqliteExperimentExecutionRecorder,
+    SqliteKnowledgeRelationRepository,
+    SqliteKnowledgeRepository,
     SqliteResearchCycleStore,
 )
 
@@ -149,8 +154,35 @@ def build_research_cli(
         runner=market_research_application,
     )
 
+    knowledge_repository = SqliteKnowledgeRepository(
+        db_path=db_path,
+    )
+
+    knowledge_relation_repository = (
+        SqliteKnowledgeRelationRepository(
+            db_path=db_path,
+            knowledge_repository=(
+                knowledge_repository
+            ),
+        )
+    )
+
+    knowledge_snapshot_builder = (
+        BuildKnowledgeGraphSnapshot(
+            knowledge_repository=(
+                knowledge_repository
+            ),
+            relation_repository=(
+                knowledge_relation_repository
+            ),
+        )
+    )
+
     knowledge_question_command = (
-        GenerateResearchQuestionsFromKnowledgeSnapshotCommand(
+        GenerateResearchQuestionsFromKnowledgeRepositoriesCommand(
+            snapshot_builder=(
+                knowledge_snapshot_builder
+            ),
             application=(
                 build_knowledge_research_question_application()
             ),

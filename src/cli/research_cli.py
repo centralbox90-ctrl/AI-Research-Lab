@@ -132,7 +132,6 @@ class KnowledgeResearchQuestionsCommand(Protocol):
 
     def execute(
         self,
-        snapshot_path: str | Path,
         *,
         indent: int | None = 2,
     ) -> str:
@@ -578,7 +577,6 @@ class ResearchCli:
 
         try:
             rendered = command.execute(
-                arguments.snapshot_path,
                 indent=indent,
             )
         except (ValueError, LookupError) as error:
@@ -797,17 +795,10 @@ class ResearchCli:
             subparsers.add_parser(
                 "generate-knowledge-research-questions",
                 help=(
-                    "Generate research questions from a "
-                    "knowledge graph snapshot."
+                    "Generate research questions from "
+                    "stored Knowledge."
                 ),
             )
-        )
-
-        knowledge_questions_parser.add_argument(
-            "--snapshot",
-            dest="snapshot_path",
-            type=Path,
-            required=True,
         )
 
         knowledge_questions_parser.add_argument(

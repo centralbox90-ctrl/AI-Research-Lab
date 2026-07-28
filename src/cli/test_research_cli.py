@@ -467,31 +467,19 @@ def test_research_cli_reports_unconfigured_campaign_command(
 
 class StubKnowledgeResearchQuestionsCommand:
     def __init__(self) -> None:
-        self.calls: list[
-            tuple[Path, int | None]
-        ] = []
+        self.calls: list[int | None] = []
 
     def execute(
         self,
-        snapshot_path: str | Path,
         *,
         indent: int | None = 2,
     ) -> str:
-        normalized_path = Path(snapshot_path)
-        self.calls.append(
-            (
-                normalized_path,
-                indent,
-            )
-        )
+        self.calls.append(indent)
 
         return json.dumps(
             {
                 "artifact_type": (
                     "knowledge_research_questions"
-                ),
-                "snapshot_path": str(
-                    normalized_path
                 ),
             },
             indent=indent,
@@ -501,12 +489,11 @@ class StubKnowledgeResearchQuestionsCommand:
 class FailingKnowledgeResearchQuestionsCommand:
     def execute(
         self,
-        snapshot_path: str | Path,
         *,
         indent: int | None = 2,
     ) -> str:
         raise ValueError(
-            "invalid knowledge snapshot"
+            "stored Knowledge is unavailable"
         )
 
 
@@ -533,8 +520,6 @@ def test_research_cli_generates_knowledge_questions(
     exit_code = cli.run(
         [
             "generate-knowledge-research-questions",
-            "--snapshot",
-            "knowledge-snapshot.json",
         ],
         stdout=stdout,
         stderr=stderr,
@@ -542,12 +527,7 @@ def test_research_cli_generates_knowledge_questions(
 
     assert exit_code == 0
     assert stderr.getvalue() == ""
-    assert command.calls == [
-        (
-            Path("knowledge-snapshot.json"),
-            2,
-        )
-    ]
+    assert command.calls == [2]
     assert json.loads(stdout.getvalue())[
         "artifact_type"
     ] == "knowledge_research_questions"
@@ -565,8 +545,6 @@ def test_research_cli_supports_compact_knowledge_questions(
     exit_code = cli.run(
         [
             "generate-knowledge-research-questions",
-            "--snapshot",
-            "knowledge-snapshot.json",
             "--compact",
         ],
         stdout=stdout,
@@ -575,7 +553,7 @@ def test_research_cli_supports_compact_knowledge_questions(
 
     assert exit_code == 0
     assert stderr.getvalue() == ""
-    assert command.calls[0][1] is None
+    assert command.calls == [None]
     assert "\n" not in stdout.getvalue().rstrip(
         "\n"
     )
@@ -592,8 +570,6 @@ def test_research_cli_reports_knowledge_question_error(
     exit_code = cli.run(
         [
             "generate-knowledge-research-questions",
-            "--snapshot",
-            "invalid.json",
         ],
         stdout=stdout,
         stderr=stderr,
@@ -605,7 +581,7 @@ def test_research_cli_reports_knowledge_question_error(
         stderr.getvalue()
         == (
             "Unable to generate knowledge research "
-            "questions: invalid knowledge snapshot\n"
+            "questions: stored Knowledge is unavailable\n"
         )
     )
 
@@ -619,8 +595,6 @@ def test_research_cli_reports_unconfigured_knowledge_command(
     exit_code = base_cli.run(
         [
             "generate-knowledge-research-questions",
-            "--snapshot",
-            "knowledge-snapshot.json",
         ],
         stdout=stdout,
         stderr=stderr,
