@@ -6,6 +6,9 @@ from src.application.indicator_comparative_hypothesis_evaluation_application imp
 from src.application.market_data_provider import (
     CanonicalMarketDatasetProvider,
 )
+from src.application.promote_hypothesis_evaluation_to_knowledge import (
+    PromoteHypothesisEvaluationToKnowledge,
+)
 from src.cli.run_indicator_comparative_hypothesis_evaluation_command import (
     RunIndicatorComparativeHypothesisEvaluationCommand,
 )
@@ -26,6 +29,10 @@ from src.research.hypothesis_evaluation_plan import (
 def build_default_indicator_comparative_hypothesis_evaluation_command(
     *,
     data_provider: CanonicalMarketDatasetProvider,
+    promotion_application: (
+        PromoteHypothesisEvaluationToKnowledge
+        | None
+    ) = None,
     comparative_evaluation_plan: ComparativeEvaluationPlan = (
         ComparativeEvaluationPlan()
     ),
@@ -46,6 +53,9 @@ def build_default_indicator_comparative_hypothesis_evaluation_command(
                     hypothesis_evaluation_plan
                 ),
             )
+        ),
+        promotion_application=(
+            promotion_application
         ),
     )
 

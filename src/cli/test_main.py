@@ -3,6 +3,9 @@ from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
 
+from src.application.promote_hypothesis_evaluation_to_knowledge import (
+    PromoteHypothesisEvaluationToKnowledge,
+)
 from src.cli import (
     build_research_cli,
     main,
@@ -123,9 +126,26 @@ def test_build_research_cli_configures_comparative_command(
         db_path=tmp_path / "research_cycles.db",
     )
 
+    command = (
+        cli.run_comparative_hypothesis_evaluation_command
+    )
+
     assert isinstance(
-        cli.run_comparative_hypothesis_evaluation_command,
+        command,
         RunIndicatorComparativeHypothesisEvaluationCommand,
+    )
+    assert isinstance(
+        command._promotion_application,
+        PromoteHypothesisEvaluationToKnowledge,
+    )
+    assert (
+        command
+        ._promotion_application
+        ._knowledge_repository
+        is
+        cli.generate_research_questions_command
+        ._snapshot_builder
+        ._knowledge_repository
     )
 
 

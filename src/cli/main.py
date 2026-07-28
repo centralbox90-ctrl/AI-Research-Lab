@@ -16,6 +16,9 @@ from src.application.artifact_comparison_input_extractor import (
 from src.application.build_knowledge_graph_snapshot import (
     BuildKnowledgeGraphSnapshot,
 )
+from src.application.knowledge_graph_relation_registrar import (
+    KnowledgeGraphRelationRegistrar,
+)
 from src.application.compare_stored_research_artifacts import (
     CompareStoredResearchArtifacts,
 )
@@ -30,6 +33,9 @@ from src.application.knowledge_research_question_application import (
 )
 from src.application.market_research_application import (
     build_market_research_application,
+)
+from src.application.promote_hypothesis_evaluation_to_knowledge import (
+    PromoteHypothesisEvaluationToKnowledge,
 )
 from src.application.simple_market_signal_provider import (
     SimpleMarketSignalProvider,
@@ -61,6 +67,18 @@ from src.cli.run_market_research_campaign_command import (
 )
 from src.cli.run_market_research_command import (
     RunMarketResearchCommand,
+)
+from src.research.hypothesis_evaluation import (
+    HypothesisEvaluationState,
+)
+from src.research.knowledge_candidate_validator import (
+    KnowledgeCandidateValidator,
+)
+from src.research.knowledge_contradiction_detector import (
+    KnowledgeContradictionDetector,
+)
+from src.research.knowledge_promotion_policy import (
+    KnowledgePromotionPolicy,
 )
 from src.storage import (
     RESEARCH_CYCLE_DATABASE_PATH,
@@ -167,6 +185,43 @@ def build_research_cli(
         )
     )
 
+    promotion_application = (
+        PromoteHypothesisEvaluationToKnowledge(
+            promotion_policy=(
+                KnowledgePromotionPolicy(
+                    allowed_states=(
+                        HypothesisEvaluationState.SUPPORTED,
+                    ),
+                    minimum_confidence=0.75,
+                    minimum_findings=2,
+                )
+            ),
+            candidate_validator=(
+                KnowledgeCandidateValidator(
+                    minimum_confidence=0.75,
+                    minimum_supporting_findings=2,
+                )
+            ),
+            knowledge_repository=(
+                knowledge_repository
+            ),
+            contradiction_detector=(
+                KnowledgeContradictionDetector()
+            ),
+            contradiction_rules=(),
+            relation_registrar=(
+                KnowledgeGraphRelationRegistrar(
+                    knowledge_repository=(
+                        knowledge_repository
+                    ),
+                    relation_repository=(
+                        knowledge_relation_repository
+                    ),
+                )
+            ),
+        )
+    )
+
     knowledge_snapshot_builder = (
         BuildKnowledgeGraphSnapshot(
             knowledge_repository=(
@@ -193,6 +248,9 @@ def build_research_cli(
         build_default_indicator_comparative_hypothesis_evaluation_command(
             data_provider=CanonicalMarketDataProvider(
                 GeneratedMarketDataProvider()
+            ),
+            promotion_application=(
+                promotion_application
             ),
         )
     )
