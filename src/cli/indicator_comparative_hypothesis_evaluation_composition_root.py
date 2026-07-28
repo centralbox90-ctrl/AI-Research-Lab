@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from src.application.hypothesis_evaluation_artifact_envelope_factory import (
+    HypothesisEvaluationArtifactEnvelopeFactory,
+)
 from src.application.indicator_comparative_hypothesis_evaluation_application import (
     IndicatorComparativeHypothesisEvaluationApplication,
 )
@@ -33,6 +36,10 @@ def build_default_indicator_comparative_hypothesis_evaluation_command(
         PromoteHypothesisEvaluationToKnowledge
         | None
     ) = None,
+    artifact_envelope_factory: (
+        HypothesisEvaluationArtifactEnvelopeFactory
+        | None
+    ) = None,
     comparative_evaluation_plan: ComparativeEvaluationPlan = (
         ComparativeEvaluationPlan()
     ),
@@ -56,6 +63,9 @@ def build_default_indicator_comparative_hypothesis_evaluation_command(
         ),
         promotion_application=(
             promotion_application
+        ),
+        artifact_envelope_factory=(
+            artifact_envelope_factory
         ),
     )
 

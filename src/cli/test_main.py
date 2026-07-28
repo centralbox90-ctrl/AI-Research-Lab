@@ -3,6 +3,9 @@ from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
 
+from src.application.hypothesis_evaluation_artifact_envelope_factory import (
+    HypothesisEvaluationArtifactEnvelopeFactory,
+)
 from src.application.promote_hypothesis_evaluation_to_knowledge import (
     PromoteHypothesisEvaluationToKnowledge,
 )
@@ -141,6 +144,10 @@ def test_build_research_cli_configures_comparative_command(
     assert isinstance(
         command._promotion_application,
         PromoteHypothesisEvaluationToKnowledge,
+    )
+    assert isinstance(
+        command._artifact_envelope_factory,
+        HypothesisEvaluationArtifactEnvelopeFactory,
     )
     assert (
         command

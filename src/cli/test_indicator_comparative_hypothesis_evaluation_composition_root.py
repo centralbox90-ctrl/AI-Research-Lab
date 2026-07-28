@@ -1,6 +1,12 @@
 from src.application.hypothesis_evaluation_application import (
     HypothesisEvaluationApplication,
 )
+from src.application.hypothesis_evaluation_artifact_envelope_factory import (
+    HypothesisEvaluationArtifactEnvelopeFactory,
+)
+from src.application.research_artifact_envelope import (
+    ResearchArtifactEnvelopeFactory,
+)
 from src.application.indicator_comparative_finding_application import (
     IndicatorComparativeFindingApplication,
 )
@@ -123,6 +129,16 @@ def test_builds_command_with_declared_plans(
         version="hypothesis-evaluation-command",
         minimum_decisive_findings=4,
     )
+    envelope_factory = (
+        HypothesisEvaluationArtifactEnvelopeFactory(
+            envelope_factory=(
+                ResearchArtifactEnvelopeFactory(
+                    producer="composition-test",
+                    producer_version="test",
+                )
+            )
+        )
+    )
 
     command = (
         build_default_indicator_comparative_hypothesis_evaluation_command(
@@ -132,6 +148,9 @@ def test_builds_command_with_declared_plans(
             ),
             hypothesis_evaluation_plan=(
                 hypothesis_plan
+            ),
+            artifact_envelope_factory=(
+                envelope_factory
             ),
         )
     )
@@ -156,4 +175,9 @@ def test_builds_command_with_declared_plans(
         ._hypothesis_evaluator
         ._plan
         is hypothesis_plan
+    )
+
+    assert (
+        command._artifact_envelope_factory
+        is envelope_factory
     )

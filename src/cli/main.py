@@ -28,6 +28,18 @@ from src.application.canonical_market_data_provider import (
 from src.application.generated_market_data_provider import (
     GeneratedMarketDataProvider,
 )
+from src.application.git_code_version_provider import (
+    GitCodeVersionProvider,
+)
+from src.application.git_command_runner import (
+    GitCommandRunner,
+)
+from src.application.hypothesis_evaluation_artifact_envelope_factory import (
+    HypothesisEvaluationArtifactEnvelopeFactory,
+)
+from src.application.research_artifact_envelope import (
+    ResearchArtifactEnvelopeFactory,
+)
 from src.application.generate_research_questions_from_knowledge_repositories import (
     GenerateResearchQuestionsFromKnowledgeRepositories,
 )
@@ -255,6 +267,28 @@ def build_research_cli(
         )
     )
 
+    comparative_code_version = (
+        GitCodeVersionProvider(
+            git_commit_reader=GitCommandRunner(),
+            fallback="development",
+        ).get_code_version()
+    )
+
+    hypothesis_evaluation_envelope_factory = (
+        HypothesisEvaluationArtifactEnvelopeFactory(
+            envelope_factory=(
+                ResearchArtifactEnvelopeFactory(
+                    producer=(
+                        "comparative-hypothesis-evaluation"
+                    ),
+                    producer_version=(
+                        comparative_code_version
+                    ),
+                )
+            )
+        )
+    )
+
     comparative_evaluation_command = (
         build_default_indicator_comparative_hypothesis_evaluation_command(
             data_provider=CanonicalMarketDataProvider(
@@ -262,6 +296,9 @@ def build_research_cli(
             ),
             promotion_application=(
                 promotion_application
+            ),
+            artifact_envelope_factory=(
+                hypothesis_evaluation_envelope_factory
             ),
         )
     )
