@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from src.application.knowledge_graph_relation_registrar import (
+    KnowledgeGraphRelationRegistrar,
+)
 from src.application.ports.clock import Clock
 from src.application.system_clock import SystemClock
 from src.research.hypothesis_evaluation import (
@@ -10,6 +13,12 @@ from src.research.knowledge_candidate import (
 )
 from src.research.knowledge_candidate_validator import (
     KnowledgeCandidateValidator,
+)
+from src.research.knowledge_contradiction_detector import (
+    KnowledgeContradictionDetector,
+)
+from src.research.knowledge_contradiction_rule import (
+    KnowledgeContradictionRule,
 )
 from src.research.knowledge_promotion_policy import (
     KnowledgePromotionPolicy,
@@ -53,6 +62,16 @@ class PromoteHypothesisEvaluationToKnowledge:
             KnowledgeCandidateValidator
         ),
         knowledge_repository: KnowledgeRepository,
+        contradiction_detector: (
+            KnowledgeContradictionDetector
+        ),
+        contradiction_rules: tuple[
+            KnowledgeContradictionRule,
+            ...,
+        ],
+        relation_registrar: (
+            KnowledgeGraphRelationRegistrar
+        ),
         clock: Clock | None = None,
     ) -> None:
         if not isinstance(
@@ -82,6 +101,44 @@ class PromoteHypothesisEvaluationToKnowledge:
                 "KnowledgeRepository"
             )
 
+        if not isinstance(
+            contradiction_detector,
+            KnowledgeContradictionDetector,
+        ):
+            raise TypeError(
+                "contradiction_detector must be a "
+                "KnowledgeContradictionDetector"
+            )
+
+        if not isinstance(
+            contradiction_rules,
+            tuple,
+        ):
+            raise TypeError(
+                "contradiction_rules must be a tuple"
+            )
+
+        if any(
+            not isinstance(
+                rule,
+                KnowledgeContradictionRule,
+            )
+            for rule in contradiction_rules
+        ):
+            raise TypeError(
+                "contradiction_rules must contain only "
+                "KnowledgeContradictionRule values"
+            )
+
+        if not isinstance(
+            relation_registrar,
+            KnowledgeGraphRelationRegistrar,
+        ):
+            raise TypeError(
+                "relation_registrar must be a "
+                "KnowledgeGraphRelationRegistrar"
+            )
+
         resolved_clock = clock or SystemClock()
 
         if not callable(
@@ -101,6 +158,15 @@ class PromoteHypothesisEvaluationToKnowledge:
         )
         self._knowledge_repository = (
             knowledge_repository
+        )
+        self._contradiction_detector = (
+            contradiction_detector
+        )
+        self._contradiction_rules = (
+            contradiction_rules
+        )
+        self._relation_registrar = (
+            relation_registrar
         )
         self._clock = resolved_clock
 
@@ -223,5 +289,31 @@ class PromoteHypothesisEvaluationToKnowledge:
         self._knowledge_repository.save(
             revision
         )
+
+        contradictions = (
+            self._contradiction_detector.detect(
+                repository=(
+                    self._knowledge_repository
+                ),
+                rules=self._contradiction_rules,
+            )
+        )
+
+        for contradiction in contradictions:
+            references_promoted_item = any(
+                item.fingerprint
+                == revision.item.fingerprint
+                for item in contradiction.items
+            )
+
+            if not references_promoted_item:
+                continue
+
+            self._knowledge_repository.save_contradiction(
+                contradiction
+            )
+            self._relation_registrar.register_contradiction(
+                contradiction
+            )
 
         return revision
