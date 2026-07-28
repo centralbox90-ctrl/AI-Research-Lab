@@ -92,6 +92,7 @@ def test_loader_creates_typed_request_from_dictionary(
     )
     assert loaded.hypothesis_id == "hypothesis-rsi"
     assert len(loaded.requests) == 1
+    assert loaded.correlation_id is None
     assert loaded.knowledge_promotion is None
 
     request = loaded.requests[0]
@@ -117,6 +118,42 @@ def test_loader_creates_typed_request_from_dictionary(
         request.market_specifications[0].direction
         is MarketPositionDirection.LONG
     )
+
+
+def test_loader_parses_correlation_id() -> None:
+    payload = build_payload()
+    payload["correlation_id"] = " research-rsi "
+
+    loaded = (
+        IndicatorComparativeHypothesisEvaluationRequestLoader()
+        .from_dict(payload)
+    )
+
+    assert loaded.correlation_id == "research-rsi"
+
+
+@pytest.mark.parametrize(
+    "correlation_id",
+    (
+        "",
+        "   ",
+        123,
+    ),
+)
+def test_loader_rejects_invalid_correlation_id(
+    correlation_id: object,
+) -> None:
+    payload = build_payload()
+    payload["correlation_id"] = correlation_id
+
+    with pytest.raises(
+        ValueError,
+        match="correlation_id must",
+    ):
+        (
+            IndicatorComparativeHypothesisEvaluationRequestLoader()
+            .from_dict(payload)
+        )
 
 
 def test_loader_reads_utf8_json_file(

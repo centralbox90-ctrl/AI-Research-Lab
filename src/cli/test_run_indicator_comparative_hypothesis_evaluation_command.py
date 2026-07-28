@@ -75,6 +75,7 @@ def build_envelope_factory(
 class StubLoadedRequest:
     hypothesis_id: str
     requests: tuple[object, ...]
+    correlation_id: str | None = None
     knowledge_promotion: (
         KnowledgePromotionRequest | None
     ) = None
@@ -451,6 +452,7 @@ def test_returns_promoted_envelope_when_configured(
     loaded_request = StubLoadedRequest(
         hypothesis_id="hypothesis-rsi",
         requests=("request-a",),
+        correlation_id="research-rsi",
         knowledge_promotion=promotion,
     )
     loader = StubRequestLoader(
@@ -493,6 +495,9 @@ def test_returns_promoted_envelope_when_configured(
     )
     assert envelope["producer"] == (
         "comparative-hypothesis-evaluation-test"
+    )
+    assert envelope["correlation_id"] == (
+        "research-rsi"
     )
     assert envelope["payload"]["evaluation"][
         "id"

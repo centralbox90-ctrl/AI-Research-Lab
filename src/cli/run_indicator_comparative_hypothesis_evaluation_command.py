@@ -150,6 +150,9 @@ class RunIndicatorComparativeHypothesisEvaluationCommand:
             envelope = (
                 self._artifact_envelope_factory.create(
                     evaluation=evaluation,
+                    correlation_id=(
+                        request.correlation_id
+                    ),
                     knowledge_revision=revision,
                 )
             )

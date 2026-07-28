@@ -45,6 +45,7 @@ class IndicatorComparativeHypothesisEvaluationRequest:
         IndicatorComparativeFindingRequest,
         ...,
     ]
+    correlation_id: str | None = None
     knowledge_promotion: (
         KnowledgePromotionRequest | None
     ) = None
@@ -86,6 +87,21 @@ class IndicatorComparativeHypothesisEvaluationRequest:
                 "IndicatorComparativeFindingRequest"
             )
 
+        correlation_id = self.correlation_id
+
+        if correlation_id is not None:
+            if not isinstance(correlation_id, str):
+                raise TypeError(
+                    "correlation_id must be a string or None"
+                )
+
+            correlation_id = correlation_id.strip()
+
+            if not correlation_id:
+                raise ValueError(
+                    "correlation_id must not be empty"
+                )
+
         if (
             self.knowledge_promotion is not None
             and not isinstance(
@@ -103,6 +119,11 @@ class IndicatorComparativeHypothesisEvaluationRequest:
             "hypothesis_id",
             normalized_hypothesis_id,
         )
+        object.__setattr__(
+            self,
+            "correlation_id",
+            correlation_id,
+        )
 
 
 class IndicatorComparativeHypothesisEvaluationRequestLoader:
@@ -115,6 +136,7 @@ class IndicatorComparativeHypothesisEvaluationRequestLoader:
         "requests",
     }
     _OPTIONAL_FIELDS = {
+        "correlation_id",
         "knowledge_promotion",
     }
     _PROMOTION_REQUIRED_FIELDS = {
@@ -223,12 +245,24 @@ class IndicatorComparativeHypothesisEvaluationRequestLoader:
                 )
             )
         )
+        correlation_id_value = payload.get(
+            "correlation_id"
+        )
+        correlation_id = (
+            None
+            if correlation_id_value is None
+            else self._require_text(
+                correlation_id_value,
+                label="correlation_id",
+            )
+        )
 
         try:
             return (
                 IndicatorComparativeHypothesisEvaluationRequest(
                     hypothesis_id=payload["hypothesis_id"],
                     requests=parsed_requests,
+                    correlation_id=correlation_id,
                     knowledge_promotion=(
                         knowledge_promotion
                     ),
