@@ -1,5 +1,10 @@
 from typing import Any
 
+from src.application.research_artifact_envelope import (
+    is_research_artifact_envelope,
+    load_research_artifact_envelope,
+)
+
 
 class ArtifactComparisonInputExtractor:
     """
@@ -31,50 +36,93 @@ class ArtifactComparisonInputExtractor:
         artifact_a: dict[str, Any],
         artifact_b: dict[str, Any],
     ) -> dict[str, Any]:
+        (
+            artifact_a_id,
+            artifact_a_payload,
+        ) = self._prepare_artifact(
+            artifact_a
+        )
+        (
+            artifact_b_id,
+            artifact_b_payload,
+        ) = self._prepare_artifact(
+            artifact_b
+        )
+
         return {
-            "artifact_a_id": self._extract_artifact_id(
-                artifact_a,
-            ),
-            "artifact_b_id": self._extract_artifact_id(
-                artifact_b,
-            ),
+            "artifact_a_id": artifact_a_id,
+            "artifact_b_id": artifact_b_id,
             "previous_hypothesis": self._extract_hypothesis(
-                artifact_a,
+                artifact_a_payload,
             ),
             "current_hypothesis": self._extract_hypothesis(
-                artifact_b,
+                artifact_b_payload,
             ),
             "hypothesis_change_reason": (
                 self._build_hypothesis_change_reason(
-                    artifact_a,
-                    artifact_b,
+                    artifact_a_payload,
+                    artifact_b_payload,
                 )
             ),
             "previous_evidence": self._extract_evidence(
-                artifact_a,
+                artifact_a_payload,
             ),
             "current_evidence": self._extract_evidence(
-                artifact_b,
+                artifact_b_payload,
             ),
             "evidence_change_reason": (
                 self._build_evidence_change_reason(
-                    artifact_a,
-                    artifact_b,
+                    artifact_a_payload,
+                    artifact_b_payload,
                 )
             ),
             "previous_confidence": self._extract_confidence(
-                artifact_a,
+                artifact_a_payload,
             ),
             "current_confidence": self._extract_confidence(
-                artifact_b,
+                artifact_b_payload,
             ),
             "confidence_change_reason": (
                 self._build_confidence_change_reason(
-                    artifact_a,
-                    artifact_b,
+                    artifact_a_payload,
+                    artifact_b_payload,
                 )
             ),
         }
+
+    def _prepare_artifact(
+        self,
+        artifact: dict[str, Any],
+    ) -> tuple[str, dict[str, Any]]:
+        if is_research_artifact_envelope(
+            artifact
+        ):
+            envelope = (
+                load_research_artifact_envelope(
+                    artifact
+                )
+            )
+            payload = envelope.to_dict()[
+                "payload"
+            ]
+
+            if not isinstance(payload, dict):
+                raise TypeError(
+                    "Research artifact envelope payload "
+                    "must be a dictionary."
+                )
+
+            return (
+                envelope.artifact_id,
+                payload,
+            )
+
+        return (
+            self._extract_artifact_id(
+                artifact
+            ),
+            artifact,
+        )
 
     def _extract_artifact_id(
         self,

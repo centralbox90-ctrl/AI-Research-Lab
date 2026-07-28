@@ -365,6 +365,157 @@ def fingerprint_research_artifact_payload(
     ).hexdigest()
 
 
+def load_research_artifact_envelope(
+    serialized: Mapping[str, object],
+) -> ResearchArtifactEnvelope:
+    """Load and validate a serialized artifact envelope."""
+
+    if not isinstance(serialized, Mapping):
+        raise TypeError(
+            "serialized envelope must be a mapping"
+        )
+
+    required_fields = (
+        "schema_version",
+        "artifact_type",
+        "payload_schema_version",
+        "artifact_id",
+        "created_at",
+        "producer",
+        "producer_version",
+        "correlation_id",
+        "source_references",
+        "provenance",
+        "payload_fingerprint",
+        "payload",
+    )
+
+    for field_name in required_fields:
+        if field_name not in serialized:
+            raise ValueError(
+                "serialized envelope is missing "
+                f"{field_name}"
+            )
+
+    created_at_value = serialized["created_at"]
+
+    if not isinstance(created_at_value, str):
+        raise TypeError(
+            "serialized created_at must be a string"
+        )
+
+    try:
+        created_at = datetime.fromisoformat(
+            created_at_value
+        )
+    except ValueError as error:
+        raise ValueError(
+            "serialized created_at is not "
+            "a valid timestamp"
+        ) from error
+
+    references_value = serialized[
+        "source_references"
+    ]
+
+    if not isinstance(
+        references_value,
+        (list, tuple),
+    ):
+        raise TypeError(
+            "serialized source_references "
+            "must be a sequence"
+        )
+
+    references: list[
+        ResearchArtifactSourceReference
+    ] = []
+
+    for reference_value in references_value:
+        if not isinstance(
+            reference_value,
+            Mapping,
+        ):
+            raise TypeError(
+                "serialized source reference "
+                "must be a mapping"
+            )
+
+        for field_name in (
+            "reference_type",
+            "reference_id",
+        ):
+            if field_name not in reference_value:
+                raise ValueError(
+                    "serialized source reference "
+                    f"is missing {field_name}"
+                )
+
+        references.append(
+            ResearchArtifactSourceReference(
+                reference_type=reference_value[
+                    "reference_type"
+                ],
+                reference_id=reference_value[
+                    "reference_id"
+                ],
+                reference_version=(
+                    reference_value.get(
+                        "reference_version"
+                    )
+                ),
+                reference_fingerprint=(
+                    reference_value.get(
+                        "reference_fingerprint"
+                    )
+                ),
+            )
+        )
+
+    return ResearchArtifactEnvelope(
+        schema_version=serialized[
+            "schema_version"
+        ],
+        artifact_type=serialized[
+            "artifact_type"
+        ],
+        payload_schema_version=serialized[
+            "payload_schema_version"
+        ],
+        artifact_id=serialized["artifact_id"],
+        created_at=created_at,
+        producer=serialized["producer"],
+        producer_version=serialized[
+            "producer_version"
+        ],
+        correlation_id=serialized[
+            "correlation_id"
+        ],
+        source_references=tuple(references),
+        provenance=serialized["provenance"],
+        payload_fingerprint=serialized[
+            "payload_fingerprint"
+        ],
+        payload=serialized["payload"],
+    )
+
+
+def is_research_artifact_envelope(
+    serialized: object,
+) -> bool:
+    if not isinstance(serialized, Mapping):
+        return False
+
+    return all(
+        field_name in serialized
+        for field_name in (
+            "schema_version",
+            "artifact_type",
+            "payload",
+        )
+    )
+
+
 def _freeze_json_object(
     value: object,
     *,

@@ -1,5 +1,11 @@
+from datetime import datetime, timezone
+
 from src.application.artifact_comparison_input_extractor import (
     ArtifactComparisonInputExtractor,
+)
+from src.application.research_artifact_envelope import (
+    ResearchArtifactEnvelope,
+    fingerprint_research_artifact_payload,
 )
 
 
@@ -102,4 +108,68 @@ def test_artifact_comparison_input_extractor():
     assert (
         result["confidence_change_reason"]
         == "Confidence increased."
+    )
+
+def test_extracts_legacy_and_enveloped_artifacts() -> None:
+    legacy = build_artifact(
+        artifact_id="legacy-artifact",
+        hypothesis_description=(
+            "Williams predicts reversal"
+        ),
+        evidence={
+            "sample_size": 500,
+        },
+        confidence=0.45,
+    )
+    payload = build_artifact(
+        artifact_id="inner-compatibility-id",
+        hypothesis_description=(
+            "Williams plus ADX predicts reversal"
+        ),
+        evidence={
+            "sample_size": 5000,
+        },
+        confidence=0.72,
+    )
+    enveloped = ResearchArtifactEnvelope(
+        schema_version=1,
+        artifact_type="market_research_cycle",
+        payload_schema_version=1,
+        artifact_id="envelope-artifact",
+        created_at=datetime(
+            2026,
+            7,
+            28,
+            12,
+            0,
+            tzinfo=timezone.utc,
+        ),
+        producer="market_research_application",
+        producer_version="git:abc123",
+        correlation_id=None,
+        source_references=(),
+        provenance={},
+        payload_fingerprint=(
+            fingerprint_research_artifact_payload(
+                payload
+            )
+        ),
+        payload=payload,
+    ).to_dict()
+
+    result = ArtifactComparisonInputExtractor().extract(
+        artifact_a=legacy,
+        artifact_b=enveloped,
+    )
+
+    assert result["artifact_a_id"] == (
+        "legacy-artifact"
+    )
+    assert result["artifact_b_id"] == (
+        "envelope-artifact"
+    )
+    assert result["previous_confidence"] == 0.45
+    assert result["current_confidence"] == 0.72
+    assert result["confidence_change_reason"] == (
+        "Confidence increased."
     )

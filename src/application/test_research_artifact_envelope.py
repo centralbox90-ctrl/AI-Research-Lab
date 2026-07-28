@@ -7,6 +7,8 @@ from src.application.research_artifact_envelope import (
     ResearchArtifactEnvelopeFactory,
     ResearchArtifactSourceReference,
     fingerprint_research_artifact_payload,
+    is_research_artifact_envelope,
+    load_research_artifact_envelope,
 )
 
 
@@ -309,6 +311,57 @@ def test_rejects_naive_created_at() -> None:
                 )
             ),
             payload=payload,
+        )
+
+
+def test_loader_round_trips_and_validates_envelope(
+) -> None:
+    original = build_factory().create(
+        artifact_type="market_research_cycle",
+        payload_schema_version=1,
+        correlation_id="research-001",
+        source_references=(build_reference(),),
+        provenance={
+            "code_version": "git:abc123",
+        },
+        payload=build_payload(),
+    )
+    serialized = original.to_dict()
+
+    loaded = load_research_artifact_envelope(
+        serialized
+    )
+
+    assert loaded.to_dict() == serialized
+    assert is_research_artifact_envelope(
+        serialized
+    )
+    assert not is_research_artifact_envelope(
+        build_payload()
+    )
+
+
+def test_loader_rejects_changed_payload() -> None:
+    serialized = build_factory().create(
+        artifact_type="market_research_cycle",
+        payload_schema_version=1,
+        provenance={},
+        payload=build_payload(),
+    ).to_dict()
+
+    serialized["payload"]["cycle"]["result"][
+        "id"
+    ] = "changed"
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "payload_fingerprint does not "
+            "match payload"
+        ),
+    ):
+        load_research_artifact_envelope(
+            serialized
         )
 
 
