@@ -37,6 +37,12 @@ from src.research.evidence_strength_evaluation import (
 )
 from src.research.experiment import Experiment
 from src.research.experiment_evaluation import ExperimentEvaluation
+from src.research.experiment_execution import (
+    ExperimentExecution,
+    ExperimentExecutionFailure,
+    ExperimentExecutionFailureStage,
+    ExperimentExecutionStatus,
+)
 from src.research.experiment_result import ExperimentResult
 from src.research.hypothesis import Hypothesis
 from src.research.hypothesis_decision import HypothesisDecision
@@ -131,6 +137,10 @@ __all__ = [
     "EvidenceStrengthResearchCycleResult",
     "Experiment",
     "ExperimentEvaluation",
+    "ExperimentExecution",
+    "ExperimentExecutionFailure",
+    "ExperimentExecutionFailureStage",
+    "ExperimentExecutionStatus",
     "ExperimentResult",
     "Hypothesis",
     "HypothesisDecision",
