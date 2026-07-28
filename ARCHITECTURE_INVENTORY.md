@@ -577,3 +577,156 @@ SQLite repository до repository-backed research question generation.
 - общий workflow, lifecycle, pipeline или orchestration engine не
   добавлялся;
 - новые Knowledge domain entities не добавлялись.
+
+## 17. Application API and HypothesisEvaluation envelope
+
+Commit checkpoint: `7d43bdc`.
+
+Этот раздел фиксирует фактическую дельту после Knowledge production
+checkpoint. Предыдущие разделы сохраняют состояние соответствующих
+архитектурных снимков.
+
+### 17.1 Application use-case classification
+
+Принят
+`ADR-005-application-use-case-classification.md`.
+
+Application components разделены по архитектурной роли:
+
+- Public Use Case;
+- Internal Coordinator;
+- Boundary Adapter;
+- Port;
+- Factory / Composition Root;
+- Legacy Compatibility Component.
+
+Классификация не вводит общий base class, runtime registry или
+WorkflowEngine.
+
+Создан отдельный `src.application.public_api` с явным allowlist
+поддерживаемых use cases и application results.
+
+Legacy `src.application.__init__` не очищался и продолжает выполнять
+compatibility-функцию. Package export больше не считается
+доказательством публичности Application contract.
+
+### 17.2 Repository-backed question use case
+
+Создан публичный application-level use case
+`GenerateResearchQuestionsFromKnowledgeRepositories`.
+
+Use case:
+
+- строит snapshot через persistent Knowledge ports;
+- передаёт snapshot существующему question generator;
+- возвращает типизированный
+  `KnowledgeResearchQuestionsResult`.
+
+`GenerateResearchQuestionsFromKnowledgeRepositoriesCommand` теперь
+является тонким CLI adapter. Он вызывает один Application use case и
+передаёт его result в presenter.
+
+Snapshot construction и question-generation orchestration больше не
+выполняются внутри CLI command.
+
+### 17.3 HypothesisEvaluation envelope writer
+
+Создана специализированная
+`HypothesisEvaluationArtifactEnvelopeFactory`.
+
+Factory использует общий `ResearchArtifactEnvelopeFactory` и
+формирует:
+
+- artifact type `hypothesis_evaluation`;
+- payload schema version 1 без Knowledge promotion;
+- payload schema version 2 с `knowledge_revision`;
+- exact HypothesisEvaluation source reference;
+- exact-version KnowledgeRevision reference при promotion;
+- evaluation fingerprint, state и hypothesis identity в provenance;
+- canonical payload fingerprint.
+
+Главный production composition root передаёт factory в comparative
+command и получает `producer_version` через
+`GitCodeVersionProvider`.
+
+Production comparative route теперь возвращает
+`ResearchArtifactEnvelope`.
+
+`correlation_id` остаётся `null`, потому что comparative request
+пока не содержит отдельный lifecycle correlation contract.
+Использовать `hypothesis_id` вместо correlation identity
+запрещено.
+
+### 17.4 Legacy writer compatibility
+
+`RunIndicatorComparativeHypothesisEvaluationCommand` принимает
+specialized envelope factory как optional dependency.
+
+Без factory command продолжает поддерживать legacy outputs:
+
+- HypothesisEvaluation artifact v1;
+- HypothesisEvaluation artifact v2 с KnowledgeRevision.
+
+Это сохраняет совместимость немигрированных composition roots и
+unit-level consumers.
+
+Главный production root всегда передаёт envelope factory.
+
+### 17.5 Specialized artifact loader
+
+Создан `HypothesisEvaluationArtifactLoader`.
+
+Loader поддерживает:
+
+- legacy artifact version 1;
+- legacy artifact version 2;
+- envelope payload schema version 1;
+- envelope payload schema version 2.
+
+При чтении loader:
+
+- проверяет общий envelope payload fingerprint;
+- проверяет artifact type и payload schema version;
+- отклоняет отсутствующие и неизвестные поля;
+- восстанавливает immutable `HypothesisEvaluation`;
+- восстанавливает optional `KnowledgeRevision` и `KnowledgeItem`;
+- повторно проверяет evaluation, item и revision fingerprints;
+- возвращает типизированный
+  `LoadedHypothesisEvaluationArtifact`.
+
+Таким образом HypothesisEvaluation migration имеет production writer,
+legacy compatibility и integrity-aware reader.
+
+### 17.6 Обновлённый artifact path
+
+Production comparative artifact path:
+
+Comparative request JSON
+→ comparative analysis
+→ Evidence
+→ Finding
+→ HypothesisEvaluation
+→ optional Knowledge promotion
+→ specialized envelope factory
+→ `ResearchArtifactEnvelope`
+→ CLI JSON.
+
+HypothesisEvaluation и optional KnowledgeRevision остаются
+типизированными payload contracts и не наследуются от envelope.
+
+### 17.7 Сохраняющиеся ограничения
+
+На commit `7d43bdc`:
+
+- Evidence и Finding artifacts остаются legacy;
+- research-question artifact остаётся legacy;
+- comparative envelope пока возвращается через CLI и не имеет
+  отдельного persistent artifact store;
+- comparative lifecycle не передаёт `correlation_id`;
+- production contradiction rules пока отсутствуют;
+- integration test полного comparative request с реальным market
+  execution до follow-up ResearchQuestion ещё отсутствует;
+- campaign artifacts не мигрированы на общий envelope;
+- общий workflow, lifecycle, pipeline или orchestration engine не
+  добавлялся;
+- новые Knowledge domain entities не добавлялись.
