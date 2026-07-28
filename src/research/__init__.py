@@ -72,6 +72,9 @@ from src.research.knowledge_candidate_validator import (
     KnowledgeCandidateValidationError,
     KnowledgeCandidateValidator,
 )
+from src.research.knowledge_promotion_policy import (
+    KnowledgePromotionPolicy,
+)
 from src.research.knowledge_contradiction import (
     KnowledgeContradiction,
 )
@@ -155,6 +158,7 @@ __all__ = [
     "KnowledgeCandidate",
     "KnowledgeCandidateValidationError",
     "KnowledgeCandidateValidator",
+    "KnowledgePromotionPolicy",
     "KnowledgeContradiction",
     "KnowledgeContradictionDetector",
     "KnowledgeContradictionRule",
