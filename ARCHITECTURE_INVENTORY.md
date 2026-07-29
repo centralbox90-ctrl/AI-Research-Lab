@@ -865,3 +865,142 @@ domain identities.
 - общий workflow, lifecycle, pipeline или orchestration engine не
   добавлялся;
 - новые Knowledge domain entities не добавлялись.
+
+## 19. Market research campaign envelope checkpoint
+
+Commit checkpoint: `5ca8bcb`.
+
+Этот раздел фиксирует фактическую дельту после Knowledge
+research-question envelope checkpoint. Предыдущие разделы сохраняют
+состояние соответствующих архитектурных снимков.
+
+### 19.1 Типизированный Campaign result
+
+`MarketResearchCampaignExperimentResult.result` больше не является
+`object`. Campaign execution использует
+`NextExperimentResearchCycleResult` как явный Application contract.
+
+`MarketResearchExperimentRunner.execute` возвращает тот же
+типизированный result. `RunMarketResearchCampaign` проверяет runtime
+тип каждого результата до включения в Campaign result.
+
+Технический статус отдельных запусков продолжает принадлежать
+`ExperimentExecution`. Campaign result агрегирует завершённые
+Application results и не вводит общий lifecycle aggregate.
+
+### 19.2 Campaign artifact payload boundary
+
+Создан
+`MarketResearchCampaignArtifactPayloadFactory`.
+
+Factory формирует Campaign payload из:
+
+- identity и fingerprint `ResearchCampaignPlan`;
+- полного сериализованного Campaign plan;
+- количества экспериментов;
+- planned experiment identities;
+- вложенных market research artifacts.
+
+`MarketResearchCampaignPresenter` делегирует построение payload этой
+factory и сохраняет legacy artifact version 1 для немигрированных
+composition roots.
+
+Payload factory является boundary adapter. Она не становится domain
+base class и не изменяет модели Research Campaign.
+
+### 19.3 Четвёртый production envelope scenario
+
+Создана специализированная
+`MarketResearchCampaignArtifactEnvelopeFactory`.
+
+Factory использует общий `ResearchArtifactEnvelopeFactory` и формирует:
+
+- artifact type `market_research_campaign`;
+- payload schema version 1;
+- Campaign payload из специализированной payload factory;
+- exact ResearchCampaignPlan source reference с fingerprint;
+- source reference каждого выполненного ExperimentResult;
+- Campaign plan identity, fingerprint и experiment count в provenance;
+- canonical payload fingerprint.
+
+Главный `build_research_cli` передаёт Campaign envelope factory в
+`RunMarketResearchCampaignCommand`.
+
+`producer_version` получается через `GitCodeVersionProvider`.
+Production producer имеет identity `market-research-campaign`.
+
+Без envelope factory command продолжает использовать legacy
+`MarketResearchCampaignPresenter`. Главный production composition root
+всегда использует envelope factory.
+
+Общий `ResearchArtifactEnvelope` теперь подтверждён четырьмя
+production scenarios:
+
+1. market research cycle;
+2. comparative HypothesisEvaluation;
+3. repository-backed Knowledge research questions;
+4. market research campaign.
+
+Новый общий workflow, lifecycle, pipeline или orchestration mechanism
+для этого не вводился.
+
+### 19.4 Campaign lifecycle correlation
+
+CLI route `run-market-research-campaign` поддерживает необязательный
+`--correlation-id`.
+
+`ResearchCli` передаёт значение в
+`RunMarketResearchCampaignCommand`, а command передаёт его только в
+Campaign envelope factory.
+
+`correlation_id` нормализуется общим envelope contract и используется
+только для трассировки. Он не заменяет:
+
+- CampaignDesign identity;
+- ResearchCampaignPlan identity и fingerprint;
+- planned experiment identity;
+- ExperimentExecution identity;
+- ExperimentResult identity.
+
+Без явного CLI-параметра `correlation_id` остаётся `null`.
+
+### 19.5 Production Campaign execution path
+
+Фактический production path имеет вид:
+
+CampaignDesign JSON
+→ `ResearchPlanner`
+→ deterministic `ResearchCampaignPlan`
+→ registration resolver
+→ `ResearchCampaignPlanMarketAdapter`
+→ tracking-enabled `RunMarketResearch`
+→ отдельный `ExperimentExecution` для каждого market experiment
+→ typed `NextExperimentResearchCycleResult`
+→ typed `MarketResearchCampaignResult`
+→ Campaign payload factory
+→ Campaign envelope factory
+→ CLI JSON.
+
+Campaign планирует, разрешает и агрегирует исследовательские
+эксперименты. Scheduling, retries, worker leases и heartbeat в
+Research Domain не добавлялись.
+
+### 19.6 Сохраняющиеся ограничения
+
+На commit `5ca8bcb`:
+
+- Campaign envelope возвращается через CLI, но не имеет отдельного
+  persistent artifact store;
+- специализированный integrity-aware Campaign artifact loader пока
+  отсутствует;
+- вложенные market research artifacts сохраняют существующий
+  сериализованный контракт;
+- Campaign не управляет retries, scheduling или worker state;
+- Evidence и Finding standalone artifacts остаются legacy;
+- полный автоматический запуск от experiment specification до
+  follow-up ResearchQuestion не является одним Application use case;
+- production contradiction rules пока отсутствуют;
+- correlation между отдельными use cases передаётся клиентом явно;
+- общий workflow, lifecycle, pipeline или orchestration engine не
+  добавлялся;
+- новые Knowledge domain entities не добавлялись.
