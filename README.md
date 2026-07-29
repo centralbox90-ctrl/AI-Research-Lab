@@ -22,6 +22,7 @@ AI Research Lab — исследовательская платформа для
 - append-only Knowledge persistence и repository-backed feedback path;
 - read-only HTTP API с OpenAPI 3.1 contract;
 - отдельные local Flask и production Waitress entry points;
+- read-only MCP adapter с repository-backed stdio server;
 - автоматическая проверка чистого checkout через GitHub Actions.
 
 Основной этап архитектурной консолидации завершён. Knowledge feature development временно заморожена; текущий этап развивает внешние adapters поверх стабильного Application API.
@@ -51,6 +52,7 @@ AI Research Lab — исследовательская платформа для
 
 - `src/application/` — прикладные сценарии и orchestration;
 - `src/api/` — HTTP transport, OpenAPI и WSGI entry points;
+- `src/mcp_adapter/` — MCP tools, composition root и stdio entry point;
 - `src/cli/` — команды, composition roots и presenters;
 - `src/data/` — загрузка рыночных данных;
 - `src/indicators/` — индикаторы и механизм их обнаружения;
@@ -113,6 +115,19 @@ python -m src.api.production_server --database .research_lab/research-cycles.db 
 ```
 
 Production server по умолчанию использует loopback interface. Внешнее размещение, TLS, authentication, authorization, CORS и rate limiting настраиваются отдельным deployment boundary. Встроенный Flask server не предназначен для production.
+
+## MCP adapter
+
+MCP adapter использует официальный MCP Python SDK 2.0.0 и предоставляет read-only tool `list_research_cycles`.
+
+MCP host должен запускать server через stdio:
+
+```powershell
+python -m src.mcp_adapter --database .research_lab/research-cycles.db
+```
+
+При ручном запуске команда ожидает MCP-сообщения через stdin и не возвращает обычное приглашение терминала. Остановить server можно через Ctrl+C.
+
 ## Пример исследовательской кампании
 
 Репозиторий содержит согласованные примеры входных документов:

@@ -322,8 +322,8 @@ Research Engine, Observation Layer и существующие indicators при
   Application use case;
 - HTTP adapter остаётся read-only; local Flask и production Waitress
   entry points реализованы, но authentication, authorization, TLS и
-  внешняя deployment configuration отсутствуют; MCP и ChatGPT adapters
-  ещё не реализованы.
+  внешняя deployment configuration отсутствуют; первый read-only MCP
+  slice реализован, отдельный ChatGPT adapter ещё отсутствует.
 
 ## Приоритеты следующего этапа
 
@@ -349,6 +349,9 @@ Knowledge feature development остаётся замороженной. Раз�
 - local-only Flask server entry point;
 - отдельный production Waitress WSGI entry point;
 - закреплённая Waitress dependency;
+- MCP SDK 2.0.0 и read-only `list_research_cycles` tool;
+- repository-backed MCP composition;
+- stdio MCP entry point;
 - contract и integration tests.
 
 Следующий режим разработки:
@@ -360,8 +363,9 @@ Knowledge feature development остаётся замороженной. Раз�
 4. Не раскрывать repositories, composition internals и Domain objects.
 5. Размещать production Waitress server только внутри отдельного
    security и network deployment boundary.
-6. Добавить MCP или ChatGPT adapter только поверх того же
-   `src.application.public_api`.
+6. Расширять MCP только по одному read-only use case поверх
+   `src.application.public_api`; отдельный ChatGPT adapter добавлять
+   только при подтверждённом consumer contract.
 7. Мигрировать legacy boundaries только по ADR-006 и при наличии
    конкретного production consumer.
 8. Добавлять artifact readers или stores только для подтверждённого

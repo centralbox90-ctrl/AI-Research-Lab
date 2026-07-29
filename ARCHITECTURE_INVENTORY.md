@@ -1509,6 +1509,7 @@ production module в `src/indicators/implementations`.
 - новые Knowledge domain entities не добавлялись;
 - общий workflow, lifecycle, pipeline или orchestration engine не
   добавлялся.
+
 ## 23. Production WSGI boundary checkpoint
 
 Commit checkpoint: `253c324`.
@@ -1597,3 +1598,116 @@ WorkflowEngine, scheduler, worker queue, retries и lifecycle aggregate не д�
 - MCP и ChatGPT adapters не реализованы;
 - новые Knowledge domain entities не добавлялись;
 - общий workflow, lifecycle, pipeline или orchestration engine не добавлялся.
+
+## 24. First MCP adapter checkpoint
+
+Commit checkpoint: `38b95c6`.
+
+Этот раздел фиксирует первый работающий MCP vertical slice поверх
+стабилизированного публичного Application API.
+
+### 24.1 Protocol boundary
+
+Создан отдельный пакет `src/mcp_adapter`.
+
+MCP adapter использует закреплённый официальный Python SDK версии
+2.0.0 и не изменяет:
+
+- Domain models;
+- Knowledge models;
+- persistence contracts;
+- HTTP API;
+- Research lifecycle;
+- indicator plugin contract.
+
+MCP остаётся внешним adapter, аналогичным CLI и HTTP adapter.
+
+### 24.2 Первый MCP tool contract
+
+Опубликован read-only tool `list_research_cycles`.
+
+Tool вызывает публичный Application use case
+`ListStoredResearchCycles` и возвращает структурированный результат:
+
+- schema version;
+- количество результатов;
+- упорядоченные result identities.
+
+Tool явно помечен как:
+
+- read-only;
+- non-destructive;
+- idempotent;
+- closed-world.
+
+MCP server не обращается напрямую к SQLite repository и не
+восстанавливает Application orchestration внутри protocol adapter.
+
+### 24.3 Production composition
+
+Создан отдельный MCP composition root.
+
+Фактическая цепочка зависимостей:
+
+SQLite research cycle store
+→ `ListStoredResearchCycles`
+→ MCP server
+→ `list_research_cycles`.
+
+Composition root только собирает зависимости и не содержит
+бизнес-ветвлений или lifecycle logic.
+
+### 24.4 Stdio entry point
+
+Создан production entry point:
+
+`python -m src.mcp_adapter`.
+
+Entry point принимает явный путь к SQLite database, собирает MCP
+composition root и запускает стандартный stdio transport.
+
+Запущенный stdio server ожидает MCP input. Для ручной остановки
+используется `Ctrl+C`.
+
+### 24.5 Protocol tests
+
+Тесты используют настоящий in-memory MCP client из официального SDK.
+
+Автоматически проверяются:
+
+- discovery зарегистрированного tool;
+- tool annotations;
+- structured result contract;
+- вызов публичного Application use case;
+- repository-backed composition через временную SQLite database;
+- default и explicit database path entry point;
+- запуск stdio transport без блокировки тестового процесса.
+
+### 24.6 Подтверждённые границы
+
+Первый MCP slice не добавил:
+
+- write tools;
+- прямой доступ protocol adapter к repositories;
+- новый Application use case;
+- новую Knowledge entity;
+- общий workflow engine;
+- lifecycle aggregate;
+- scheduler, retries или worker state;
+- отдельную ChatGPT domain model.
+
+Добавление нового индикатора по-прежнему требует ровно одного нового
+production module в `src/indicators/implementations`.
+
+### 24.7 Сохраняющиеся ограничения
+
+На commit `38b95c6`:
+
+- MCP adapter публикует только один read-only use case;
+- получение отдельных artifacts через MCP ещё не реализовано;
+- сравнение artifacts через MCP ещё не реализовано;
+- authentication и authorization отсутствуют;
+- внешний ChatGPT adapter отдельно не реализован;
+- write operations через MCP запрещены;
+- общий workflow, lifecycle, pipeline или orchestration engine не
+  добавлялся.
