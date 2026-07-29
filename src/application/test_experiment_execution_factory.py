@@ -220,3 +220,70 @@ def test_delegates_clock_validation_to_execution(
             specification=build_specification(),
             experiment_id="experiment-id",
         )
+
+
+def test_creates_pending_execution_from_fingerprint(
+) -> None:
+    clock = StubClock(CREATED_AT)
+    id_generator = StubIdGenerator(
+        "comparative-execution-id"
+    )
+    factory = ExperimentExecutionFactory(
+        clock=clock,
+        id_generator=id_generator,
+    )
+
+    execution = (
+        factory.create_pending_from_fingerprint(
+            specification_fingerprint="c" * 64,
+            experiment_id=(
+                "comparative-experiment-id"
+            ),
+            correlation_id=(
+                "comparative-correlation-id"
+            ),
+        )
+    )
+
+    assert execution.execution_id == (
+        "comparative-execution-id"
+    )
+    assert execution.experiment_id == (
+        "comparative-experiment-id"
+    )
+    assert execution.specification_fingerprint == (
+        "c" * 64
+    )
+    assert execution.correlation_id == (
+        "comparative-correlation-id"
+    )
+    assert execution.created_at == CREATED_AT
+    assert execution.status is (
+        ExperimentExecutionStatus.PENDING
+    )
+    assert clock.call_count == 1
+    assert id_generator.call_count == 1
+
+
+def test_fingerprint_creation_delegates_validation_to_execution(
+) -> None:
+    factory = ExperimentExecutionFactory(
+        clock=StubClock(CREATED_AT),
+        id_generator=StubIdGenerator(
+            "execution-id"
+        ),
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "specification_fingerprint must be "
+            "a lowercase SHA-256 hexadecimal string"
+        ),
+    ):
+        factory.create_pending_from_fingerprint(
+            specification_fingerprint=(
+                "invalid-fingerprint"
+            ),
+            experiment_id="experiment-id",
+        )

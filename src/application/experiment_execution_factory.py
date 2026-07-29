@@ -52,13 +52,35 @@ class ExperimentExecutionFactory:
                 "MarketExperimentSpecification"
             )
 
+        return self.create_pending_from_fingerprint(
+            specification_fingerprint=(
+                specification.fingerprint
+            ),
+            experiment_id=experiment_id,
+            correlation_id=correlation_id,
+        )
+
+    def create_pending_from_fingerprint(
+        self,
+        *,
+        specification_fingerprint: str,
+        experiment_id: str,
+        correlation_id: str | None = None,
+    ) -> ExperimentExecution:
+        """
+        Create a pending execution from an explicit specification identity.
+
+        This entry point supports execution scenarios whose complete
+        specification is not a MarketExperimentSpecification.
+        """
+
         return ExperimentExecution(
             execution_id=(
                 self._id_generator.generate()
             ),
             experiment_id=experiment_id,
             specification_fingerprint=(
-                specification.fingerprint
+                specification_fingerprint
             ),
             correlation_id=correlation_id,
             created_at=self._clock.now(),
