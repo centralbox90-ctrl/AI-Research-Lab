@@ -4,7 +4,11 @@ from pathlib import Path
 
 from mcp.server import MCPServer
 
+from src.application.artifact_comparison_input_extractor import (
+    ArtifactComparisonInputExtractor,
+)
 from src.application.public_api import (
+    CompareStoredResearchArtifacts,
     GetStoredResearchArtifact,
     ListStoredResearchCycles,
 )
@@ -36,6 +40,16 @@ def build_research_mcp_server(
             store=store,
         )
     )
+    compare_stored_research_artifacts = (
+        CompareStoredResearchArtifacts(
+            artifact_getter=(
+                get_stored_research_artifact
+            ),
+            input_extractor=(
+                ArtifactComparisonInputExtractor()
+            ),
+        )
+    )
     list_stored_research_cycles = (
         ListStoredResearchCycles(
             store=store,
@@ -43,6 +57,9 @@ def build_research_mcp_server(
     )
 
     return create_research_mcp_server(
+        compare_stored_research_artifacts=(
+            compare_stored_research_artifacts
+        ),
         get_stored_research_artifact=(
             get_stored_research_artifact
         ),

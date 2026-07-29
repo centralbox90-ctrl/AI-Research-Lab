@@ -6,6 +6,7 @@ from mcp.server import MCPServer
 from mcp.types import ToolAnnotations
 
 from src.application.public_api import (
+    CompareStoredResearchArtifacts,
     GetStoredResearchArtifact,
     ListStoredResearchCycles,
 )
@@ -23,8 +24,18 @@ class ResearchArtifactResult(TypedDict):
     artifact: dict[str, Any]
 
 
+class ArtifactComparisonResult(TypedDict):
+    schema_version: int
+    artifact_a_result_id: str
+    artifact_b_result_id: str
+    comparison: dict[str, Any]
+
+
 def create_research_mcp_server(
     *,
+    compare_stored_research_artifacts: (
+        CompareStoredResearchArtifacts
+    ),
     get_stored_research_artifact: (
         GetStoredResearchArtifact
     ),
@@ -39,6 +50,18 @@ def create_research_mcp_server(
     rendering. Persistence and Application composition remain
     outside this module.
     """
+
+    if not callable(
+        getattr(
+            compare_stored_research_artifacts,
+            "execute",
+            None,
+        )
+    ):
+        raise TypeError(
+            "compare_stored_research_artifacts must "
+            "provide a callable execute method"
+        )
 
     if not callable(
         getattr(
@@ -164,6 +187,136 @@ def create_research_mcp_server(
             "schema_version": 1,
             "result_id": normalized_result_id,
             "artifact": dict(artifact),
+        }
+
+    @server.tool(
+        name="compare_research_artifacts",
+        title="Compare research artifacts",
+        description=(
+            "Compare hypothesis, evidence, and confidence "
+            "between two stored research artifacts."
+        ),
+        annotations=ToolAnnotations(
+            read_only_hint=True,
+            destructive_hint=False,
+            idempotent_hint=True,
+            open_world_hint=False,
+        ),
+    )
+    def compare_research_artifacts(
+        artifact_a_result_id: str,
+        artifact_b_result_id: str,
+    ) -> ArtifactComparisonResult:
+        normalized_artifact_a_result_id = (
+            artifact_a_result_id.strip()
+        )
+        normalized_artifact_b_result_id = (
+            artifact_b_result_id.strip()
+        )
+
+        if (
+            not normalized_artifact_a_result_id
+            or not normalized_artifact_b_result_id
+        ):
+            raise ValueError(
+                "artifact_a_result_id and "
+                "artifact_b_result_id must not be empty"
+            )
+
+        comparison = (
+            compare_stored_research_artifacts.execute(
+                artifact_a_result_id=(
+                    normalized_artifact_a_result_id
+                ),
+                artifact_b_result_id=(
+                    normalized_artifact_b_result_id
+                ),
+            )
+        )
+
+        return {
+            "schema_version": 1,
+            "artifact_a_result_id": (
+                normalized_artifact_a_result_id
+            ),
+            "artifact_b_result_id": (
+                normalized_artifact_b_result_id
+            ),
+            "comparison": {
+                "artifact_a_id": comparison.artifact_a_id,
+                "artifact_b_id": comparison.artifact_b_id,
+                "hypothesis_evolution": {
+                    "previous_hypothesis": (
+                        comparison
+                        .hypothesis_evolution
+                        .previous_hypothesis
+                    ),
+                    "current_hypothesis": (
+                        comparison
+                        .hypothesis_evolution
+                        .current_hypothesis
+                    ),
+                    "change_reason": (
+                        comparison
+                        .hypothesis_evolution
+                        .change_reason
+                    ),
+                },
+                "evidence_evolution": {
+                    "previous_evidence": (
+                        comparison
+                        .evidence_evolution
+                        .previous_evidence
+                    ),
+                    "current_evidence": (
+                        comparison
+                        .evidence_evolution
+                        .current_evidence
+                    ),
+                    "metric_deltas": [
+                        {
+                            "metric_name": delta.metric_name,
+                            "previous_value": (
+                                delta.previous_value
+                            ),
+                            "current_value": (
+                                delta.current_value
+                            ),
+                            "absolute_delta": (
+                                delta.absolute_delta
+                            ),
+                            "direction": delta.direction,
+                        }
+                        for delta in (
+                            comparison
+                            .evidence_evolution
+                            .metric_deltas
+                        )
+                    ],
+                    "change_reason": (
+                        comparison
+                        .evidence_evolution
+                        .change_reason
+                    ),
+                },
+                "confidence_evolution": {
+                    "previous_confidence": (
+                        comparison
+                        .confidence_evolution
+                        .previous_confidence
+                    ),
+                    "current_confidence": (
+                        comparison
+                        .confidence_evolution
+                        .current_confidence
+                    ),
+                    "change_reason": (
+                        comparison
+                        .confidence_evolution
+                        .change_reason
+                    ),
+                },
+            },
         }
 
     return server

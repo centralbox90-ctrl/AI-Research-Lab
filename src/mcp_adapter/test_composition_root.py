@@ -93,6 +93,8 @@ async def test_builds_mcp_server_with_empty_database(
         "count": 0,
         "result_ids": [],
     }
+
+
 @pytest.mark.anyio
 async def test_gets_repository_backed_artifact_through_mcp(
     tmp_path: Path,
@@ -135,3 +137,113 @@ async def test_gets_repository_backed_artifact_through_mcp(
         "result_id": "result-001",
         "artifact": artifact,
     }
+@pytest.mark.anyio
+async def test_compares_repository_backed_artifacts_through_mcp(
+    tmp_path: Path,
+) -> None:
+    database_path = (
+        tmp_path / "research-cycles.db"
+    )
+    store = SqliteResearchCycleStore(
+        db_path=database_path,
+    )
+    store.save(
+        result_id="result-001",
+        serialized_cycle={
+            "metadata": {
+                "artifact_id": "artifact-001",
+            },
+            "specification": {
+                "hypothesis_title": (
+                    "Previous hypothesis"
+                ),
+                "hypothesis_description": (
+                    "Previous hypothesis"
+                ),
+            },
+            "cycle": {
+                "evidence": {
+                    "data": {
+                        "net_profit": 1.0,
+                    },
+                },
+                "evidence_strength_evaluation": {
+                    "score": 0.4,
+                },
+            },
+        },
+    )
+    store.save(
+        result_id="result-002",
+        serialized_cycle={
+            "metadata": {
+                "artifact_id": "artifact-002",
+            },
+            "specification": {
+                "hypothesis_title": (
+                    "Current hypothesis"
+                ),
+                "hypothesis_description": (
+                    "Current hypothesis"
+                ),
+            },
+            "cycle": {
+                "evidence": {
+                    "data": {
+                        "net_profit": 2.5,
+                    },
+                },
+                "evidence_strength_evaluation": {
+                    "score": 0.7,
+                },
+            },
+        },
+    )
+
+    server = build_research_mcp_server(
+        db_path=database_path,
+    )
+
+    async with Client(
+        server,
+        raise_exceptions=True,
+    ) as client:
+        result = await client.call_tool(
+            "compare_research_artifacts",
+            {
+                "artifact_a_result_id": "result-001",
+                "artifact_b_result_id": "result-002",
+            },
+        )
+
+    assert result.is_error is False
+
+    payload = result.structured_content
+
+    assert payload is not None
+    assert payload["schema_version"] == 1
+    assert payload["artifact_a_result_id"] == (
+        "result-001"
+    )
+    assert payload["artifact_b_result_id"] == (
+        "result-002"
+    )
+    assert payload["comparison"]["artifact_a_id"] == (
+        "artifact-001"
+    )
+    assert payload["comparison"]["artifact_b_id"] == (
+        "artifact-002"
+    )
+    assert (
+        payload["comparison"]
+        ["evidence_evolution"]
+        ["metric_deltas"][0]
+        ["absolute_delta"]
+        == 1.5
+    )
+    assert (
+        payload["comparison"]
+        ["confidence_evolution"]
+        ["current_confidence"]
+        == 0.7
+    )
