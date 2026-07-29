@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime, timedelta
+from hashlib import sha256
 
 import pandas as pd
 import pytest
@@ -17,12 +19,18 @@ from src.application.indicator_comparative_execution_specification import (
 from src.application.indicator_comparative_execution_tracker import (
     IndicatorComparativeExecutionTracker,
 )
+from src.application.indicator_comparative_research_application import (
+    IndicatorComparativeResearchApplication,
+)
 from src.application.market_dataset_quality import (
     DataQualityReport,
 )
 from src.application.market_experiment_specification import (
     MarketExperimentSpecification,
     MarketPositionDirection,
+)
+from src.indicators.implementations.rsi import (
+    INDICATOR,
 )
 from src.research.comparative_analysis import (
     ComparativeAnalysis,
@@ -540,3 +548,201 @@ def test_invalid_environment_is_not_recorded(
         )
 
     assert recorder.executions == []
+
+class StubIndicatorCatalog:
+    def get(
+        self,
+        indicator_id: str,
+    ) -> object:
+        assert indicator_id == "rsi"
+
+        return INDICATOR
+
+
+class StubDataProvider:
+    def __init__(
+        self,
+        dataset: CanonicalMarketDataset,
+    ) -> None:
+        self.dataset = dataset
+        self.specifications: list[
+            MarketExperimentSpecification
+        ] = []
+
+    def load(
+        self,
+        specification: MarketExperimentSpecification,
+    ) -> CanonicalMarketDataset:
+        self.specifications.append(
+            specification
+        )
+
+        return self.dataset
+
+
+class UnexpectedResearchService:
+    def run(
+        self,
+        **kwargs: object,
+    ) -> ComparativeAnalysis:
+        raise AssertionError(
+            "direct research service must not run"
+        )
+
+
+class RecordingExecutionTracker:
+    def __init__(
+        self,
+        analysis: ComparativeAnalysis,
+    ) -> None:
+        self.analysis = analysis
+        self.calls: list[
+            dict[str, object]
+        ] = []
+
+    def execute(
+        self,
+        **kwargs: object,
+    ) -> ComparativeAnalysis:
+        self.calls.append(dict(kwargs))
+
+        return self.analysis
+
+
+class RecordingStatisticalEvaluator:
+    def __init__(self) -> None:
+        self.calls: list[
+            dict[str, object]
+        ] = []
+
+    def evaluate(
+        self,
+        **kwargs: object,
+    ) -> tuple[object, ...]:
+        self.calls.append(dict(kwargs))
+
+        return ()
+
+
+def test_application_tracks_analysis_before_evaluation(
+) -> None:
+    dataset = build_dataset()
+    analysis = build_analysis()
+    tracker = RecordingExecutionTracker(
+        analysis
+    )
+    statistical_evaluator = (
+        RecordingStatisticalEvaluator()
+    )
+    application = (
+        IndicatorComparativeResearchApplication(
+            data_provider=StubDataProvider(
+                dataset
+            ),
+            indicator_catalog=(
+                StubIndicatorCatalog()
+            ),
+            research_service=(
+                UnexpectedResearchService()
+            ),
+            statistical_evaluator=(
+                statistical_evaluator
+            ),
+            execution_tracker=tracker,
+            code_version="commit-123",
+            executor_version=(
+                "indicator-comparative-research:v1"
+            ),
+        )
+    )
+    market_specification = (
+        build_market_specification()
+    )
+    outcome_specification = (
+        ForwardReturnSpecification(
+            horizons=(1,),
+        )
+    )
+
+    result = application.run(
+        market_specification=(
+            market_specification
+        ),
+        indicator_id="rsi",
+        outcome_specification=(
+            outcome_specification
+        ),
+        correlation_id=(
+            "research-lifecycle-42"
+        ),
+    )
+
+    assert result.analysis is analysis
+    assert len(tracker.calls) == 1
+    assert len(statistical_evaluator.calls) == 1
+
+    tracker_call = tracker.calls[0]
+    execution_specification = (
+        tracker_call["specification"]
+    )
+
+    assert tracker_call["dataset"] is dataset
+    assert tracker_call["correlation_id"] == (
+        "research-lifecycle-42"
+    )
+    assert (
+        execution_specification
+        .market_specification
+        is market_specification
+    )
+    assert (
+        execution_specification
+        .outcome_specification
+        is outcome_specification
+    )
+    assert (
+        execution_specification
+        .research_specification
+        .indicator
+        .indicator_id
+        == "rsi"
+    )
+
+    environment_payload = {
+        "schema_version": 1,
+        "dataset_fingerprint": (
+            dataset
+            .fingerprint
+            .dataset_fingerprint
+        ),
+        "code_version": "commit-123",
+        "executor_version": (
+            "indicator-comparative-research:v1"
+        ),
+    }
+    serialized_environment = json.dumps(
+        environment_payload,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+        allow_nan=False,
+    )
+    expected_environment_fingerprint = (
+        sha256(
+            serialized_environment.encode(
+                "utf-8"
+            )
+        ).hexdigest()
+    )
+
+    assert (
+        tracker_call[
+            "environment_fingerprint"
+        ]
+        == expected_environment_fingerprint
+    )
+    assert (
+        statistical_evaluator
+        .calls[0]["analysis"]
+        is analysis
+    )

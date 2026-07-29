@@ -1,5 +1,14 @@
 from __future__ import annotations
 
+import json
+from hashlib import sha256
+
+from src.application.indicator_comparative_execution_specification import (
+    IndicatorComparativeExecutionSpecification,
+)
+from src.application.indicator_comparative_execution_tracker import (
+    IndicatorComparativeExecutionTracker,
+)
 from src.application.indicator_comparative_research_design import (
     IndicatorComparativeResearchDesign,
 )
@@ -43,12 +52,44 @@ class IndicatorComparativeResearchApplication:
         evaluation_plan: ComparativeEvaluationPlan = (
             ComparativeEvaluationPlan()
         ),
+        execution_tracker: (
+            IndicatorComparativeExecutionTracker
+            | None
+        ) = None,
+        code_version: str = "development",
+        executor_version: str = (
+            "indicator-comparative-research:v1"
+        ),
     ) -> None:
+        if (
+            execution_tracker is not None
+            and not callable(
+                getattr(
+                    execution_tracker,
+                    "execute",
+                    None,
+                )
+            )
+        ):
+            raise TypeError(
+                "execution_tracker must provide "
+                "a callable execute method"
+            )
+
         self._data_provider = data_provider
         self._indicator_catalog = indicator_catalog
         self._research_service = research_service
         self._statistical_evaluator = statistical_evaluator
         self._evaluation_plan = evaluation_plan
+        self._execution_tracker = execution_tracker
+        self._code_version = self._normalize_text(
+            code_version,
+            field_name="code_version",
+        )
+        self._executor_version = self._normalize_text(
+            executor_version,
+            field_name="executor_version",
+        )
 
     def run(
         self,
@@ -56,6 +97,7 @@ class IndicatorComparativeResearchApplication:
         market_specification: MarketExperimentSpecification,
         indicator_id: str,
         outcome_specification: ForwardReturnSpecification,
+        correlation_id: str | None = None,
     ) -> IndicatorComparativeResearchResult:
         if not isinstance(
             market_specification,
@@ -107,12 +149,43 @@ class IndicatorComparativeResearchApplication:
             market_specification
         )
 
-        analysis = self._research_service.run(
-            dataset=dataset,
-            design=design,
-            symbol=market_specification.symbol,
-            timeframe=market_specification.timeframe,
-        )
+        if self._execution_tracker is None:
+            analysis = self._research_service.run(
+                dataset=dataset,
+                design=design,
+                symbol=market_specification.symbol,
+                timeframe=market_specification.timeframe,
+            )
+        else:
+            execution_specification = (
+                IndicatorComparativeExecutionSpecification(
+                    market_specification=(
+                        market_specification
+                    ),
+                    research_specification=(
+                        research_specification
+                    ),
+                    outcome_specification=(
+                        outcome_specification
+                    ),
+                    baseline=design.baseline,
+                )
+            )
+            analysis = (
+                self._execution_tracker.execute(
+                    dataset=dataset,
+                    specification=(
+                        execution_specification
+                    ),
+                    environment_fingerprint=(
+                        self
+                        ._build_execution_environment_fingerprint(
+                            dataset
+                        )
+                    ),
+                    correlation_id=correlation_id,
+                )
+            )
         statistical_evaluations = (
             self._statistical_evaluator.evaluate(
                 analysis=analysis,
@@ -146,3 +219,51 @@ class IndicatorComparativeResearchApplication:
                 statistical_evaluations
             ),
         )
+
+    def _build_execution_environment_fingerprint(
+        self,
+        dataset: object,
+    ) -> str:
+        payload = {
+            "schema_version": 1,
+            "dataset_fingerprint": (
+                dataset
+                .fingerprint
+                .dataset_fingerprint
+            ),
+            "code_version": self._code_version,
+            "executor_version": (
+                self._executor_version
+            ),
+        }
+        serialized = json.dumps(
+            payload,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=True,
+            allow_nan=False,
+        )
+
+        return sha256(
+            serialized.encode("utf-8")
+        ).hexdigest()
+
+    @staticmethod
+    def _normalize_text(
+        value: object,
+        *,
+        field_name: str,
+    ) -> str:
+        if not isinstance(value, str):
+            raise TypeError(
+                f"{field_name} must be a string"
+            )
+
+        normalized = value.strip()
+
+        if not normalized:
+            raise ValueError(
+                f"{field_name} must not be empty"
+            )
+
+        return normalized
