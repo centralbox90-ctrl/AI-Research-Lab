@@ -9,6 +9,9 @@ from src.application.campaign_design_loader import (
 from src.application.market_experiment_registration_loader import (
     MarketExperimentRegistrationLoader,
 )
+from src.application.market_research_campaign_artifact_envelope_factory import (
+    MarketResearchCampaignArtifactEnvelopeFactory,
+)
 from src.application.research_campaign_plan_market_adapter import (
     ResearchCampaignPlanMarketAdapter,
 )
@@ -40,6 +43,10 @@ class RunMarketResearchCampaignCommand:
         ) = None,
         presenter: (
             MarketResearchCampaignPresenter | None
+        ) = None,
+        artifact_envelope_factory: (
+            MarketResearchCampaignArtifactEnvelopeFactory
+            | None
         ) = None,
     ) -> None:
         if not callable(
@@ -96,6 +103,19 @@ class RunMarketResearchCampaignCommand:
                 "MarketResearchCampaignPresenter or None"
             )
 
+        if (
+            artifact_envelope_factory is not None
+            and not isinstance(
+                artifact_envelope_factory,
+                MarketResearchCampaignArtifactEnvelopeFactory,
+            )
+        ):
+            raise TypeError(
+                "artifact_envelope_factory must be a "
+                "MarketResearchCampaignArtifactEnvelopeFactory "
+                "or None"
+            )
+
         self._runner = runner
         self._planner = planner or ResearchPlanner()
         self._design_loader = (
@@ -109,6 +129,9 @@ class RunMarketResearchCampaignCommand:
         self._presenter = (
             presenter
             or MarketResearchCampaignPresenter()
+        )
+        self._artifact_envelope_factory = (
+            artifact_envelope_factory
         )
 
     def execute(
@@ -134,7 +157,15 @@ class RunMarketResearchCampaignCommand:
             runner=self._runner,
         )
         result = application.execute(design)
-        payload = self._presenter.present(result)
+
+        if self._artifact_envelope_factory is not None:
+            payload = (
+                self._artifact_envelope_factory.create(
+                    result=result,
+                ).to_dict()
+            )
+        else:
+            payload = self._presenter.present(result)
 
         return json.dumps(
             payload,

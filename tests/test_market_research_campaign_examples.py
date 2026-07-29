@@ -75,9 +75,18 @@ def test_campaign_example_runs_through_main_cli(
 
     payload = json.loads(stdout.getvalue())
 
+    assert payload["schema_version"] == 1
     assert payload["artifact_type"] == (
         "market_research_campaign"
     )
-    assert payload["artifact_version"] == 1
-    assert payload["experiment_count"] == 1
-    assert len(payload["experiments"]) == 1
+    assert payload["payload_schema_version"] == 1
+    assert payload["producer"] == (
+        "market-research-campaign"
+    )
+    assert payload["correlation_id"] is None
+    assert len(payload["source_references"]) == 2
+
+    campaign_payload = payload["payload"]
+
+    assert campaign_payload["experiment_count"] == 1
+    assert len(campaign_payload["experiments"]) == 1

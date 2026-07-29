@@ -9,6 +9,9 @@ from src.application.hypothesis_evaluation_artifact_envelope_factory import (
 from src.application.knowledge_research_questions_artifact_envelope_factory import (
     KnowledgeResearchQuestionsArtifactEnvelopeFactory,
 )
+from src.application.market_research_campaign_artifact_envelope_factory import (
+    MarketResearchCampaignArtifactEnvelopeFactory,
+)
 from src.application.promote_hypothesis_evaluation_to_knowledge import (
     PromoteHypothesisEvaluationToKnowledge,
 )
@@ -171,11 +174,18 @@ def test_build_research_cli_configures_campaign_command(
         db_path=tmp_path / "research_cycles.db",
     )
 
-    assert isinstance(
-        cli.run_market_research_campaign_command,
-        RunMarketResearchCampaignCommand,
+    command = (
+        cli.run_market_research_campaign_command
     )
 
+    assert isinstance(
+        command,
+        RunMarketResearchCampaignCommand,
+    )
+    assert isinstance(
+        command._artifact_envelope_factory,
+        MarketResearchCampaignArtifactEnvelopeFactory,
+    )
 
 def test_build_research_cli_configures_knowledge_command(
     tmp_path: Path,

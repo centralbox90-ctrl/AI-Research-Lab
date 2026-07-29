@@ -4,6 +4,15 @@ from pathlib import Path
 
 import pytest
 
+from src.application.market_research_campaign_artifact_envelope_factory import (
+    MarketResearchCampaignArtifactEnvelopeFactory,
+)
+
+from src.application.research_artifact_envelope import (
+    ResearchArtifactEnvelope,
+    ResearchArtifactEnvelopeFactory,
+)
+
 from src.application.campaign_design_loader import (
     CampaignDesignLoader,
 )
@@ -114,6 +123,48 @@ class StubCampaignPresenter(
                 result.experiment_results
             ),
         }
+
+
+class StubCampaignEnvelopeFactory(
+    MarketResearchCampaignArtifactEnvelopeFactory
+):
+    def __init__(self) -> None:
+        self.calls: list[
+            tuple[
+                MarketResearchCampaignResult,
+                str | None,
+            ]
+        ] = []
+
+    def create(
+        self,
+        *,
+        result: MarketResearchCampaignResult,
+        correlation_id: str | None = None,
+    ) -> ResearchArtifactEnvelope:
+        self.calls.append(
+            (
+                result,
+                correlation_id,
+            )
+        )
+
+        return ResearchArtifactEnvelopeFactory(
+            producer="campaign-command-test",
+            producer_version="git:test",
+        ).create(
+            artifact_type="market_research_campaign",
+            payload_schema_version=1,
+            payload={
+                "campaign_plan_id": (
+                    result.research_plan.id
+                ),
+                "experiment_count": len(
+                    result.experiment_results
+                ),
+            },
+            provenance={},
+        )
 
 
 class RecordingRunner:
@@ -237,6 +288,10 @@ def build_resolver(
 def build_command(
     *,
     complete: bool = True,
+    artifact_envelope_factory: (
+        MarketResearchCampaignArtifactEnvelopeFactory
+        | None
+    ) = None,
 ) -> tuple[
     RunMarketResearchCampaignCommand,
     CampaignDesign,
@@ -267,6 +322,9 @@ def build_command(
         design_loader=design_loader,
         registration_loader=registration_loader,
         presenter=presenter,
+        artifact_envelope_factory=(
+            artifact_envelope_factory
+        ),
     )
 
     return (
@@ -429,4 +487,59 @@ def test_rejects_invalid_presenter() -> None:
         RunMarketResearchCampaignCommand(
             runner=RecordingRunner(),
             presenter=object(),
+        )
+
+def test_presents_campaign_as_envelope_when_configured(
+) -> None:
+    envelope_factory = (
+        StubCampaignEnvelopeFactory()
+    )
+    (
+        command,
+        _,
+        plan,
+        _,
+        _,
+        _,
+        presenter,
+    ) = build_command(
+        artifact_envelope_factory=(
+            envelope_factory
+        )
+    )
+
+    rendered = command.execute(
+        "campaign-design.json",
+        "campaign-registrations.json",
+    )
+    payload = json.loads(rendered)
+
+    assert len(envelope_factory.calls) == 1
+    assert envelope_factory.calls[0][1] is None
+    assert presenter.results == []
+    assert payload["schema_version"] == 1
+    assert payload["artifact_type"] == (
+        "market_research_campaign"
+    )
+    assert payload["payload"][
+        "campaign_plan_id"
+    ] == plan.id
+    assert payload["payload"][
+        "experiment_count"
+    ] == 2
+
+
+def test_rejects_invalid_artifact_envelope_factory(
+) -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "artifact_envelope_factory must be a "
+            "MarketResearchCampaignArtifactEnvelopeFactory "
+            "or None"
+        ),
+    ):
+        RunMarketResearchCampaignCommand(
+            runner=RecordingRunner(),
+            artifact_envelope_factory=object(),
         )

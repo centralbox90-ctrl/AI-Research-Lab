@@ -52,6 +52,9 @@ from src.application.knowledge_research_question_application import (
 from src.application.market_research_application import (
     build_market_research_application,
 )
+from src.application.market_research_campaign_artifact_envelope_factory import (
+    MarketResearchCampaignArtifactEnvelopeFactory,
+)
 from src.application.promote_hypothesis_evaluation_to_knowledge import (
     PromoteHypothesisEvaluationToKnowledge,
 )
@@ -186,10 +189,6 @@ def build_research_cli(
         run_market_research=market_research_application,
     )
 
-    run_campaign_command = RunMarketResearchCampaignCommand(
-        runner=market_research_application,
-    )
-
     knowledge_repository = SqliteKnowledgeRepository(
         db_path=db_path,
     )
@@ -269,6 +268,27 @@ def build_research_cli(
         ).get_code_version()
     )
 
+    campaign_envelope_factory = (
+        MarketResearchCampaignArtifactEnvelopeFactory(
+            envelope_factory=(
+                ResearchArtifactEnvelopeFactory(
+                    producer=(
+                        "market-research-campaign"
+                    ),
+                    producer_version=(
+                        application_code_version
+                    ),
+                )
+            )
+        )
+    )
+
+    run_campaign_command = RunMarketResearchCampaignCommand(
+        runner=market_research_application,
+        artifact_envelope_factory=(
+            campaign_envelope_factory
+        ),
+    )
     knowledge_question_envelope_factory = (
         KnowledgeResearchQuestionsArtifactEnvelopeFactory(
             envelope_factory=(
