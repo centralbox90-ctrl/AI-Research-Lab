@@ -93,3 +93,45 @@ async def test_builds_mcp_server_with_empty_database(
         "count": 0,
         "result_ids": [],
     }
+@pytest.mark.anyio
+async def test_gets_repository_backed_artifact_through_mcp(
+    tmp_path: Path,
+) -> None:
+    database_path = (
+        tmp_path / "research-cycles.db"
+    )
+    artifact = {
+        "artifact_type": "market_research",
+        "result": {
+            "id": "result-001",
+        },
+    }
+    store = SqliteResearchCycleStore(
+        db_path=database_path,
+    )
+    store.save(
+        result_id="result-001",
+        serialized_cycle=artifact,
+    )
+
+    server = build_research_mcp_server(
+        db_path=database_path,
+    )
+
+    async with Client(
+        server,
+        raise_exceptions=True,
+    ) as client:
+        result = await client.call_tool(
+            "get_research_artifact",
+            {
+                "result_id": "result-001",
+            },
+        )
+
+    assert result.is_error is False
+    assert result.structured_content == {
+        "schema_version": 1,
+        "result_id": "result-001",
+        "artifact": artifact,
+    }

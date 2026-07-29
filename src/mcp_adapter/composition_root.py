@@ -5,6 +5,7 @@ from pathlib import Path
 from mcp.server import MCPServer
 
 from src.application.public_api import (
+    GetStoredResearchArtifact,
     ListStoredResearchCycles,
 )
 from src.mcp_adapter.research_server import (
@@ -30,6 +31,11 @@ def build_research_mcp_server(
     store = SqliteResearchCycleStore(
         db_path=db_path,
     )
+    get_stored_research_artifact = (
+        GetStoredResearchArtifact(
+            store=store,
+        )
+    )
     list_stored_research_cycles = (
         ListStoredResearchCycles(
             store=store,
@@ -37,6 +43,9 @@ def build_research_mcp_server(
     )
 
     return create_research_mcp_server(
+        get_stored_research_artifact=(
+            get_stored_research_artifact
+        ),
         list_stored_research_cycles=(
             list_stored_research_cycles
         ),
