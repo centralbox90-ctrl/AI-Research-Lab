@@ -1004,3 +1004,193 @@ Research Domain не добавлялись.
 - общий workflow, lifecycle, pipeline или orchestration engine не
   добавлялся;
 - новые Knowledge domain entities не добавлялись.
+
+## 20. Comparative ExperimentExecution production checkpoint
+
+Commit checkpoint: `3fc7999`.
+
+Этот раздел фиксирует фактическое завершение production wiring
+технического lifecycle для comparative analysis. Предыдущие разделы
+сохраняют состояние соответствующих архитектурных снимков.
+
+### 20.1 Reproducible comparative execution specification
+
+Создан immutable
+`IndicatorComparativeExecutionSpecification`.
+
+Specification фиксирует полный воспроизводимый вход одного
+comparative analysis execution:
+
+- market experiment specification;
+- точный период market data;
+- indicator research specification;
+- forward outcome specification;
+- baseline identity.
+
+Specification имеет deterministic fingerprint.
+
+Statistical evaluation plan намеренно не входит в execution
+specification. Statistical evaluation выполняется после успешного
+comparative analysis и относится к научной интерпретации результата,
+а не к техническому выполнению эксперимента.
+
+### 20.2 Comparative execution tracker
+
+Создан специализированный
+`IndicatorComparativeExecutionTracker`.
+
+Tracker оборачивает один вызов
+`IndicatorComparativeResearchService` и записывает immutable
+`ExperimentExecution` snapshots:
+
+1. `PENDING`;
+2. `RUNNING`;
+3. `SUCCEEDED` или `FAILED`.
+
+Dataset preparation выполняется до tracker.
+
+Comparative statistical evaluation, Evidence, Finding и
+HypothesisEvaluation формируются после tracker и не изменяют
+технический execution status.
+
+Tracker не управляет:
+
+- retries;
+- scheduling;
+- worker leases;
+- heartbeat;
+- очередями;
+- runtime recovery.
+
+Общий workflow или lifecycle engine не вводился.
+
+### 20.3 Production persistence wiring
+
+Главный `build_research_cli` создаёт общий
+`SqliteExperimentExecutionRecorder`.
+
+Тот же recorder используется:
+
+- одиночным market research execution;
+- market research campaign executions;
+- comparative analysis executions.
+
+Recorder передаётся через явные composition roots:
+
+`build_research_cli`
+→ comparative hypothesis-evaluation builder
+→ comparative finding builder
+→ comparative evidence builder
+→ comparative research builder
+→ `IndicatorComparativeExecutionTracker`.
+
+Application и Research layers не импортируют SQLite adapter.
+Persistence остаётся подключённой только в composition root через
+`ExperimentExecutionRecorder` port.
+
+Каждая попытка comparative analysis получает отдельный UUID
+`execution_id`. Specification fingerprint и experiment identity
+остаются deterministic и не подменяют identity конкретной попытки.
+
+### 20.4 Environment and code version
+
+Comparative research application формирует environment fingerprint из:
+
+- canonical dataset fingerprint;
+- application code version;
+- comparative executor version.
+
+Production code version поступает из существующего
+`GitCodeVersionProvider`.
+
+Техническое окружение сохраняется в `RUNNING`, `SUCCEEDED` и `FAILED`
+execution snapshots. Оно не включается в scientific Evidence или
+HypothesisEvaluation state.
+
+### 20.5 Lifecycle correlation
+
+`correlation_id` передаётся по фактическому production path:
+
+Comparative request JSON
+→ CLI command
+→ HypothesisEvaluation application
+→ Finding application
+→ Evidence application
+→ comparative research application
+→ execution tracker
+→ SQLite snapshots.
+
+Correlation используется только для трассировки связанных executions
+и artifacts.
+
+Он не заменяет:
+
+- execution identity;
+- experiment identity;
+- specification fingerprint;
+- Finding identity;
+- HypothesisEvaluation identity;
+- Knowledge identity.
+
+### 20.6 Production integration evidence
+
+Production integration test выполняет реальный comparative request,
+содержащий:
+
+- две Finding requests;
+- два независимых market data периода в каждой request;
+- один общий lifecycle correlation identifier.
+
+Тест подтверждает четыре отдельных comparative executions.
+
+Для каждого execution SQLite содержит точную последовательность:
+
+`PENDING`
+→ `RUNNING`
+→ `SUCCEEDED`.
+
+Всего сохраняется двенадцать append-only snapshots.
+
+Тест также подтверждает:
+
+- отдельный UUID каждой попытки;
+- последовательности snapshot numbers `1, 2, 3`;
+- одинаковый request `correlation_id` во всех snapshots;
+- отсутствие failure у успешных executions;
+- наличие result identity в terminal snapshot.
+
+### 20.7 Обновлённая граница execution и interpretation
+
+Фактическая граница теперь выражена следующим образом:
+
+`ExperimentExecution.status`
+описывает техническое выполнение comparative analysis.
+
+`ComparativeStatisticalEvaluation`,
+`Evidence`,
+`Finding` и
+`HypothesisEvaluation`
+описывают научную интерпретацию успешно полученного анализа.
+
+`FAILED` execution не эквивалентен
+`NOT_SUPPORTED`, `REJECTED` или `INCONCLUSIVE`
+HypothesisEvaluation.
+
+Domain statuses не используются для управления runtime queue.
+
+### 20.8 Сохраняющиеся ограничения
+
+На commit `3fc7999`:
+
+- execution snapshots не имеют отдельного публичного CLI query use case;
+- comparative HypothesisEvaluation envelope возвращается через CLI,
+  но не сохраняется отдельным artifact store;
+- Evidence и Finding standalone artifacts остаются legacy;
+- полный автоматический запуск от experiment specification до
+  follow-up ResearchQuestion не является одним Application use case;
+- production contradiction rules пока отсутствуют;
+- correlation между отдельными CLI use cases передаётся клиентом явно;
+- retries, scheduling, worker leases и heartbeat не реализованы;
+- общий workflow, lifecycle, pipeline или orchestration engine не
+  добавлялся;
+- новые Knowledge domain entities не добавлялись.
