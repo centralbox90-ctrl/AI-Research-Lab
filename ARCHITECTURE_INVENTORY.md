@@ -1363,3 +1363,149 @@ transport base class.
 - новые Knowledge domain entities не добавлялись;
 - общий workflow, lifecycle, pipeline или orchestration engine не
   добавлялся.
+## 22. HTTP artifact comparison checkpoint
+
+Commit checkpoint: `4be827d`.
+
+Этот раздел фиксирует расширение read-only HTTP boundary после первого
+HTTP API checkpoint. Предыдущие разделы сохраняют состояние
+соответствующих архитектурных снимков.
+
+### 22.1 Публичный comparison use case
+
+HTTP adapter предоставляет новую операцию:
+
+`GET /v1/research-artifact-comparisons`.
+
+Операция вызывает существующий публичный Application use case
+`CompareStoredResearchArtifacts`.
+
+Обязательные query parameters:
+
+- `artifact_a_result_id`;
+- `artifact_b_result_id`.
+
+Оба значения нормализуются на transport boundary и должны содержать
+непустые строки.
+
+HTTP adapter не загружает artifacts самостоятельно, не интерпретирует
+их payload и не выполняет comparison rules. Эти ответственности
+остаются в Application Layer.
+
+### 22.2 Transport result
+
+Успешный response использует schema version 1 и содержит:
+
+- точный `artifact_a_result_id`;
+- точный `artifact_b_result_id`;
+- comparison DTO.
+
+Comparison DTO содержит:
+
+- идентичности сравниваемых artifacts;
+- изменение гипотезы;
+- изменение evidence;
+- детерминированные metric deltas;
+- изменение confidence.
+
+Transport DTO формируется HTTP adapter из типизированного
+`ArtifactComparison`.
+
+HTTP response не сериализует repositories или persistence records и не
+объявляет Application result HTTP-моделью.
+
+### 22.3 Error contract
+
+HTTP boundary явно различает три группы ошибок:
+
+- status 400 для отсутствующих обязательных query parameters;
+- status 404, если один из сохранённых artifacts не найден;
+- status 422, если сохранённые artifacts не удовлетворяют comparison
+  contract.
+
+Каждый error response содержит:
+
+- `schema_version`;
+- стабильный error code;
+- диагностическое message.
+
+Неожиданные инфраструктурные исключения не маскируются под
+application-level validation errors.
+
+### 22.4 Production composition
+
+`src.api.composition_root` создаёт
+`CompareStoredResearchArtifacts` поверх того же
+`GetStoredResearchArtifact`, который используется одиночным artifact
+endpoint.
+
+Для интерпретации сохранённых payload используется существующий
+`ArtifactComparisonInputExtractor`.
+
+Все три read-only HTTP operation используют одну
+`SqliteResearchCycleStore`.
+
+HTTP transport factory по-прежнему не импортирует SQLite adapter,
+artifact extractor или composition internals.
+
+Integration test подтверждает repository-backed comparison двух
+сохранённых artifacts через реальную SQLite database.
+
+### 22.5 OpenAPI 1.1
+
+HTTP contract остаётся OpenAPI 3.1.0.
+
+API version повышена с 1.0.0 до 1.1.0 как обратно совместимое
+добавление нового read-only operation.
+
+OpenAPI document фиксирует:
+
+- оба обязательных query parameters;
+- responses 200, 400, 404 и 422;
+- exact comparison response schema;
+- отдельные hypothesis, evidence и confidence evolution schemas;
+- полный набор допустимых metric delta directions;
+- точные error codes для statuses 400 и 422;
+- запрет неизвестных верхнеуровневых DTO fields.
+
+Произвольные evidence values остаются открытым application-safe
+payload внутри строго типизированной transport envelope.
+
+### 22.6 Подтверждённые границы
+
+Расширение HTTP boundary не изменило:
+
+- Domain Layer;
+- Knowledge Domain;
+- Knowledge feature freeze;
+- Research lifecycle;
+- ExperimentExecution;
+- persistence schemas;
+- CLI routes;
+- public Application API;
+- indicator plugin contract.
+
+Comparison endpoint является read-only.
+
+Write endpoints, общий transport base class, универсальный request DTO,
+WorkflowEngine или lifecycle aggregate не добавлялись.
+
+Добавление нового индикатора по-прежнему требует ровно одного
+production module в `src/indicators/implementations`.
+
+### 22.7 Сохраняющиеся ограничения
+
+На commit `4be827d`:
+
+- HTTP API остаётся read-only;
+- доступны три публичных Application use case;
+- authentication и authorization отсутствуют;
+- TLS termination отсутствует;
+- CORS policy не определена;
+- rate limiting отсутствует;
+- production WSGI deployment не настроен;
+- встроенный Flask server используется только локально;
+- MCP и ChatGPT adapters не реализованы;
+- новые Knowledge domain entities не добавлялись;
+- общий workflow, lifecycle, pipeline или orchestration engine не
+  добавлялся.

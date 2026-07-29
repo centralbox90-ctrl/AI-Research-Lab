@@ -320,8 +320,9 @@ Research Engine, Observation Layer и существующие indicators при
   изолированными compatibility boundaries;
 - полный lifecycle намеренно не объединён в один универсальный
   Application use case;
-- HTTP adapter реализован только для read-only artifact access и
-  локального запуска; MCP и ChatGPT adapters ещё не реализованы.
+- HTTP adapter реализован только для read-only artifact access,
+  repository-backed comparison и локального запуска; MCP и ChatGPT
+  adapters ещё не реализованы.
 
 ## Приоритеты следующего этапа
 
@@ -338,11 +339,12 @@ Knowledge feature development остаётся замороженной. Раз�
 Подтверждены:
 
 - отдельный transport package;
-- два read-only public use case;
+- три read-only public use case;
+- repository-backed artifact comparison;
 - SQLite production composition;
 - versioned response DTO;
-- JSON error contract;
-- OpenAPI 3.1 document;
+- JSON error contract для statuses 400, 404 и 422;
+- OpenAPI 3.1 document с API version 1.1.0;
 - local-only server entry point;
 - contract и integration tests.
 
