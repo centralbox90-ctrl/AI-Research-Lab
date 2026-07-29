@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
 
@@ -8,6 +10,8 @@ def generate_market_data(
     symbol: str = "BTCUSDT",
     timeframe: str = "1h",
     bars: int = 100,
+    start_at: str | datetime = "2024-01-01T00:00:00Z",
+    random_seed: int = 0,
 ) -> pd.DataFrame:
     """Generate deterministic development market data."""
 
@@ -33,16 +37,49 @@ def generate_market_data(
             "bars must be a positive integer"
         )
 
+    if (
+        not isinstance(random_seed, int)
+        or isinstance(random_seed, bool)
+        or random_seed < 0
+    ):
+        raise ValueError(
+            "random_seed must be a "
+            "non-negative integer"
+        )
+
+    try:
+        normalized_start = pd.Timestamp(
+            start_at
+        )
+    except (TypeError, ValueError) as error:
+        raise ValueError(
+            "start_at must be a valid timestamp"
+        ) from error
+
+    if pd.isna(normalized_start):
+        raise ValueError(
+            "start_at must be a valid timestamp"
+        )
+
+    if normalized_start.tzinfo is None:
+        normalized_start = (
+            normalized_start.tz_localize("UTC")
+        )
+    else:
+        normalized_start = (
+            normalized_start.tz_convert("UTC")
+        )
+
     normalized_symbol = symbol.strip()
     normalized_timeframe = timeframe.strip()
 
     timestamps = pd.date_range(
-        start="2024-01-01T00:00:00Z",
+        start=normalized_start,
         periods=bars,
         freq="h",
     )
 
-    random = np.random.default_rng(0)
+    random = np.random.default_rng(random_seed)
 
     close = (
         100.0

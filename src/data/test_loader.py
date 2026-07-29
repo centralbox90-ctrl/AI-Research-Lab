@@ -48,3 +48,41 @@ def test_generates_valid_ohlc_and_identity(
     assert (data["Low"] <= data["Open"]).all()
     assert (data["Low"] <= data["Close"]).all()
     assert (data["Volume"] >= 0).all()
+
+def test_respects_start_timestamp_and_random_seed(
+) -> None:
+    first = generate_market_data(
+        symbol="EURUSD",
+        timeframe="H1",
+        bars=10,
+        start_at="2026-01-01T00:00:00Z",
+        random_seed=17,
+    )
+    repeated = generate_market_data(
+        symbol="EURUSD",
+        timeframe="H1",
+        bars=10,
+        start_at="2026-01-01T00:00:00Z",
+        random_seed=17,
+    )
+    different = generate_market_data(
+        symbol="EURUSD",
+        timeframe="H1",
+        bars=10,
+        start_at="2026-02-01T00:00:00Z",
+        random_seed=19,
+    )
+
+    pd.testing.assert_frame_equal(
+        first,
+        repeated,
+    )
+    assert first.index[0] == pd.Timestamp(
+        "2026-01-01T00:00:00Z"
+    )
+    assert different.index[0] == pd.Timestamp(
+        "2026-02-01T00:00:00Z"
+    )
+    assert not first["Close"].equals(
+        different["Close"]
+    )
