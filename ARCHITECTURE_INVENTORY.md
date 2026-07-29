@@ -730,3 +730,138 @@ HypothesisEvaluation и optional KnowledgeRevision остаются
 - общий workflow, lifecycle, pipeline или orchestration engine не
   добавлялся;
 - новые Knowledge domain entities не добавлялись.
+## 18. Knowledge research-question envelope checkpoint
+
+Commit checkpoint: `1db06ff`.
+
+Этот раздел фиксирует фактическую дельту после Application API и
+HypothesisEvaluation envelope checkpoint. Предыдущие разделы сохраняют
+состояние соответствующих архитектурных снимков.
+
+### 18.1 Третий production envelope scenario
+
+Создана специализированная
+`KnowledgeResearchQuestionsArtifactEnvelopeFactory`.
+
+Factory использует общий `ResearchArtifactEnvelopeFactory` и формирует:
+
+- artifact type `knowledge_research_questions`;
+- payload schema version 1;
+- полный immutable `KnowledgeGraphSnapshot` в payload;
+- отдельный snapshot fingerprint;
+- количество вопросов и типизированные ResearchQuestion payloads;
+- exact Knowledge snapshot source reference;
+- количество Knowledge items и relations в provenance;
+- canonical payload fingerprint.
+
+Полный snapshot включён в artifact, поэтому результат можно проверить
+и воспроизвести без обращения к изменившемуся состоянию repositories.
+
+Главный production composition root передаёт factory в
+`GenerateResearchQuestionsFromKnowledgeRepositoriesCommand`.
+`producer_version` получается через тот же
+`GitCodeVersionProvider`, который используется comparative artifact
+producer.
+
+Без factory command сохраняет legacy question artifact v1 для
+немигрированных composition roots. Главный production root всегда
+использует envelope factory.
+
+### 18.2 Integrity-aware question artifact reader
+
+Создан `KnowledgeResearchQuestionsArtifactLoader`.
+
+Loader принимает полный envelope payload schema version 1 и:
+
+- проверяет общий payload fingerprint;
+- проверяет artifact type и payload schema version;
+- отклоняет отсутствующие и неизвестные payload fields;
+- восстанавливает `KnowledgeGraphSnapshot` через существующий
+  `KnowledgeGraphSnapshotLoader`;
+- повторно проверяет snapshot fingerprint;
+- восстанавливает immutable `ResearchQuestion` values;
+- проверяет question count и уникальность question identities;
+- проверяет exact Knowledge snapshot source reference;
+- возвращает типизированные
+  `KnowledgeResearchQuestionsResult` и `ResearchArtifactEnvelope`.
+
+Legacy question artifact v1 loader не поддерживает намеренно: legacy
+payload содержит только snapshot fingerprint, но не полный snapshot.
+Восстановить из него типизированный воспроизводимый Application result
+невозможно без внешнего состояния.
+
+### 18.3 Lifecycle correlation
+
+Comparative evaluation request теперь поддерживает необязательный
+нормализованный `correlation_id`. Production comparative command
+передаёт его в HypothesisEvaluation envelope.
+
+CLI route `generate-knowledge-research-questions` поддерживает
+необязательный `--correlation-id` и передаёт его в Knowledge-question
+envelope.
+
+`correlation_id` используется только для трассировки связанных
+artifacts. Он не заменяет:
+
+- hypothesis identity;
+- HypothesisEvaluation identity;
+- Knowledge identity и version;
+- Knowledge snapshot fingerprint;
+- ResearchQuestion identity.
+
+Comparative evaluation и question generation остаются двумя отдельными
+use cases. Correlation не распространяется через Knowledge repositories
+автоматически: вызывающий клиент должен явно передать одно и то же
+значение в оба lifecycle шага.
+
+### 18.4 Подтверждённая общая envelope-граница
+
+Общий `ResearchArtifactEnvelope` теперь используется тремя независимыми
+production scenarios:
+
+1. market research cycle;
+2. comparative HypothesisEvaluation с optional KnowledgeRevision;
+3. repository-backed Knowledge research questions.
+
+Это подтверждает повторяющийся boundary contract на трёх сценариях без
+создания общего WorkflowEngine, lifecycle aggregate или универсального
+domain artifact.
+
+Domain payloads остаются раздельными и типизированными. Envelope
+используется только на границах хранения и обмена.
+
+### 18.5 Обновлённый Knowledge feedback artifact path
+
+Фактический production path имеет вид:
+
+HypothesisEvaluation envelope
+→ explicit Knowledge promotion
+→ KnowledgeRevision и relations в SQLite
+→ repository-backed KnowledgeGraphSnapshot
+→ KnowledgeGap
+→ ResearchRecommendation
+→ ResearchQuestion
+→ Knowledge-question envelope.
+
+При явной передаче одинакового `correlation_id` начальный
+HypothesisEvaluation artifact и итоговый Knowledge-question artifact
+образуют трассируемый lifecycle без прямой зависимости между их
+domain identities.
+
+### 18.6 Сохраняющиеся ограничения
+
+На commit `1db06ff`:
+
+- Evidence и Finding artifacts остаются legacy;
+- campaign artifacts не используют общий envelope;
+- comparative и Knowledge-question envelopes возвращаются через CLI,
+  но не имеют отдельного persistent artifact store;
+- полный автоматический запуск от experiment specification до
+  follow-up ResearchQuestion не является одним Application use case;
+- integration test вертикального Knowledge path начинается с готовой
+  HypothesisEvaluation;
+- production contradiction rules пока отсутствуют;
+- correlation между отдельными CLI use cases передаётся клиентом;
+- общий workflow, lifecycle, pipeline или orchestration engine не
+  добавлялся;
+- новые Knowledge domain entities не добавлялись.
