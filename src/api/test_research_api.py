@@ -1,4 +1,7 @@
 from src.api import create_research_api
+from src.application.artifact_comparison_factory import (
+    ArtifactComparisonFactory,
+)
 
 
 class StubGetStoredResearchArtifact:
@@ -35,6 +38,54 @@ class StubListStoredResearchCycles:
         return list(self.result_ids)
 
 
+class StubCompareStoredResearchArtifacts:
+    def __init__(
+        self,
+        error: ValueError | None = None,
+    ) -> None:
+        self.error = error
+        self.calls: list[tuple[str, str]] = []
+
+    def execute(
+        self,
+        artifact_a_result_id: str,
+        artifact_b_result_id: str,
+    ):
+        self.calls.append(
+            (
+                artifact_a_result_id,
+                artifact_b_result_id,
+            )
+        )
+
+        if self.error is not None:
+            raise self.error
+
+        return ArtifactComparisonFactory().create(
+            artifact_a_id="artifact-001",
+            artifact_b_id="artifact-002",
+            previous_hypothesis="Previous hypothesis",
+            current_hypothesis="Current hypothesis",
+            hypothesis_change_reason=(
+                "Hypothesis changed."
+            ),
+            previous_evidence={
+                "net_profit": 1.0,
+            },
+            current_evidence={
+                "net_profit": 2.5,
+            },
+            evidence_change_reason=(
+                "Evidence changed."
+            ),
+            previous_confidence=0.4,
+            current_confidence=0.7,
+            confidence_change_reason=(
+                "Confidence increased."
+            ),
+        )
+
+
 class MissingExecute:
     pass
 
@@ -48,7 +99,9 @@ def test_lists_stored_research_cycles(
         ]
     )
     application = create_research_api(
-        get_stored_research_artifact=(
+        compare_stored_research_artifacts=(
+            StubCompareStoredResearchArtifacts()
+        ),        get_stored_research_artifact=(
             StubGetStoredResearchArtifact({})
         ),
         list_stored_research_cycles=use_case,
@@ -78,7 +131,9 @@ def test_lists_empty_research_cycle_collection(
 ) -> None:
     use_case = StubListStoredResearchCycles([])
     application = create_research_api(
-        get_stored_research_artifact=(
+        compare_stored_research_artifacts=(
+            StubCompareStoredResearchArtifacts()
+        ),        get_stored_research_artifact=(
             StubGetStoredResearchArtifact({})
         ),
         list_stored_research_cycles=use_case,
@@ -102,7 +157,9 @@ def test_rejects_invalid_application_dependency(
 ) -> None:
     try:
         create_research_api(
-            get_stored_research_artifact=(
+            compare_stored_research_artifacts=(
+                StubCompareStoredResearchArtifacts()
+            ),            get_stored_research_artifact=(
                 StubGetStoredResearchArtifact({})
             ),
             list_stored_research_cycles=(
@@ -135,7 +192,9 @@ def test_gets_stored_research_artifact(
         )
     )
     application = create_research_api(
-        get_stored_research_artifact=(
+        compare_stored_research_artifacts=(
+            StubCompareStoredResearchArtifacts()
+        ),        get_stored_research_artifact=(
             artifact_use_case
         ),
         list_stored_research_cycles=(
@@ -168,7 +227,9 @@ def test_reports_missing_research_artifact(
         StubGetStoredResearchArtifact({})
     )
     application = create_research_api(
-        get_stored_research_artifact=(
+        compare_stored_research_artifacts=(
+            StubCompareStoredResearchArtifacts()
+        ),        get_stored_research_artifact=(
             artifact_use_case
         ),
         list_stored_research_cycles=(
@@ -203,7 +264,9 @@ def test_rejects_invalid_artifact_dependency(
 ) -> None:
     try:
         create_research_api(
-            get_stored_research_artifact=(
+            compare_stored_research_artifacts=(
+                StubCompareStoredResearchArtifacts()
+            ),            get_stored_research_artifact=(
                 MissingExecute()
             ),
             list_stored_research_cycles=(
@@ -223,7 +286,9 @@ def test_rejects_invalid_artifact_dependency(
 def test_serves_openapi_document(
 ) -> None:
     application = create_research_api(
-        get_stored_research_artifact=(
+        compare_stored_research_artifacts=(
+            StubCompareStoredResearchArtifacts()
+        ),        get_stored_research_artifact=(
             StubGetStoredResearchArtifact({})
         ),
         list_stored_research_cycles=(
@@ -252,3 +317,164 @@ def test_serves_openapi_document(
             "{result_id}"
         ),
     }
+
+def test_compares_stored_research_artifacts(
+) -> None:
+    use_case = StubCompareStoredResearchArtifacts()
+    application = create_research_api(
+        compare_stored_research_artifacts=use_case,
+        get_stored_research_artifact=(
+            StubGetStoredResearchArtifact({})
+        ),
+        list_stored_research_cycles=(
+            StubListStoredResearchCycles([])
+        ),
+    )
+    client = application.test_client()
+
+    response = client.get(
+        "/v1/research-artifact-comparisons",
+        query_string={
+            "artifact_a_result_id": "result-001",
+            "artifact_b_result_id": "result-002",
+        },
+    )
+
+    assert response.status_code == 200
+    assert use_case.calls == [
+        (
+            "result-001",
+            "result-002",
+        ),
+    ]
+
+    payload = response.get_json()
+
+    assert payload["schema_version"] == 1
+    assert payload["artifact_a_result_id"] == (
+        "result-001"
+    )
+    assert payload["artifact_b_result_id"] == (
+        "result-002"
+    )
+    assert payload["comparison"]["artifact_a_id"] == (
+        "artifact-001"
+    )
+    assert payload["comparison"]["artifact_b_id"] == (
+        "artifact-002"
+    )
+    assert (
+        payload["comparison"]
+        ["confidence_evolution"]
+        ["current_confidence"]
+        == 0.7
+    )
+    assert (
+        payload["comparison"]
+        ["evidence_evolution"]
+        ["metric_deltas"][0]
+        ["absolute_delta"]
+        == 1.5
+    )
+
+
+def test_rejects_incomplete_artifact_comparison_request(
+) -> None:
+    use_case = StubCompareStoredResearchArtifacts()
+    application = create_research_api(
+        compare_stored_research_artifacts=use_case,
+        get_stored_research_artifact=(
+            StubGetStoredResearchArtifact({})
+        ),
+        list_stored_research_cycles=(
+            StubListStoredResearchCycles([])
+        ),
+    )
+    client = application.test_client()
+
+    response = client.get(
+        "/v1/research-artifact-comparisons",
+        query_string={
+            "artifact_a_result_id": "result-001",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.get_json() == {
+        "schema_version": 1,
+        "error": {
+            "code": (
+                "invalid_artifact_comparison_request"
+            ),
+            "message": (
+                "artifact_a_result_id and "
+                "artifact_b_result_id are required"
+            ),
+        },
+    }
+    assert use_case.calls == []
+
+
+def test_reports_missing_comparison_artifact(
+) -> None:
+    use_case = StubCompareStoredResearchArtifacts(
+        ValueError(
+            "Research artifact was not found "
+            "for result_id: result-404"
+        )
+    )
+    application = create_research_api(
+        compare_stored_research_artifacts=use_case,
+        get_stored_research_artifact=(
+            StubGetStoredResearchArtifact({})
+        ),
+        list_stored_research_cycles=(
+            StubListStoredResearchCycles([])
+        ),
+    )
+    client = application.test_client()
+
+    response = client.get(
+        "/v1/research-artifact-comparisons",
+        query_string={
+            "artifact_a_result_id": "result-001",
+            "artifact_b_result_id": "result-404",
+        },
+    )
+
+    assert response.status_code == 404
+    assert response.get_json() == {
+        "schema_version": 1,
+        "error": {
+            "code": "research_artifact_not_found",
+            "message": (
+                "Research artifact was not found "
+                "for result_id: result-404"
+            ),
+        },
+    }
+
+
+def test_rejects_invalid_comparison_dependency(
+) -> None:
+    try:
+        create_research_api(
+            compare_stored_research_artifacts=(
+                MissingExecute()
+            ),
+            get_stored_research_artifact=(
+                StubGetStoredResearchArtifact({})
+            ),
+            list_stored_research_cycles=(
+                StubListStoredResearchCycles([])
+            ),
+        )
+    except TypeError as error:
+        assert str(error) == (
+            "compare_stored_research_artifacts must "
+            "provide a callable execute method"
+        )
+    else:
+        raise AssertionError(
+            "TypeError was not raised"
+        )

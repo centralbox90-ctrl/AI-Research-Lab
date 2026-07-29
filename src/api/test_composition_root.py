@@ -106,3 +106,90 @@ def test_builds_api_with_empty_database(
             ),
         },
     }
+
+def test_builds_repository_backed_comparison(
+    tmp_path: Path,
+) -> None:
+    database_path = (
+        tmp_path / "research-cycles.db"
+    )
+    store = SqliteResearchCycleStore(
+        db_path=database_path,
+    )
+
+    store.save(
+        result_id="result-001",
+        serialized_cycle={
+            "metadata": {
+                "artifact_id": "artifact-001",
+            },
+            "specification": {
+                "hypothesis_description": (
+                    "Previous hypothesis"
+                ),
+            },
+            "cycle": {
+                "evidence": {
+                    "data": {
+                        "net_profit": 1.0,
+                    },
+                },
+                "evidence_strength_evaluation": {
+                    "score": 0.4,
+                },
+            },
+        },
+    )
+    store.save(
+        result_id="result-002",
+        serialized_cycle={
+            "metadata": {
+                "artifact_id": "artifact-002",
+            },
+            "specification": {
+                "hypothesis_description": (
+                    "Current hypothesis"
+                ),
+            },
+            "cycle": {
+                "evidence": {
+                    "data": {
+                        "net_profit": 2.5,
+                    },
+                },
+                "evidence_strength_evaluation": {
+                    "score": 0.7,
+                },
+            },
+        },
+    )
+
+    application = build_research_api(
+        db_path=database_path,
+    )
+    client = application.test_client()
+
+    response = client.get(
+        "/v1/research-artifact-comparisons",
+        query_string={
+            "artifact_a_result_id": "result-001",
+            "artifact_b_result_id": "result-002",
+        },
+    )
+
+    assert response.status_code == 200
+
+    payload = response.get_json()
+
+    assert payload["comparison"]["artifact_a_id"] == (
+        "artifact-001"
+    )
+    assert payload["comparison"]["artifact_b_id"] == (
+        "artifact-002"
+    )
+    assert (
+        payload["comparison"]
+        ["confidence_evolution"]
+        ["current_confidence"]
+        == 0.7
+    )
