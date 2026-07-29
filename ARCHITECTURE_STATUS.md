@@ -236,15 +236,118 @@ Conclusion и HypothesisDecision используются существующи
 
 Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandidateValidator и KnowledgeRepository реализованы как специализированные контракты Knowledge Domain. Существующий mutable Knowledge остаётся legacy-моделью ResearchEngine. InMemoryKnowledgeRepository хранит все KnowledgeRevision без удаления, возвращает latest/version/history, проверяет линейную последовательность и монотонный UTC valid_from. Repository-level find_applicable применяет типизированный KnowledgeApplicabilityQuery только к latest KnowledgeItem и возвращает результат в детерминированном порядке ID. Immutable KnowledgeContradiction регистрирует каноническую пару точных версий KnowledgeItem, их fingerprints, обязательную reason и пересечение applicability. KnowledgeContradictionRule явно задаёт две несовместимые нормализованные формулировки и выполняет точный case-insensitive matching. KnowledgeContradictionDetector получает latest items через KnowledgeRepository, проверяет уникальность knowledge ID и rules, учитывает applicability overlap и возвращает канонически упорядоченные KnowledgeContradiction. InMemoryKnowledgeRepository хранит KnowledgeContradiction append-only по fingerprint, проверяет точные версии и fingerprints ссылочных KnowledgeItem, сохраняет противоречия после superseding и предоставляет детерминированные list_contradictions/contradictions_for. KnowledgeRelation фиксирует типизированную направленную связь между точными версиями KnowledgeItem, нормализует reason и предоставляет schema-versioned serialization и fingerprint; contradicts канонизирует endpoints. Отдельный InMemoryKnowledgeRelationRepository хранит relations append-only по fingerprint, валидирует endpoints через KnowledgeRepository и поддерживает детерминированные запросы по ID, версии и типу relation. KnowledgeGraph является отдельным read model над KnowledgeRelationRepository, вычисляет детерминированных neighbors и выполняет ограниченный breadth-first traversal с защитой от циклов. KnowledgeGraphRelationRegistrar принимает только уже сохранённые domain records, проецирует KnowledgeContradiction в contradicts, а superseding KnowledgeRevision — в supersedes, сохраняя точные версии, причины и идемпотентность. KnowledgeGraphSnapshot фиксирует immutable набор точных версий KnowledgeItem и KnowledgeRelation, проверяет ссылочную целостность endpoints, канонизирует порядок и предоставляет schema v1 JSON и детерминированный fingerprint. Добавлен immutable KnowledgeGap с типами isolated_item, unsupported_item и unresolved_contradiction, точными ссылками на KnowledgeItem, applicability, причиной и fingerprint исходного snapshot. KnowledgeGapDetector анализирует KnowledgeGraphSnapshot без semantic heuristics, исключает superseded versions и детерминированно выявляет isolated, unsupported и unresolved contradiction gaps. Добавлен immutable ResearchRecommendation с типизированным priority, исследовательским вопросом, rationale, applicability из точного KnowledgeGap, полной gap provenance, schema v1 и детерминированным fingerprint. ResearchRecommendationGenerator применяет фиксированные templates по KnowledgeGapType, назначает low/medium/high priority и выполняет пакетную дедупликацию с детерминированным priority order. ResearchRecommendationQuestionAdapter преобразует рекомендацию в legacy ResearchQuestion, использует внедрённые clock и ID factory, нормализует created_at в UTC и сохраняет rationale, priority, applicability и fingerprints provenance в description. GenerateResearchQuestionsFromKnowledgeSnapshot оркестрирует полный поток KnowledgeGraphSnapshot → KnowledgeGapDetector → ResearchRecommendationGenerator → ResearchRecommendationQuestionAdapter, сохраняет priority order и отклоняет повторяющиеся ID вопросов. Production composition root build_knowledge_research_question_application связывает готовый сервис с system_utc_clock и fingerprint_research_question_id; ID основан на полном fingerprint рекомендации. KnowledgeGraphSnapshotLoader строго загружает schema v1 JSON, проверяет полный набор полей, вычисляемые KnowledgeItem fingerprints и точные relation endpoints, после чего восстанавливает канонический immutable snapshot. Presenter present_research_questions формирует versioned artifact knowledge_research_questions с fingerprint исходного snapshot, количеством вопросов и сохранением priority order. GenerateResearchQuestionsFromKnowledgeSnapshotCommand загружает snapshot, запускает application-service и возвращает deterministic JSON в pretty/compact режимах. Общий ResearchCli предоставляет маршрут generate-knowledge-research-questions с обязательным snapshot path, pretty/compact JSON, контролируемыми exit codes и обработкой ошибок загрузки. Production build_research_cli связывает маршрут с готовыми loader, application-service и presenter; end-to-end тест подтверждает полный file-to-JSON поток. SqliteKnowledgeRepository реализует persistent append-only revision history и contradictions, восстанавливает immutable domain objects с проверкой fingerprints, сохраняет sequence/UTC invariants и поддерживает детерминированные запросы после повторного открытия базы. SqliteKnowledgeRelationRepository реализует persistent append-only relations, проверяет точные сохранённые версии и fingerprints endpoints, обеспечивает идемпотентное сохранение и детерминированные запросы после повторного открытия базы.
 
-## Приоритеты развития
+## Статус архитектурной консолидации
 
-Knowledge feature development временно заморожена: разрешены исправления, тесты, документация и интеграция уже существующих Knowledge-контрактов. До завершения Architecture Inventory и ADR запрещено вводить общие workflow, lifecycle, pipeline и orchestration abstractions.
+На commit `c0f80eb` основной этап архитектурной консолидации
+подтверждён production wiring и автоматическими тестами.
 
-1. Провести фактический Architecture Inventory: public use cases, internal coordinators, domain services, adapters, composition roots, legacy compatibility models, manual file boundaries, artifact producers/consumers и persistence ports.
-2. Зафиксировать ADR и dependency rules, включая Research/runtime boundary, ExperimentExecution lifecycle, artifact envelope, Knowledge feature freeze, application use-case classification и legacy migration policy.
-3. Провести один market experiment через минимальный unified ExperimentExecution lifecycle и ResearchArtifact envelope.
-4. Замкнуть production-путь HypothesisEvaluation → KnowledgeCandidate → validation → revision storage → contradiction detection → relation registration → snapshot → recommendation без подготовленного snapshot-файла.
-5. Стабилизировать публичный Application API перед добавлением HTTP, MCP и ChatGPT adapters.
+Завершены:
+
+- фактический Architecture Inventory;
+- ADR-001 — ADR-006;
+- Knowledge feature freeze;
+- классификация Application Layer;
+- явный `src.application.public_api`;
+- минимальный immutable `ExperimentExecution` lifecycle;
+- append-only SQLite snapshots технического выполнения;
+- production execution tracking для одиночного market research;
+- production execution tracking для Market Research Campaign;
+- production execution tracking для comparative analysis;
+- deterministic specification fingerprints;
+- reproducимые independent generated market-data periods;
+- явное разделение technical execution и scientific interpretation;
+- общий `ResearchArtifactEnvelope` на границах хранения и обмена;
+- market research envelope;
+- comparative HypothesisEvaluation envelope;
+- Knowledge research-question envelope;
+- Market Research Campaign envelope;
+- lifecycle correlation без подмены domain identities;
+- явная `KnowledgePromotionPolicy`;
+- production promotion в append-only Knowledge repositories;
+- contradiction detection и relation registration;
+- repository-backed KnowledgeGraphSnapshot;
+- KnowledgeGap → ResearchRecommendation → ResearchQuestion;
+- production Knowledge feedback path без подготовленного snapshot-файла;
+- legacy migration policy и перечисленные legacy boundaries.
+
+Основной production lifecycle существует как набор явных Application
+use cases и internal coordinators.
+
+Единый `ResearchLifecycle` aggregate, WorkflowEngine, универсальный
+pipeline или конфигурируемый orchestration mechanism не создавались.
+
+Composition roots выбирают adapters, версии producer и policy objects,
+но не принимают научные решения.
+
+Research Domain не управляет retries, scheduling, worker leases,
+heartbeat или очередями.
+
+Добавление нового индикатора остаётся локальным plugin-изменением:
+один production module в `src/indicators/implementations`, экспортирующий
+стандартный immutable `INDICATOR`. Catalog, discovery, composition roots,
+Research Engine, Observation Layer и существующие indicators при этом
+не изменяются.
+
+### Выполненные критерии консолидации
+
+1. Market и comparative experiments используют явный execution
+   lifecycle.
+2. Основные production results проходят через общий artifact envelope.
+3. Analysis → Knowledge → ResearchQuestion работает без ручного
+   snapshot-файла.
+4. Публичные Application use cases перечислены явным allowlist.
+5. Composition roots не содержат lifecycle transitions.
+6. Research Domain не управляет runtime infrastructure.
+7. Knowledge feature freeze соблюдается.
+8. Legacy boundaries перечислены и защищены migration policy.
+9. Specification, data periods, code version, environment fingerprints
+   и artifacts обеспечивают воспроизводимость production paths.
+10. Внешний adapter может быть добавлен поверх Application contracts
+    без изменения Domain Layer.
+
+### Сохраняющиеся ограничения
+
+Следующие ограничения не блокируют завершение консолидации:
+
+- standalone Evidence и Finding artifacts сохраняют legacy contracts;
+- некоторые envelopes возвращаются через CLI без отдельного artifact
+  store;
+- специализированный Campaign artifact reader отсутствует;
+- production contradiction rules пока представлены пустой явной
+  конфигурацией;
+- correlation между отдельными use cases передаётся клиентом явно;
+- legacy `ResearchEngine` и mutable Research models остаются
+  изолированными compatibility boundaries;
+- полный lifecycle намеренно не объединён в один универсальный
+  Application use case;
+- HTTP, MCP и ChatGPT adapters ещё не реализованы.
+
+## Приоритеты следующего этапа
+
+Knowledge feature development остаётся замороженной. Разрешены
+исправления, тесты, документация, integration существующих contracts и
+миграция подтверждённых boundaries.
+
+Общие workflow, lifecycle, pipeline и orchestration abstractions
+по-прежнему запрещены без трёх независимых production scenarios с
+одинаковой технической семантикой.
+
+Следующий режим разработки:
+
+1. Выбрать один первый внешний adapter: HTTP, MCP или ChatGPT.
+2. Подключить его только к use cases из
+   `src.application.public_api`.
+3. Определять отдельные transport DTO для каждого публичного сценария,
+   не создавая универсальный request или response.
+4. Оставить domain models, repositories и composition internals
+   недоступными внешнему transport.
+5. Добавить contract и integration tests внешней boundary.
+6. Не изменять существующие Application contracts ради удобства
+   transport без отдельного архитектурного решения.
+7. Мигрировать legacy boundaries только по правилам ADR-006 и только
+   при наличии конкретного production consumer.
+8. Добавлять новые artifact readers или stores только для
+   подтверждённого внешнего сценария.
 
 ## Критерий обновления
 
