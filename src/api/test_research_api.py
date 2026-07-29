@@ -101,7 +101,8 @@ def test_lists_stored_research_cycles(
     application = create_research_api(
         compare_stored_research_artifacts=(
             StubCompareStoredResearchArtifacts()
-        ),        get_stored_research_artifact=(
+        ),
+        get_stored_research_artifact=(
             StubGetStoredResearchArtifact({})
         ),
         list_stored_research_cycles=use_case,
@@ -133,7 +134,8 @@ def test_lists_empty_research_cycle_collection(
     application = create_research_api(
         compare_stored_research_artifacts=(
             StubCompareStoredResearchArtifacts()
-        ),        get_stored_research_artifact=(
+        ),
+        get_stored_research_artifact=(
             StubGetStoredResearchArtifact({})
         ),
         list_stored_research_cycles=use_case,
@@ -159,7 +161,8 @@ def test_rejects_invalid_application_dependency(
         create_research_api(
             compare_stored_research_artifacts=(
                 StubCompareStoredResearchArtifacts()
-            ),            get_stored_research_artifact=(
+            ),
+            get_stored_research_artifact=(
                 StubGetStoredResearchArtifact({})
             ),
             list_stored_research_cycles=(
@@ -194,7 +197,8 @@ def test_gets_stored_research_artifact(
     application = create_research_api(
         compare_stored_research_artifacts=(
             StubCompareStoredResearchArtifacts()
-        ),        get_stored_research_artifact=(
+        ),
+        get_stored_research_artifact=(
             artifact_use_case
         ),
         list_stored_research_cycles=(
@@ -229,7 +233,8 @@ def test_reports_missing_research_artifact(
     application = create_research_api(
         compare_stored_research_artifacts=(
             StubCompareStoredResearchArtifacts()
-        ),        get_stored_research_artifact=(
+        ),
+        get_stored_research_artifact=(
             artifact_use_case
         ),
         list_stored_research_cycles=(
@@ -266,7 +271,8 @@ def test_rejects_invalid_artifact_dependency(
         create_research_api(
             compare_stored_research_artifacts=(
                 StubCompareStoredResearchArtifacts()
-            ),            get_stored_research_artifact=(
+            ),
+            get_stored_research_artifact=(
                 MissingExecute()
             ),
             list_stored_research_cycles=(
@@ -288,7 +294,8 @@ def test_serves_openapi_document(
     application = create_research_api(
         compare_stored_research_artifacts=(
             StubCompareStoredResearchArtifacts()
-        ),        get_stored_research_artifact=(
+        ),
+        get_stored_research_artifact=(
             StubGetStoredResearchArtifact({})
         ),
         list_stored_research_cycles=(
@@ -308,9 +315,10 @@ def test_serves_openapi_document(
 
     assert document["openapi"] == "3.1.0"
     assert document["info"]["version"] == (
-        "1.0.0"
+        "1.1.0"
     )
     assert set(document["paths"]) == {
+        "/v1/research-artifact-comparisons",
         "/v1/research-cycles",
         (
             "/v1/research-artifacts/"

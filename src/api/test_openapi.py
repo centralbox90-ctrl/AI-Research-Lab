@@ -10,7 +10,7 @@ def test_builds_openapi_31_document(
     assert document["openapi"] == "3.1.0"
     assert document["info"] == {
         "title": "AI Research Lab API",
-        "version": "1.0.0",
+        "version": "1.1.0",
         "description": (
             "Read-only access to stored "
             "research results."
@@ -20,6 +20,7 @@ def test_builds_openapi_31_document(
     paths = document["paths"]
 
     assert set(paths) == {
+        "/v1/research-artifact-comparisons",
         "/v1/research-cycles",
         (
             "/v1/research-artifacts/"
@@ -66,6 +67,37 @@ def test_builds_openapi_31_document(
         "200",
         "404",
     }
+    comparison_operation = paths[
+        "/v1/research-artifact-comparisons"
+    ]["get"]
+
+    assert comparison_operation[
+        "operationId"
+    ] == "compareResearchArtifacts"
+    assert [
+        parameter["name"]
+        for parameter in comparison_operation[
+            "parameters"
+        ]
+    ] == [
+        "artifact_a_result_id",
+        "artifact_b_result_id",
+    ]
+    assert all(
+        parameter["in"] == "query"
+        and parameter["required"] is True
+        for parameter in comparison_operation[
+            "parameters"
+        ]
+    )
+    assert set(
+        comparison_operation["responses"]
+    ) == {
+        "200",
+        "400",
+        "404",
+        "422",
+    }
 
 
 def test_defines_exact_transport_schemas(
@@ -78,6 +110,14 @@ def test_defines_exact_transport_schemas(
     assert set(schemas) == {
         "ResearchCycleList",
         "ResearchArtifact",
+        "ResearchArtifactComparison",
+        "ArtifactComparison",
+        "HypothesisEvolution",
+        "EvidenceEvolution",
+        "EvidenceMetricDelta",
+        "ConfidenceEvolution",
+        "InvalidArtifactComparisonRequestError",
+        "InvalidResearchArtifactComparisonError",
         "ApiError",
     }
 
@@ -86,6 +126,38 @@ def test_defines_exact_transport_schemas(
             "additionalProperties"
         ] is False
 
+    assert schemas[
+        "ResearchArtifactComparison"
+    ]["required"] == [
+        "schema_version",
+        "artifact_a_result_id",
+        "artifact_b_result_id",
+        "comparison",
+    ]
+    assert schemas[
+        "EvidenceMetricDelta"
+    ]["properties"]["direction"]["enum"] == [
+        "increased",
+        "decreased",
+        "unchanged",
+        "added",
+        "removed",
+        "not_comparable",
+    ]
+    assert schemas[
+        "InvalidArtifactComparisonRequestError"
+    ]["properties"]["error"]["properties"][
+        "code"
+    ]["const"] == (
+        "invalid_artifact_comparison_request"
+    )
+    assert schemas[
+        "InvalidResearchArtifactComparisonError"
+    ]["properties"]["error"]["properties"][
+        "code"
+    ]["const"] == (
+        "research_artifact_comparison_invalid"
+    )
     assert schemas[
         "ResearchCycleList"
     ]["required"] == [
