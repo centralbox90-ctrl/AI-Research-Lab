@@ -219,3 +219,36 @@ def test_rejects_invalid_artifact_dependency(
         raise AssertionError(
             "TypeError was not raised"
         )
+
+def test_serves_openapi_document(
+) -> None:
+    application = create_research_api(
+        get_stored_research_artifact=(
+            StubGetStoredResearchArtifact({})
+        ),
+        list_stored_research_cycles=(
+            StubListStoredResearchCycles([])
+        ),
+    )
+    client = application.test_client()
+
+    response = client.get("/openapi.json")
+
+    assert response.status_code == 200
+    assert response.content_type == (
+        "application/json"
+    )
+
+    document = response.get_json()
+
+    assert document["openapi"] == "3.1.0"
+    assert document["info"]["version"] == (
+        "1.0.0"
+    )
+    assert set(document["paths"]) == {
+        "/v1/research-cycles",
+        (
+            "/v1/research-artifacts/"
+            "{result_id}"
+        ),
+    }

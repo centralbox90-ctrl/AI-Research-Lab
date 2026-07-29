@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from flask import Flask, jsonify
 
+from src.api.openapi import (
+    build_openapi_document,
+)
 from src.application.public_api import (
     GetStoredResearchArtifact,
     ListStoredResearchCycles,
@@ -49,6 +52,12 @@ def create_research_api(
         )
 
     application = Flask(__name__)
+
+    @application.get("/openapi.json")
+    def get_openapi_document():
+        return jsonify(
+            build_openapi_document()
+        )
 
     @application.get(
         "/v1/research-artifacts/<result_id>"
