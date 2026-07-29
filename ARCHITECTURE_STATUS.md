@@ -320,9 +320,10 @@ Research Engine, Observation Layer и существующие indicators при
   изолированными compatibility boundaries;
 - полный lifecycle намеренно не объединён в один универсальный
   Application use case;
-- HTTP adapter реализован только для read-only artifact access,
-  repository-backed comparison и локального запуска; MCP и ChatGPT
-  adapters ещё не реализованы.
+- HTTP adapter остаётся read-only; local Flask и production Waitress
+  entry points реализованы, но authentication, authorization, TLS и
+  внешняя deployment configuration отсутствуют; MCP и ChatGPT adapters
+  ещё не реализованы.
 
 ## Приоритеты следующего этапа
 
@@ -345,7 +346,9 @@ Knowledge feature development остаётся замороженной. Раз�
 - versioned response DTO;
 - JSON error contract для statuses 400, 404 и 422;
 - OpenAPI 3.1 document с API version 1.1.0;
-- local-only server entry point;
+- local-only Flask server entry point;
+- отдельный production Waitress WSGI entry point;
+- закреплённая Waitress dependency;
 - contract и integration tests.
 
 Следующий режим разработки:
@@ -355,8 +358,8 @@ Knowledge feature development остаётся замороженной. Раз�
    authentication, authorization и idempotency.
 3. Сохранять отдельный transport DTO для каждого сценария.
 4. Не раскрывать repositories, composition internals и Domain objects.
-5. Подготовить production WSGI deployment отдельно от Flask local
-   server.
+5. Размещать production Waitress server только внутри отдельного
+   security и network deployment boundary.
 6. Добавить MCP или ChatGPT adapter только поверх того же
    `src.application.public_api`.
 7. Мигрировать legacy boundaries только по ADR-006 и при наличии

@@ -1509,3 +1509,91 @@ production module в `src/indicators/implementations`.
 - новые Knowledge domain entities не добавлялись;
 - общий workflow, lifecycle, pipeline или orchestration engine не
   добавлялся.
+## 23. Production WSGI boundary checkpoint
+
+Commit checkpoint: `253c324`.
+
+Этот раздел фиксирует отдельный production server boundary после завершения read-only HTTP comparison slice.
+
+### 23.1 Разделение entry points
+
+Локальный entry point `python -m src.api` продолжает использовать встроенный Flask server только для разработки.
+
+Production entry point `python -m src.api.production_server` использует Waitress и не вызывает `Flask.run`.
+
+Оба entry point используют существующий `build_research_api` и не изменяют HTTP routes или Application use cases.
+
+### 23.2 Runtime configuration
+
+Production server принимает явные параметры:
+
+- SQLite database path;
+- bind host;
+- TCP port;
+- количество Waitress threads.
+
+Defaults:
+
+- существующая research database;
+- host `127.0.0.1`;
+- port `8080`;
+- четыре threads.
+
+Host не может быть пустым, port ограничен диапазоном 1–65535, количество threads должно быть положительным.
+
+### 23.3 Dependency boundary
+
+Waitress закреплён в `requirements.txt` точной версией 3.0.2.
+
+Dependency импортируется только production server entry point и не входит в Application, Domain, Knowledge или storage contracts.
+
+### 23.4 Security boundary
+
+Production WSGI server не является полной network deployment configuration.
+
+Отдельными deployment responsibilities остаются:
+
+- TLS termination;
+- authentication и authorization;
+- CORS и rate limiting;
+- reverse proxy;
+- process supervision;
+- secret management.
+
+Default loopback binding предотвращает неявное внешнее опубликование API.
+
+Write endpoints остаются запрещены до отдельного решения по authentication, authorization и idempotency.
+
+### 23.5 Автоматические проверки
+
+Тесты подтверждают использование Waitress, default и explicit runtime options, а также отклонение некорректных host, port и thread count.
+
+Локальный Flask entry point тестируется отдельно.
+
+Полный test suite и `pip check` проходят с закреплённой dependency.
+
+### 23.6 Подтверждённые границы
+
+Production WSGI slice не изменил:
+
+- HTTP routes и OpenAPI contract;
+- public Application API;
+- Domain и Knowledge models;
+- persistence schemas;
+- Research lifecycle;
+- indicator plugin contract.
+
+WorkflowEngine, scheduler, worker queue, retries и lifecycle aggregate не добавлялись.
+
+Добавление нового индикатора остаётся локальным изменением одного production module в `src/indicators/implementations`.
+
+### 23.7 Сохраняющиеся ограничения
+
+На commit `253c324`:
+
+- HTTP API остаётся read-only;
+- authentication, authorization и TLS отсутствуют;
+- внешний reverse proxy и process supervision не настроены;
+- MCP и ChatGPT adapters не реализованы;
+- новые Knowledge domain entities не добавлялись;
+- общий workflow, lifecycle, pipeline или orchestration engine не добавлялся.

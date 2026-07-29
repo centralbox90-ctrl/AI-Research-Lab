@@ -19,9 +19,12 @@ AI Research Lab — исследовательская платформа для
 - запуск полного сравнительного Analysis-потока через JSON CLI-команду;
 - воспроизводимое планирование и запуск рыночных исследовательских кампаний из согласованных JSON-контрактов;
 - composition roots для сборки прикладных сценариев;
+- append-only Knowledge persistence и repository-backed feedback path;
+- read-only HTTP API с OpenAPI 3.1 contract;
+- отдельные local Flask и production Waitress entry points;
 - автоматическая проверка чистого checkout через GitHub Actions.
 
-Research orchestration и Analysis развиваются поэтапно. Полноценный Knowledge Domain остаётся целевой частью архитектуры.
+Основной этап архитектурной консолидации завершён. Knowledge feature development временно заморожена; текущий этап развивает внешние adapters поверх стабильного Application API.
 
 ## Архитектурный цикл
 
@@ -47,6 +50,7 @@ Research orchestration и Analysis развиваются поэтапно. По
 ## Структура проекта
 
 - `src/application/` — прикладные сценарии и orchestration;
+- `src/api/` — HTTP transport, OpenAPI и WSGI entry points;
 - `src/cli/` — команды, composition roots и presenters;
 - `src/data/` — загрузка рыночных данных;
 - `src/indicators/` — индикаторы и механизм их обнаружения;
@@ -90,6 +94,25 @@ python -m pytest -q
 
 Та же проверка автоматически выполняется в GitHub Actions при push и pull request в ветку `main`.
 
+## HTTP API
+
+HTTP boundary предоставляет три read-only операции: список research cycles, получение artifact и сравнение двух artifacts.
+
+OpenAPI 3.1 contract доступен через `/openapi.json`.
+
+Локальный development server:
+
+```powershell
+python -m src.api --database .research_lab/research-cycles.db --host 127.0.0.1 --port 8000
+```
+
+Production WSGI server:
+
+```powershell
+python -m src.api.production_server --database .research_lab/research-cycles.db --host 127.0.0.1 --port 8080 --threads 4
+```
+
+Production server по умолчанию использует loopback interface. Внешнее размещение, TLS, authentication, authorization, CORS и rate limiting настраиваются отдельным deployment boundary. Встроенный Flask server не предназначен для production.
 ## Пример исследовательской кампании
 
 Репозиторий содержит согласованные примеры входных документов:
