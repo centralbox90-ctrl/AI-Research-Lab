@@ -24,6 +24,9 @@ from src.cli.market_research_campaign_presenter import (
     MarketResearchCampaignPresenter,
 )
 from src.research.campaign_design import CampaignDesign
+from src.research.cycle_results import (
+    NextExperimentResearchCycleResult,
+)
 from src.research.research_planner import (
     CampaignExperimentSpecification,
     ResearchPlanner,
@@ -37,14 +40,14 @@ class StubArtifactSerializer(
         self.calls: list[
             tuple[
                 MarketExperimentSpecification,
-                object,
+                NextExperimentResearchCycleResult,
             ]
         ] = []
 
     def serialize(
         self,
         specification: MarketExperimentSpecification,
-        cycle: object,
+        cycle: NextExperimentResearchCycleResult,
         metadata=None,
         lineage=None,
         comparisons=None,
@@ -64,7 +67,9 @@ class StubArtifactSerializer(
                 "timeframe": specification.timeframe,
             },
             "cycle": {
-                "value": cycle,
+                "result_type": (
+                    type(cycle).__name__
+                ),
             },
         }
 
@@ -122,7 +127,10 @@ def build_market_specification(
 def build_result(
 ) -> tuple[
     MarketResearchCampaignResult,
-    tuple[object, ...],
+    tuple[
+        NextExperimentResearchCycleResult,
+        ...,
+    ],
 ]:
     design = CampaignDesign(
         question_id="question-rsi",
@@ -159,10 +167,10 @@ def build_result(
         )
     ).adapt(plan)
     cycles = tuple(
-        f"cycle-{index}"
-        for index in range(
-            len(resolved_plan.experiments)
+        object.__new__(
+            NextExperimentResearchCycleResult
         )
+        for _ in resolved_plan.experiments
     )
     experiment_results = tuple(
         MarketResearchCampaignExperimentResult(
@@ -207,10 +215,19 @@ def test_presents_versioned_campaign_artifact() -> None:
     assert payload["campaign_plan"] == (
         result.research_plan.to_dict()
     )
-    assert tuple(
+    serialized_cycles = tuple(
         cycle
         for _, cycle in serializer.calls
-    ) == cycles
+    )
+    assert len(serialized_cycles) == len(cycles)
+    assert all(
+        actual is expected
+        for actual, expected in zip(
+            serialized_cycles,
+            cycles,
+            strict=True,
+        )
+    )
 
 
 def test_preserves_planned_experiment_order() -> None:

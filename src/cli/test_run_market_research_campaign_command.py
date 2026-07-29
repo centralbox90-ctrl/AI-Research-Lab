@@ -27,6 +27,9 @@ from src.cli.run_market_research_campaign_command import (
     RunMarketResearchCampaignCommand,
 )
 from src.research.campaign_design import CampaignDesign
+from src.research.cycle_results import (
+    NextExperimentResearchCycleResult,
+)
 from src.research.research_planner import (
     CampaignExperimentSpecification,
     ResearchCampaignPlan,
@@ -118,17 +121,21 @@ class RecordingRunner:
         self.specifications: list[
             MarketExperimentSpecification
         ] = []
+        self.results: list[
+            NextExperimentResearchCycleResult
+        ] = []
 
     def execute(
         self,
         specification: MarketExperimentSpecification,
-    ) -> str:
+    ) -> NextExperimentResearchCycleResult:
         self.specifications.append(specification)
-
-        return (
-            f"cycle:{specification.symbol}:"
-            f"{specification.timeframe}"
+        result = object.__new__(
+            NextExperimentResearchCycleResult
         )
+        self.results.append(result)
+
+        return result
 
 
 def build_design() -> CampaignDesign:

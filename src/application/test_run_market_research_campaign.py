@@ -19,6 +19,9 @@ from src.application.run_market_research_campaign import (
     RunMarketResearchCampaign,
 )
 from src.research.campaign_design import CampaignDesign
+from src.research.cycle_results import (
+    NextExperimentResearchCycleResult,
+)
 from src.research.research_planner import (
     CampaignExperimentSpecification,
     ResearchCampaignPlan,
@@ -31,17 +34,21 @@ class RecordingMarketResearchRunner:
         self.received: list[
             MarketExperimentSpecification
         ] = []
+        self.results: list[
+            NextExperimentResearchCycleResult
+        ] = []
 
     def execute(
         self,
         specification: MarketExperimentSpecification,
-    ) -> str:
+    ) -> NextExperimentResearchCycleResult:
         self.received.append(specification)
-
-        return (
-            f"result:{specification.symbol}:"
-            f"{specification.timeframe}"
+        result = object.__new__(
+            NextExperimentResearchCycleResult
         )
+        self.results.append(result)
+
+        return result
 
 
 def build_design() -> CampaignDesign:
@@ -235,14 +242,46 @@ def test_preserves_result_relationships_and_order() -> None:
         in result.experiment_results
     )
 
-    assert result.results == tuple(
-        (
-            f"result:{specification.symbol}:"
-            f"{specification.timeframe}"
-        )
-        for specification
-        in result.resolved_plan.market_specifications
+    assert len(result.results) == len(
+        runner.results
     )
+    assert all(
+        actual is expected
+        for actual, expected in zip(
+            result.results,
+            runner.results,
+            strict=True,
+        )
+    )
+
+
+def test_campaign_experiment_result_requires_cycle_result(
+) -> None:
+    design = build_design()
+    planner = ResearchPlanner()
+    plan = planner.plan(design)
+    runner = RecordingMarketResearchRunner()
+    campaign_result = build_use_case(
+        planner=planner,
+        plan=plan,
+        runner=runner,
+    ).execute(design)
+
+    with pytest.raises(
+        TypeError,
+        match=(
+            "result must be a "
+            "NextExperimentResearchCycleResult"
+        ),
+    ):
+        MarketResearchCampaignExperimentResult(
+            resolved_experiment=(
+                campaign_result
+                .resolved_plan
+                .experiments[0]
+            ),
+            result=object(),
+        )
 
 
 def test_resolves_entire_plan_before_execution() -> None:

@@ -12,6 +12,9 @@ from src.application.research_campaign_plan_market_adapter import (
     ResolvedMarketExperiment,
 )
 from src.research.campaign_design import CampaignDesign
+from src.research.cycle_results import (
+    NextExperimentResearchCycleResult,
+)
 from src.research.research_planner import (
     ResearchCampaignPlan,
     ResearchPlanner,
@@ -26,7 +29,7 @@ class MarketResearchExperimentRunner(Protocol):
     def execute(
         self,
         specification: MarketExperimentSpecification,
-    ) -> object:
+    ) -> NextExperimentResearchCycleResult:
         ...
 
 
@@ -37,7 +40,7 @@ class MarketResearchCampaignExperimentResult:
     """
 
     resolved_experiment: ResolvedMarketExperiment
-    result: object
+    result: NextExperimentResearchCycleResult
 
     def __post_init__(self) -> None:
         if not isinstance(
@@ -47,6 +50,15 @@ class MarketResearchCampaignExperimentResult:
             raise TypeError(
                 "resolved_experiment must be a "
                 "ResolvedMarketExperiment"
+            )
+
+        if not isinstance(
+            self.result,
+            NextExperimentResearchCycleResult,
+        ):
+            raise TypeError(
+                "result must be a "
+                "NextExperimentResearchCycleResult"
             )
 
 
@@ -121,7 +133,12 @@ class MarketResearchCampaignResult:
         return self.resolved_plan.research_plan
 
     @property
-    def results(self) -> tuple[object, ...]:
+    def results(
+        self,
+    ) -> tuple[
+        NextExperimentResearchCycleResult,
+        ...,
+    ]:
         return tuple(
             experiment_result.result
             for experiment_result
