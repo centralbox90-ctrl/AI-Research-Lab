@@ -1858,3 +1858,129 @@ production module в `src/indicators/implementations`.
 - новые Knowledge domain entities не добавлялись;
 - общий workflow, lifecycle, pipeline или orchestration engine не
   добавлялся.
+
+## 26. Campaign artifact reader checkpoint
+
+Commit checkpoint: `2e2e124`.
+
+Этот раздел фиксирует integrity-aware read boundary для уже
+существующего Market Research Campaign envelope.
+
+Предыдущие разделы сохраняют состояние соответствующих архитектурных
+снимков.
+
+### 26.1 Specialized Application loader
+
+Создан `MarketResearchCampaignArtifactLoader`.
+
+Loader принимает только `ResearchArtifactEnvelope` с:
+
+- artifact type `market_research_campaign`;
+- payload schema version 1;
+- корректным общим payload fingerprint;
+- полным Campaign plan;
+- непустым набором experiment artifacts.
+
+Общий envelope contract проверяет целостность serialized payload до
+интерпретации Campaign semantics.
+
+### 26.2 Восстановление типизированного плана
+
+Loader восстанавливает:
+
+- immutable `CampaignExperimentSpecification`;
+- immutable `ResearchCampaignPlan`;
+- deterministic specification identities;
+- Campaign plan identity и fingerprint;
+- plan provenance.
+
+После восстановления выполняется canonical round-trip через
+существующие `to_dict` contracts.
+
+Serialized plan ID и каждый planned specification ID повторно
+проверяются по вычисляемым fingerprints.
+
+Новая Campaign domain model не создавалась.
+
+### 26.3 Проверка experiment bindings
+
+Для каждого experiment entry loader проверяет:
+
+- точный набор обязательных полей;
+- planned experiment identity;
+- соответствие planned specification позиции в Campaign plan;
+- artifact version;
+- наличие serialized market specification;
+- наличие research cycle;
+- identity вложенного `ExperimentResult`.
+
+Количество и порядок experiment entries должны точно соответствовать
+детерминированному `ResearchCampaignPlan`.
+
+### 26.4 Provenance и source references
+
+Envelope provenance должен точно совпадать с:
+
+- provenance Campaign plan;
+- Campaign design identity;
+- Campaign plan identity;
+- Campaign plan fingerprint;
+- question identity;
+- experiment count.
+
+Первый source reference должен указывать на точный
+`ResearchCampaignPlan` и его fingerprint.
+
+Остальные source references должны в том же порядке указывать на
+точные identities вложенных `ExperimentResult`.
+
+### 26.5 Loaded Application result
+
+Loader возвращает immutable
+`LoadedMarketResearchCampaignArtifact`.
+
+Result содержит:
+
+- восстановленный `ResearchCampaignPlan`;
+- упорядоченные
+  `LoadedMarketResearchCampaignExperimentArtifact`;
+- исходный проверенный `ResearchArtifactEnvelope`.
+
+Вложенные serialized market research artifacts остаются frozen
+Application snapshots.
+
+Loader не восстанавливает runtime `MarketResearchCampaignResult`,
+не запускает experiments повторно и не обращается к repositories.
+
+### 26.6 Подтверждённые границы
+
+Campaign reader slice не добавил:
+
+- общий artifact loader framework;
+- universal payload DTO;
+- новый public Application use case;
+- новый CLI, HTTP или MCP route;
+- новый persistent artifact store;
+- новую Research или Knowledge entity;
+- workflow, lifecycle, pipeline или orchestration engine;
+- retries, scheduling, workers или queue state.
+
+Knowledge feature freeze и локальный indicator plugin contract
+сохранены.
+
+### 26.7 Сохраняющиеся ограничения
+
+На commit `2e2e124`:
+
+- Campaign envelope возвращается через CLI без отдельного persistent
+  artifact store;
+- вложенные market research artifacts сохраняют существующий
+  serialized contract;
+- standalone Evidence и Finding artifacts остаются legacy;
+- production contradiction rules представлены пустой явной
+  конфигурацией;
+- correlation между отдельными use cases передаётся клиентом явно;
+- полный production lifecycle намеренно не объединён в один
+  Application use case;
+- общий workflow, lifecycle, pipeline или orchestration engine не
+  добавлялся.

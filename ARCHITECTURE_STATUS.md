@@ -261,6 +261,7 @@ Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandida
 - comparative HypothesisEvaluation envelope;
 - Knowledge research-question envelope;
 - Market Research Campaign envelope;
+- integrity-aware Market Research Campaign artifact reader;
 - lifecycle correlation без подмены domain identities;
 - явная `KnowledgePromotionPolicy`;
 - production promotion в append-only Knowledge repositories;
@@ -312,7 +313,6 @@ Research Engine, Observation Layer и существующие indicators при
 - standalone Evidence и Finding artifacts сохраняют legacy contracts;
 - некоторые envelopes возвращаются через CLI без отдельного artifact
   store;
-- специализированный Campaign artifact reader отсутствует;
 - production contradiction rules пока представлены пустой явной
   конфигурацией;
 - correlation между отдельными use cases передаётся клиентом явно;
