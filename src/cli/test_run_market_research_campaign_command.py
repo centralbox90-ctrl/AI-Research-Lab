@@ -164,6 +164,7 @@ class StubCampaignEnvelopeFactory(
                 ),
             },
             provenance={},
+            correlation_id=correlation_id,
         )
 
 
@@ -511,15 +512,21 @@ def test_presents_campaign_as_envelope_when_configured(
     rendered = command.execute(
         "campaign-design.json",
         "campaign-registrations.json",
+        correlation_id=" campaign-lifecycle-42 ",
     )
     payload = json.loads(rendered)
 
     assert len(envelope_factory.calls) == 1
-    assert envelope_factory.calls[0][1] is None
+    assert envelope_factory.calls[0][1] == (
+        " campaign-lifecycle-42 "
+    )
     assert presenter.results == []
     assert payload["schema_version"] == 1
     assert payload["artifact_type"] == (
         "market_research_campaign"
+    )
+    assert payload["correlation_id"] == (
+        "campaign-lifecycle-42"
     )
     assert payload["payload"][
         "campaign_plan_id"
@@ -527,7 +534,6 @@ def test_presents_campaign_as_envelope_when_configured(
     assert payload["payload"][
         "experiment_count"
     ] == 2
-
 
 def test_rejects_invalid_artifact_envelope_factory(
 ) -> None:

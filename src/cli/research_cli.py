@@ -168,6 +168,7 @@ class MarketResearchCampaignCommand(Protocol):
         registration_path: str | Path,
         *,
         indent: int | None = 2,
+        correlation_id: str | None = None,
     ) -> str:
         """
         Run a campaign from versioned input documents.
@@ -647,6 +648,9 @@ class ResearchCli:
                 arguments.design_path,
                 arguments.registration_path,
                 indent=indent,
+                correlation_id=(
+                    arguments.correlation_id
+                ),
             )
         except (ValueError, LookupError) as error:
             stderr.write(
@@ -855,6 +859,10 @@ class ResearchCli:
             action="store_true",
         )
 
+        campaign_parser.add_argument(
+            "--correlation-id",
+            dest="correlation_id",
+        )
         comparative_evaluation_parser = (
             subparsers.add_parser(
                 "run-comparative-hypothesis-evaluation",

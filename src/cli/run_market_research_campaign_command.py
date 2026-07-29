@@ -140,6 +140,7 @@ class RunMarketResearchCampaignCommand:
         registration_path: str | Path,
         *,
         indent: int | None = 2,
+        correlation_id: str | None = None,
     ) -> str:
         design = self._design_loader.load(
             design_path
@@ -162,6 +163,7 @@ class RunMarketResearchCampaignCommand:
             payload = (
                 self._artifact_envelope_factory.create(
                     result=result,
+                    correlation_id=correlation_id,
                 ).to_dict()
             )
         else:

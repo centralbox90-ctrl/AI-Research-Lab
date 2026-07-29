@@ -291,7 +291,12 @@ def test_research_cli_reports_comparative_error(
 class StubMarketResearchCampaignCommand:
     def __init__(self) -> None:
         self.calls: list[
-            tuple[Path, Path, int | None]
+            tuple[
+                Path,
+                Path,
+                int | None,
+                str | None,
+            ]
         ] = []
 
     def execute(
@@ -300,6 +305,7 @@ class StubMarketResearchCampaignCommand:
         registration_path: str | Path,
         *,
         indent: int | None = 2,
+        correlation_id: str | None = None,
     ) -> str:
         normalized_design_path = Path(design_path)
         normalized_registration_path = Path(
@@ -310,6 +316,7 @@ class StubMarketResearchCampaignCommand:
                 normalized_design_path,
                 normalized_registration_path,
                 indent,
+                correlation_id,
             )
         )
 
@@ -332,9 +339,9 @@ class FailingMarketResearchCampaignCommand:
         registration_path: str | Path,
         *,
         indent: int | None = 2,
+        correlation_id: str | None = None,
     ) -> str:
         raise ValueError("invalid campaign design")
-
 
 def build_cli_with_campaign_command(
     command: object,
@@ -361,6 +368,8 @@ def test_research_cli_runs_market_research_campaign(
             "campaign-design.json",
             "--registrations",
             "registrations.json",
+            "--correlation-id",
+            "campaign-lifecycle-42",
         ],
         stdout=stdout,
         stderr=stderr,
@@ -373,12 +382,12 @@ def test_research_cli_runs_market_research_campaign(
             Path("campaign-design.json"),
             Path("registrations.json"),
             2,
+            "campaign-lifecycle-42",
         )
     ]
     assert json.loads(stdout.getvalue())[
         "artifact_type"
     ] == "market_research_campaign"
-
 
 def test_research_cli_supports_compact_campaign_json(
 ) -> None:
@@ -402,9 +411,15 @@ def test_research_cli_supports_compact_campaign_json(
 
     assert exit_code == 0
     assert stderr.getvalue() == ""
-    assert command.calls[0][2] is None
+    assert command.calls == [
+        (
+            Path("campaign-design.json"),
+            Path("registrations.json"),
+            None,
+            None,
+        )
+    ]
     assert "\n" not in stdout.getvalue().rstrip("\n")
-
 
 def test_research_cli_reports_campaign_error() -> None:
     cli = build_cli_with_campaign_command(
