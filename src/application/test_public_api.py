@@ -5,6 +5,7 @@ EXPECTED_PUBLIC_NAMES = (
     "CompareStoredResearchArtifacts",
     "ExportStoredResearchArtifact",
     "GenerateResearchQuestionsFromKnowledgeRepositories",
+    "GetExperimentExecutionHistory",
     "GetStoredResearchArtifact",
     "GetStoredResearchCycle",
     "IndicatorComparativeHypothesisEvaluationApplication",
@@ -18,6 +19,7 @@ EXPECTED_PUBLIC_NAMES = (
 
 INTERNAL_NAMES = (
     "BuildKnowledgeGraphSnapshot",
+    "ExperimentExecutionHistoryReader",
     "GenerateResearchQuestionsFromKnowledgeSnapshot",
     "KnowledgeGraphRelationRegistrar",
     "KnowledgeGraphSnapshotLoader",

@@ -15,6 +15,9 @@ from src.application.generate_research_questions_from_knowledge_repositories imp
     GenerateResearchQuestionsFromKnowledgeRepositories,
     KnowledgeResearchQuestionsResult,
 )
+from src.application.get_experiment_execution_history import (
+    GetExperimentExecutionHistory,
+)
 from src.application.get_stored_research_artifact import (
     GetStoredResearchArtifact,
 )
@@ -43,6 +46,7 @@ __all__ = (
     "CompareStoredResearchArtifacts",
     "ExportStoredResearchArtifact",
     "GenerateResearchQuestionsFromKnowledgeRepositories",
+    "GetExperimentExecutionHistory",
     "GetStoredResearchArtifact",
     "GetStoredResearchCycle",
     "IndicatorComparativeHypothesisEvaluationApplication",
