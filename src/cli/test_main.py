@@ -369,3 +369,175 @@ def test_promoted_evaluation_generates_questions_from_shared_repository(
     assert payload["payload"]["snapshot"][
         "schema_version"
     ] == 1
+
+def build_comparative_market_specification_payload(
+    *,
+    start_at: str,
+    end_at: str,
+    experiment_title: str,
+) -> dict[str, object]:
+    return {
+        "executor_type": "market_backtest",
+        "question_title": (
+            "Does RSI predict forward returns?"
+        ),
+        "question_description": (
+            "Evaluate RSI over distinct generated periods."
+        ),
+        "hypothesis_title": (
+            "RSI oversold values precede positive returns"
+        ),
+        "hypothesis_description": (
+            "Replicated RSI observations should support "
+            "positive forward returns."
+        ),
+        "expected_result": (
+            "Positive replicated comparative evidence."
+        ),
+        "experiment_title": experiment_title,
+        "experiment_description": (
+            "Analyze one declared generated period."
+        ),
+        "data_source": "generated",
+        "symbol": "EURUSD",
+        "timeframe": "H1",
+        "start_at": start_at,
+        "end_at": end_at,
+        "entry_rule": "rsi < 30",
+        "exit_rule": "rsi > 50",
+        "direction": "LONG",
+        "stop_loss_percent": 1.0,
+        "take_profit_percent": 2.0,
+        "max_holding_bars": 10,
+    }
+
+
+def test_main_runs_real_comparative_request_to_evaluation(
+    tmp_path: Path,
+) -> None:
+    first_specification = (
+        build_comparative_market_specification_payload(
+            start_at=(
+                "2026-01-01T00:00:00Z"
+            ),
+            end_at=(
+                "2026-07-01T00:00:00Z"
+            ),
+            experiment_title=(
+                "RSI generated replication one"
+            ),
+        )
+    )
+    second_specification = (
+        build_comparative_market_specification_payload(
+            start_at=(
+                "2026-07-01T00:00:00Z"
+            ),
+            end_at=(
+                "2027-01-01T00:00:00Z"
+            ),
+            experiment_title=(
+                "RSI generated replication two"
+            ),
+        )
+    )
+    request_payload = {
+        "hypothesis_id": "hypothesis-rsi",
+        "correlation_id": (
+            "comparative-production-42"
+        ),
+        "requests": [
+            {
+                "market_specifications": [
+                    first_specification,
+                    second_specification,
+                ],
+                "indicator_id": "rsi",
+                "outcome_specification": {
+                    "horizons": [1, 3],
+                    "price_field": "close",
+                },
+                "horizon": 1,
+                "statement": (
+                    "RSI supports one-bar returns."
+                ),
+                "applicable_markets": [
+                    "EURUSD:H1",
+                ],
+            },
+            {
+                "market_specifications": [
+                    first_specification,
+                    second_specification,
+                ],
+                "indicator_id": "rsi",
+                "outcome_specification": {
+                    "horizons": [1, 3],
+                    "price_field": "close",
+                },
+                "horizon": 3,
+                "statement": (
+                    "RSI supports three-bar returns."
+                ),
+                "applicable_markets": [
+                    "EURUSD:H1",
+                ],
+            },
+        ],
+    }
+    request_path = (
+        tmp_path / "comparative-request.json"
+    )
+    request_path.write_text(
+        json.dumps(
+            request_payload,
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    stdout = StringIO()
+    stderr = StringIO()
+
+    exit_code = main(
+        [
+            "--database",
+            str(tmp_path / "research-cycles.db"),
+            "run-comparative-hypothesis-evaluation",
+            "--request",
+            str(request_path),
+            "--compact",
+        ],
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 0, stderr.getvalue()
+    assert stderr.getvalue() == ""
+
+    artifact = json.loads(
+        stdout.getvalue()
+    )
+    evaluation = artifact["payload"][
+        "evaluation"
+    ]
+
+    assert artifact["schema_version"] == 1
+    assert artifact["artifact_type"] == (
+        "hypothesis_evaluation"
+    )
+    assert artifact["payload_schema_version"] == 1
+    assert artifact["producer"] == (
+        "comparative-hypothesis-evaluation"
+    )
+    assert artifact["correlation_id"] == (
+        "comparative-production-42"
+    )
+    assert evaluation["hypothesis_id"] == (
+        "hypothesis-rsi"
+    )
+    assert evaluation["state"] == (
+        "inconclusive"
+    )
+    assert evaluation["confidence"] == 0.0
+    assert len(evaluation["finding_refs"]) == 2
+    assert len(artifact["source_references"]) == 1

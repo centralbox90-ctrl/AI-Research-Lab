@@ -113,6 +113,8 @@ def test_generates_distinct_period_replications(
     assert not first["Close"].equals(
         second["Close"]
     )
+    assert len(first) == 744
+    assert len(second) == 744
 
     canonical_provider = (
         CanonicalMarketDataProvider(

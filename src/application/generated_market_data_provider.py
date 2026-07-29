@@ -37,6 +37,7 @@ class GeneratedMarketDataProvider(
             symbol=specification.symbol,
             timeframe=specification.timeframe,
             start_at=specification.start_at,
+            end_at=specification.end_at,
             random_seed=self._build_random_seed(
                 specification
             ),

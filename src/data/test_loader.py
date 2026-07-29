@@ -86,3 +86,22 @@ def test_respects_start_timestamp_and_random_seed(
     assert not first["Close"].equals(
         different["Close"]
     )
+
+def test_uses_declared_end_and_timeframe(
+) -> None:
+    data = generate_market_data(
+        symbol="EURUSD",
+        timeframe="H2",
+        bars=999,
+        start_at="2026-01-01T00:00:00Z",
+        end_at="2026-01-01T10:00:00Z",
+        random_seed=23,
+    )
+
+    assert len(data) == 5
+    assert data.index[0] == pd.Timestamp(
+        "2026-01-01T00:00:00Z"
+    )
+    assert data.index[-1] == pd.Timestamp(
+        "2026-01-01T08:00:00Z"
+    )
