@@ -1194,3 +1194,172 @@ Domain statuses не используются для управления runtim
 - общий workflow, lifecycle, pipeline или orchestration engine не
   добавлялся;
 - новые Knowledge domain entities не добавлялись.
+
+## 21. HTTP API boundary checkpoint
+
+Commit checkpoint: `55945d8`.
+
+Этот раздел фиксирует первый внешний transport adapter после
+завершения архитектурной консолидации.
+
+### 21.1 Transport boundary
+
+Создан отдельный package `src.api`.
+
+HTTP adapter зависит только от явно переданных публичных Application
+use cases.
+
+Transport factory не импортирует:
+
+- SQLite adapters;
+- CLI commands;
+- Research Domain services;
+- Knowledge repositories;
+- composition internals;
+- indicator implementations.
+
+HTTP adapter выполняет только:
+
+- routing;
+- вызов Application use case;
+- формирование versioned transport DTO;
+- преобразование отсутствующего результата в HTTP response.
+
+Domain models и persistence contracts не становятся HTTP DTO.
+
+### 21.2 Read-only use cases
+
+Первый HTTP slice предоставляет два read-only operation:
+
+- `GET /v1/research-cycles`;
+- `GET /v1/research-artifacts/{result_id}`.
+
+`GET /v1/research-cycles` вызывает
+`ListStoredResearchCycles`.
+
+Response schema version 1 содержит:
+
+- `schema_version`;
+- количество результатов;
+- упорядоченные `result_ids`.
+
+`GET /v1/research-artifacts/{result_id}` вызывает
+`GetStoredResearchArtifact`.
+
+Успешный response schema version 1 содержит:
+
+- `schema_version`;
+- точный `result_id`;
+- сохранённый application-safe artifact payload.
+
+Отсутствующий artifact возвращает JSON response со статусом 404 и
+стабильным кодом `research_artifact_not_found`.
+
+HTTP adapter не реконструирует Domain objects из сохранённого payload.
+
+### 21.3 Production composition
+
+Создан отдельный `src.api.composition_root`.
+
+Composition root:
+
+- создаёт `SqliteResearchCycleStore`;
+- создаёт `GetStoredResearchArtifact`;
+- создаёт `ListStoredResearchCycles`;
+- передаёт use cases в transport factory.
+
+SQLite выбирается только composition root.
+
+`src.api.research_api` не зависит от `src.storage`.
+
+Production integration tests подтверждают:
+
+- чтение списка identifiers из реальной SQLite database;
+- чтение сохранённого artifact;
+- deterministic ordering;
+- JSON 404 для отсутствующего artifact;
+- пустую database без специальных branches в Application Layer.
+
+### 21.4 OpenAPI contract
+
+HTTP boundary публикует `GET /openapi.json`.
+
+Документ использует OpenAPI 3.1.0 и API version 1.0.0.
+
+OpenAPI document фиксирует:
+
+- оба доступных path;
+- уникальные operation identifiers;
+- обязательный path parameter `result_id`;
+- HTTP responses 200 и 404;
+- exact transport schemas;
+- обязательные DTO fields;
+- запрет неизвестных верхнеуровневых response fields;
+- свободный application-safe artifact object внутри
+  `ResearchArtifact`.
+
+OpenAPI contract строится отдельным boundary factory и не импортирует
+Application, Domain или persistence models.
+
+### 21.5 Local entry point
+
+API можно запустить локально через module entry point:
+
+`python -m src.api`.
+
+Entry point принимает:
+
+- SQLite database path;
+- host;
+- TCP port.
+
+Без явных параметров используются:
+
+- существующий default research database;
+- host `127.0.0.1`;
+- port `8000`.
+
+Debug mode и automatic reloader отключены.
+
+Port валидируется в диапазоне от 1 до 65535.
+
+Пустой host отклоняется до запуска server.
+
+Встроенный Flask server классифицирован только как local development
+boundary. Он не считается production deployment server.
+
+### 21.6 Подтверждённые границы
+
+Первый HTTP slice не изменил:
+
+- Domain Layer;
+- Research lifecycle;
+- ExperimentExecution;
+- Knowledge Domain;
+- public Application use cases;
+- repositories;
+- CLI routes;
+- indicator plugin contract.
+
+Новый indicator по-прежнему добавляется одним production module в
+`src/indicators/implementations`.
+
+HTTP adapter не создаёт universal request, response, workflow или
+transport base class.
+
+### 21.7 Сохраняющиеся ограничения
+
+На commit `55945d8`:
+
+- HTTP API является read-only;
+- доступны только два публичных use case;
+- authentication и authorization отсутствуют;
+- TLS termination отсутствует;
+- CORS policy не определена;
+- rate limiting отсутствует;
+- production WSGI deployment не настроен;
+- встроенный server разрешён только для локальной разработки;
+- MCP и ChatGPT adapters не реализованы;
+- новые Knowledge domain entities не добавлялись;
+- общий workflow, lifecycle, pipeline или orchestration engine не
+  добавлялся.

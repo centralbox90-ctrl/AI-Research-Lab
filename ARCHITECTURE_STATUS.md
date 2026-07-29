@@ -320,7 +320,8 @@ Research Engine, Observation Layer и существующие indicators при
   изолированными compatibility boundaries;
 - полный lifecycle намеренно не объединён в один универсальный
   Application use case;
-- HTTP, MCP и ChatGPT adapters ещё не реализованы.
+- HTTP adapter реализован только для read-only artifact access и
+  локального запуска; MCP и ChatGPT adapters ещё не реализованы.
 
 ## Приоритеты следующего этапа
 
@@ -332,22 +333,34 @@ Knowledge feature development остаётся замороженной. Раз�
 по-прежнему запрещены без трёх независимых production scenarios с
 одинаковой технической семантикой.
 
+Первым внешним adapter выбран HTTP.
+
+Подтверждены:
+
+- отдельный transport package;
+- два read-only public use case;
+- SQLite production composition;
+- versioned response DTO;
+- JSON error contract;
+- OpenAPI 3.1 document;
+- local-only server entry point;
+- contract и integration tests.
+
 Следующий режим разработки:
 
-1. Выбрать один первый внешний adapter: HTTP, MCP или ChatGPT.
-2. Подключить его только к use cases из
+1. Расширять HTTP только по одному публичному Application use case.
+2. Не добавлять write endpoints до отдельного решения об
+   authentication, authorization и idempotency.
+3. Сохранять отдельный transport DTO для каждого сценария.
+4. Не раскрывать repositories, composition internals и Domain objects.
+5. Подготовить production WSGI deployment отдельно от Flask local
+   server.
+6. Добавить MCP или ChatGPT adapter только поверх того же
    `src.application.public_api`.
-3. Определять отдельные transport DTO для каждого публичного сценария,
-   не создавая универсальный request или response.
-4. Оставить domain models, repositories и composition internals
-   недоступными внешнему transport.
-5. Добавить contract и integration tests внешней boundary.
-6. Не изменять существующие Application contracts ради удобства
-   transport без отдельного архитектурного решения.
-7. Мигрировать legacy boundaries только по правилам ADR-006 и только
-   при наличии конкретного production consumer.
-8. Добавлять новые artifact readers или stores только для
-   подтверждённого внешнего сценария.
+7. Мигрировать legacy boundaries только по ADR-006 и при наличии
+   конкретного production consumer.
+8. Добавлять artifact readers или stores только для подтверждённого
+   внешнего сценария.
 
 ## Критерий обновления
 
