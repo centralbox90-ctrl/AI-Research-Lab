@@ -1711,3 +1711,150 @@ production module в `src/indicators/implementations`.
 - write operations через MCP запрещены;
 - общий workflow, lifecycle, pipeline или orchestration engine не
   добавлялся.
+
+## 25. Complete read-only MCP surface checkpoint
+
+Commit checkpoint: `be57383`.
+
+Этот раздел фиксирует завершение read-only MCP surface поверх трёх
+стабильных публичных Application use cases.
+
+Предыдущий раздел сохраняет состояние первого MCP vertical slice на
+commit `38b95c6`.
+
+### 25.1 Три публичных MCP tools
+
+MCP server предоставляет:
+
+1. `list_research_cycles`;
+2. `get_research_artifact`;
+3. `compare_research_artifacts`.
+
+Каждый tool:
+
+- вызывает существующий public Application use case;
+- возвращает отдельный structured transport DTO;
+- помечен как read-only;
+- помечен как non-destructive;
+- помечен как idempotent;
+- не объявляет open-world interaction.
+
+MCP adapter не обращается напрямую к repositories.
+
+### 25.2 Получение сохранённого artifact
+
+Tool `get_research_artifact` вызывает
+`GetStoredResearchArtifact`.
+
+Входной `result_id` нормализуется на transport boundary.
+
+Structured result содержит:
+
+- schema version;
+- нормализованный `result_id`;
+- сохранённый artifact dictionary.
+
+Отсутствующий artifact и некорректный Application result возвращаются
+как контролируемые MCP tool errors.
+
+Artifact не преобразуется в общий Domain object и не становится новой
+Knowledge entity.
+
+### 25.3 Сравнение сохранённых artifacts
+
+Tool `compare_research_artifacts` вызывает
+`CompareStoredResearchArtifacts`.
+
+Входной contract содержит два независимых result identities.
+
+Application use case:
+
+- загружает artifacts через общий `GetStoredResearchArtifact`;
+- интерпретирует legacy или enveloped payload через
+  `ArtifactComparisonInputExtractor`;
+- строит immutable `ArtifactComparison`.
+
+MCP adapter только отображает готовый результат в structured DTO:
+
+- hypothesis evolution;
+- evidence evolution;
+- metric deltas;
+- confidence evolution.
+
+Scientific comparison logic не дублируется внутри MCP adapter.
+
+### 25.4 Production composition
+
+MCP composition root собирает единую цепочку:
+
+SQLite research cycle store
+→ `GetStoredResearchArtifact`
+→ `ListStoredResearchCycles`
+→ `CompareStoredResearchArtifacts`
+→ MCP server.
+
+`CompareStoredResearchArtifacts` повторно использует тот же
+`GetStoredResearchArtifact`, поэтому list, get и compare работают над
+одним repository-backed состоянием.
+
+Composition root выбирает infrastructure и adapters, но не содержит
+transport routing, comparison rules или lifecycle transitions.
+
+### 25.5 Protocol и integration tests
+
+Protocol tests используют настоящий in-memory MCP client и проверяют:
+
+- discovery трёх tools;
+- input и output schemas;
+- read-only annotations;
+- нормализацию identifiers;
+- structured results;
+- контролируемые ошибки Application use cases;
+- отклонение некорректных injected dependencies.
+
+SQLite integration tests подтверждают:
+
+- детерминированное перечисление research cycles;
+- получение сохранённого artifact;
+- сравнение двух реально сохранённых artifacts;
+- передачу hypothesis, evidence, metric delta и confidence evolution.
+
+HTTP и MCP adapters используют одинаковые public Application use cases,
+но сохраняют отдельные transport DTO.
+
+Общий transport serializer не вводился: повторяющийся lifecycle
+mechanism на трёх независимых transport scenarios пока не подтверждён.
+
+### 25.6 Подтверждённые архитектурные границы
+
+Завершение read-only MCP surface не изменило:
+
+- Domain models;
+- Knowledge models;
+- persistence schemas;
+- Research lifecycle;
+- ExperimentExecution lifecycle;
+- HTTP routes и OpenAPI contract;
+- CLI contracts;
+- indicator plugin contract.
+
+Write tools, authentication, authorization, retries, scheduling,
+workers и queue state не добавлялись.
+
+Добавление нового индикатора по-прежнему требует ровно одного нового
+production module в `src/indicators/implementations`.
+
+### 25.7 Сохраняющиеся ограничения
+
+На commit `be57383`:
+
+- MCP transport использует только stdio;
+- MCP surface остаётся строго read-only;
+- authentication и authorization отсутствуют;
+- отдельный ChatGPT adapter не добавлен без подтверждённого consumer
+  contract;
+- write operations требуют отдельного решения по authorization,
+  idempotency и audit;
+- новые Knowledge domain entities не добавлялись;
+- общий workflow, lifecycle, pipeline или orchestration engine не
+  добавлялся.

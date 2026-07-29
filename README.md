@@ -118,7 +118,11 @@ Production server по умолчанию использует loopback interfac
 
 ## MCP adapter
 
-MCP adapter использует официальный MCP Python SDK 2.0.0 и предоставляет read-only tool `list_research_cycles`.
+MCP adapter использует официальный MCP Python SDK 2.0.0 и предоставляет три read-only tools:
+
+- `list_research_cycles` — список сохранённых research cycles;
+- `get_research_artifact` — получение одного artifact по `result_id`;
+- `compare_research_artifacts` — сравнение двух сохранённых artifacts.
 
 MCP host должен запускать server через stdio:
 

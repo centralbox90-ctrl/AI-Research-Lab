@@ -320,10 +320,10 @@ Research Engine, Observation Layer и существующие indicators при
   изолированными compatibility boundaries;
 - полный lifecycle намеренно не объединён в один универсальный
   Application use case;
-- HTTP adapter остаётся read-only; local Flask и production Waitress
-  entry points реализованы, но authentication, authorization, TLS и
-  внешняя deployment configuration отсутствуют; первый read-only MCP
-  slice реализован, отдельный ChatGPT adapter ещё отсутствует.
+- HTTP и MCP adapters предоставляют одинаковые три read-only
+  Application use case; authentication, authorization, TLS и внешняя
+  deployment configuration отсутствуют; отдельный ChatGPT adapter
+  добавляется только при подтверждённом consumer contract.
 
 ## Приоритеты следующего этапа
 
@@ -349,10 +349,13 @@ Knowledge feature development остаётся замороженной. Раз�
 - local-only Flask server entry point;
 - отдельный production Waitress WSGI entry point;
 - закреплённая Waitress dependency;
-- MCP SDK 2.0.0 и read-only `list_research_cycles` tool;
-- repository-backed MCP composition;
+- MCP SDK 2.0.0;
+- read-only MCP tools `list_research_cycles`,
+  `get_research_artifact` и `compare_research_artifacts`;
+- repository-backed MCP composition для трёх публичных use cases;
 - stdio MCP entry point;
-- contract и integration tests.
+- protocol contract и SQLite integration tests через настоящий MCP
+  client.
 
 Следующий режим разработки:
 
@@ -363,9 +366,9 @@ Knowledge feature development остаётся замороженной. Раз�
 4. Не раскрывать repositories, composition internals и Domain objects.
 5. Размещать production Waitress server только внутри отдельного
    security и network deployment boundary.
-6. Расширять MCP только по одному read-only use case поверх
-   `src.application.public_api`; отдельный ChatGPT adapter добавлять
-   только при подтверждённом consumer contract.
+6. Сохранять MCP surface read-only; новые tools добавлять только поверх
+   стабильного `src.application.public_api`, а отдельный ChatGPT adapter
+   — только при подтверждённом consumer contract.
 7. Мигрировать legacy boundaries только по ADR-006 и при наличии
    конкретного production consumer.
 8. Добавлять artifact readers или stores только для подтверждённого
