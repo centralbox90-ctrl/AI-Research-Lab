@@ -52,6 +52,21 @@ def test_builds_repository_backed_research_api(
         ],
     }
 
+    artifact_response = client.get(
+        "/v1/research-artifacts/result-001"
+    )
+
+    assert artifact_response.status_code == 200
+    assert artifact_response.get_json() == {
+        "schema_version": 1,
+        "result_id": "result-001",
+        "artifact": {
+            "result": {
+                "id": "result-001",
+            },
+        },
+    }
+
 
 def test_builds_api_with_empty_database(
     tmp_path: Path,
@@ -72,4 +87,22 @@ def test_builds_api_with_empty_database(
         "schema_version": 1,
         "count": 0,
         "result_ids": [],
+    }
+
+    artifact_response = client.get(
+        "/v1/research-artifacts/unknown-result"
+    )
+
+    assert artifact_response.status_code == 404
+    assert artifact_response.get_json() == {
+        "schema_version": 1,
+        "error": {
+            "code": (
+                "research_artifact_not_found"
+            ),
+            "message": (
+                "Research artifact not found: "
+                "unknown-result"
+            ),
+        },
     }
