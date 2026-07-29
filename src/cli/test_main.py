@@ -1,4 +1,5 @@
 import json
+import sqlite3
 from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
@@ -495,13 +496,16 @@ def test_main_runs_real_comparative_request_to_evaluation(
         ),
         encoding="utf-8",
     )
+    database_path = (
+        tmp_path / "research-cycles.db"
+    )
     stdout = StringIO()
     stderr = StringIO()
 
     exit_code = main(
         [
             "--database",
-            str(tmp_path / "research-cycles.db"),
+            str(database_path),
             "run-comparative-hypothesis-evaluation",
             "--request",
             str(request_path),
@@ -541,3 +545,82 @@ def test_main_runs_real_comparative_request_to_evaluation(
     assert evaluation["confidence"] == 0.0
     assert len(evaluation["finding_refs"]) == 2
     assert len(artifact["source_references"]) == 1
+
+    with sqlite3.connect(
+        database_path
+    ) as connection:
+        execution_rows = connection.execute(
+            """
+            SELECT
+                execution_id,
+                sequence,
+                status,
+                payload
+            FROM experiment_execution_snapshots
+            ORDER BY execution_id, sequence
+            """
+        ).fetchall()
+
+    assert len(execution_rows) == 12
+
+    execution_histories = {}
+
+    for (
+        execution_id,
+        sequence,
+        status,
+        serialized_payload,
+    ) in execution_rows:
+        execution_histories.setdefault(
+            execution_id,
+            [],
+        ).append(
+            (
+                sequence,
+                status,
+                json.loads(serialized_payload),
+            )
+        )
+
+    assert len(execution_histories) == 4
+
+    for history in execution_histories.values():
+        assert [
+            snapshot[0]
+            for snapshot in history
+        ] == [1, 2, 3]
+        assert [
+            snapshot[1]
+            for snapshot in history
+        ] == [
+            "PENDING",
+            "RUNNING",
+            "SUCCEEDED",
+        ]
+
+        payloads = [
+            snapshot[2]
+            for snapshot in history
+        ]
+
+        assert [
+            payload["status"]
+            for payload in payloads
+        ] == [
+            "PENDING",
+            "RUNNING",
+            "SUCCEEDED",
+        ]
+        assert all(
+            payload["correlation_id"]
+            == "comparative-production-42"
+            for payload in payloads
+        )
+        assert all(
+            payload["failure"] is None
+            for payload in payloads
+        )
+        assert (
+            payloads[2]["result_id"]
+            is not None
+        )

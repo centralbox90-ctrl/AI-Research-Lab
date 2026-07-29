@@ -335,6 +335,8 @@ def build_research_cli(
             data_provider=CanonicalMarketDataProvider(
                 GeneratedMarketDataProvider()
             ),
+            execution_recorder=execution_recorder,
+            code_version=application_code_version,
             promotion_application=(
                 promotion_application
             ),

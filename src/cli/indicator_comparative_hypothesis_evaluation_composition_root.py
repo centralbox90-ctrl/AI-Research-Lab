@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from src.application.experiment_execution_recorder import (
+    ExperimentExecutionRecorder,
+)
 from src.application.hypothesis_evaluation_artifact_envelope_factory import (
     HypothesisEvaluationArtifactEnvelopeFactory,
 )
@@ -32,6 +35,10 @@ from src.research.hypothesis_evaluation_plan import (
 def build_default_indicator_comparative_hypothesis_evaluation_command(
     *,
     data_provider: CanonicalMarketDatasetProvider,
+    execution_recorder: (
+        ExperimentExecutionRecorder | None
+    ) = None,
+    code_version: str = "development",
     promotion_application: (
         PromoteHypothesisEvaluationToKnowledge
         | None
@@ -53,6 +60,8 @@ def build_default_indicator_comparative_hypothesis_evaluation_command(
         application=(
             build_default_indicator_comparative_hypothesis_evaluation_application(
                 data_provider=data_provider,
+                execution_recorder=execution_recorder,
+                code_version=code_version,
                 comparative_evaluation_plan=(
                     comparative_evaluation_plan
                 ),
@@ -73,6 +82,10 @@ def build_default_indicator_comparative_hypothesis_evaluation_command(
 def build_default_indicator_comparative_hypothesis_evaluation_application(
     *,
     data_provider: CanonicalMarketDatasetProvider,
+    execution_recorder: (
+        ExperimentExecutionRecorder | None
+    ) = None,
+    code_version: str = "development",
     comparative_evaluation_plan: ComparativeEvaluationPlan = (
         ComparativeEvaluationPlan()
     ),
@@ -89,6 +102,8 @@ def build_default_indicator_comparative_hypothesis_evaluation_application(
             build_default_indicator_comparative_finding_application(
                 data_provider=data_provider,
                 evaluation_plan=comparative_evaluation_plan,
+                execution_recorder=execution_recorder,
+                code_version=code_version,
             )
         ),
         hypothesis_evaluation_application=(
