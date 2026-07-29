@@ -234,6 +234,7 @@ def test_runs_requests_through_formal_evaluation(
     result = application.run(
         hypothesis_id=" hypothesis-rsi ",
         requests=requests,
+        correlation_id="research-lifecycle-42",
     )
 
     assert result is evaluation_application.result
@@ -253,6 +254,12 @@ def test_runs_requests_through_formal_evaluation(
     assert finding_application.calls[0][
         "analysis_pipeline_version"
     ] == "finding-v2"
+    assert finding_application.calls[0][
+        "correlation_id"
+    ] == "research-lifecycle-42"
+    assert finding_application.calls[1][
+        "correlation_id"
+    ] == "research-lifecycle-42"
     assert evaluation_application.calls == [
         (
             finding_application.results[0],

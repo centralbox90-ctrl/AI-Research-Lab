@@ -70,6 +70,7 @@ class IndicatorComparativeEvidenceApplication:
             ForwardReturnSpecification
         ),
         horizon: int,
+        correlation_id: str | None = None,
     ) -> Evidence:
         normalized_hypothesis_id = (
             self._normalize_text(
@@ -121,6 +122,7 @@ class IndicatorComparativeEvidenceApplication:
                 outcome_specification=(
                     outcome_specification
                 ),
+                correlation_id=correlation_id,
             )
             for specification
             in normalized_specifications

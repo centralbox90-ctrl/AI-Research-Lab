@@ -129,6 +129,7 @@ def test_runs_evidence_application_into_finding(
         applicable_markets=(
             "EURUSD:H1",
         ),
+        correlation_id="research-lifecycle-42",
         analysis_pipeline_version="analysis-v1",
     )
 
@@ -159,6 +160,9 @@ def test_runs_evidence_application_into_finding(
             outcome_specification
         ),
         "horizon": 3,
+        "correlation_id": (
+            "research-lifecycle-42"
+        ),
     }
     assert dict(finding.provenance)[
         "analysis_pipeline_version"

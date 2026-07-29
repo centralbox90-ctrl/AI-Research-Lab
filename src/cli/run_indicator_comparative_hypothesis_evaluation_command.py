@@ -119,6 +119,7 @@ class RunIndicatorComparativeHypothesisEvaluationCommand:
         evaluation = self._application.run(
             hypothesis_id=request.hypothesis_id,
             requests=request.requests,
+            correlation_id=request.correlation_id,
         )
         promotion = request.knowledge_promotion
         revision = None

@@ -66,6 +66,7 @@ class IndicatorComparativeFindingApplication:
         horizon: int,
         statement: str,
         applicable_markets: tuple[str, ...],
+        correlation_id: str | None = None,
         analysis_pipeline_version: str = (
             FindingEvaluator
             .DEFAULT_PIPELINE_VERSION
@@ -81,6 +82,7 @@ class IndicatorComparativeFindingApplication:
                 outcome_specification
             ),
             horizon=horizon,
+            correlation_id=correlation_id,
         )
 
         return self._finding_evaluator.evaluate(

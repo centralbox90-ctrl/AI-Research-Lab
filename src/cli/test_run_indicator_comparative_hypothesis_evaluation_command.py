@@ -109,7 +109,11 @@ class StubApplication(
     ) -> None:
         self.result = result
         self.calls: list[
-            tuple[str, tuple[object, ...]]
+            tuple[
+                str,
+                tuple[object, ...],
+                str | None,
+            ]
         ] = []
 
     def run(
@@ -117,11 +121,13 @@ class StubApplication(
         *,
         hypothesis_id: str,
         requests: tuple[object, ...],
+        correlation_id: str | None = None,
     ) -> HypothesisEvaluation:
         self.calls.append(
             (
                 hypothesis_id,
                 requests,
+                correlation_id,
             )
         )
 
@@ -237,6 +243,9 @@ def build_command(
             "request-a",
             "request-b",
         ),
+        correlation_id=(
+            "research-lifecycle-42"
+        ),
     )
     loader = StubRequestLoader(
         loaded_request
@@ -275,6 +284,7 @@ def test_executes_request_and_returns_json_artifact(
                 "request-a",
                 "request-b",
             ),
+            "research-lifecycle-42",
         )
     ]
     assert payload["artifact_type"] == (

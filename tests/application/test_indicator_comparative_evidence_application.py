@@ -169,6 +169,7 @@ class RecordingResearchApplication(
         market_specification: MarketExperimentSpecification,
         indicator_id: str,
         outcome_specification: ForwardReturnSpecification,
+        correlation_id: str | None = None,
     ) -> IndicatorComparativeResearchResult:
         result_index = len(self.calls)
         self.calls.append(
@@ -180,6 +181,7 @@ class RecordingResearchApplication(
                 "outcome_specification": (
                     outcome_specification
                 ),
+                "correlation_id": correlation_id,
             }
         )
 
@@ -287,6 +289,7 @@ def test_runs_research_for_each_independent_period(
             outcome_specification
         ),
         horizon=3,
+        correlation_id="research-lifecycle-42",
     )
 
     assert evidence is expected_evidence
@@ -309,6 +312,9 @@ def test_runs_research_for_each_independent_period(
         assert (
             call["outcome_specification"]
             is outcome_specification
+        )
+        assert call["correlation_id"] == (
+            "research-lifecycle-42"
         )
 
     assert evidence_service.calls == [

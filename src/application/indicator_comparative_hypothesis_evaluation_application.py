@@ -239,6 +239,7 @@ class IndicatorComparativeHypothesisEvaluationApplication:
             IndicatorComparativeFindingRequest,
             ...,
         ],
+        correlation_id: str | None = None,
     ) -> HypothesisEvaluation:
         normalized_hypothesis_id = (
             self._normalize_hypothesis_id(
@@ -266,6 +267,7 @@ class IndicatorComparativeHypothesisEvaluationApplication:
                 analysis_pipeline_version=(
                     request.analysis_pipeline_version
                 ),
+                correlation_id=correlation_id,
             )
             for request in normalized_requests
         )
