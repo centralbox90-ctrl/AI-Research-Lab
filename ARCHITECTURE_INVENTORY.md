@@ -2251,3 +2251,27 @@ Slice переиспользует существующий envelope loader и �
 
 Knowledge feature freeze и локальный indicator plugin contract
 сохранены.
+
+## 31. Strict artifact envelope schema checkpoint
+
+Commit checkpoint: `e2f116c`.
+
+Serialized `ResearchArtifactEnvelope` теперь проверяется по точному
+набору top-level fields schema version 1.
+
+Loader отдельно вычисляет missing и unknown fields.
+
+Отсутствующие обязательные поля и любые неизвестные поля
+отклоняются до восстановления immutable envelope.
+
+Это предотвращает неявное расширение transport и persistence
+contract без изменения schema version.
+
+Все существующие production artifact producers подтверждены полным
+набором автоматических тестов.
+
+Slice не добавил новый artifact type, DTO, public use case, route,
+repository, Domain model или общий artifact framework.
+
+Knowledge feature freeze, legacy compatibility и локальный indicator
+plugin contract сохранены.
