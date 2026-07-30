@@ -19,6 +19,7 @@ AI Research Lab — исследовательская платформа для
 - запуск полного сравнительного Analysis-потока через JSON CLI-команду;
 - воспроизводимое планирование и запуск рыночных исследовательских кампаний из согласованных JSON-контрактов;
 - read-only просмотр append-only истории `ExperimentExecution` через CLI;
+- read-only обнаружение сохранённых `ExperimentExecution` identities через CLI;
 - composition roots для сборки прикладных сценариев;
 - append-only Knowledge persistence и repository-backed feedback path;
 - read-only HTTP API с OpenAPI 3.1 contract;
@@ -110,6 +111,17 @@ python -m src.cli.main `
 ```
 
 Команда возвращает versioned JSON с количеством snapshots и точной последовательностью состояний. Научные `Evidence`, `Finding` и `HypothesisEvaluation` не смешиваются с техническим execution status.
+
+Список доступных `execution_id` можно получить отдельно:
+
+```powershell
+python -m src.cli.main `
+    --database .research_lab/research-cycles.db `
+    list-experiment-executions `
+    --compact
+```
+
+Команда возвращает детерминированно отсортированный список identities из того же append-only SQLite recorder. Listing не изменяет состояния выполнений и не дублирует snapshots.
 
 ## HTTP API
 

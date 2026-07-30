@@ -2074,3 +2074,85 @@ Queue, retries, scheduling, leases и heartbeat не добавлялись.
   production module;
 - общий workflow, lifecycle, pipeline или orchestration engine не
   добавлялся.
+
+## 28. ExperimentExecution listing checkpoint
+
+Commit checkpoint: `72e5167`.
+
+Этот раздел фиксирует завершённый read-only vertical slice для
+обнаружения сохранённых technical execution identities.
+
+### 28.1 Persistence query
+
+`SqliteExperimentExecutionRecorder` предоставляет
+`list_execution_ids`.
+
+Query:
+
+- читает distinct `execution_id` из существующей append-only таблицы;
+- не загружает и не дублирует snapshots;
+- возвращает identities в детерминированном порядке;
+- возвращает пустой tuple для пустой базы.
+
+Новая таблица, index или отдельный repository не создавались.
+
+### 28.2 Public Application use case
+
+Создан публичный use case `ListExperimentExecutions`.
+
+Use case работает через внутренний `ExperimentExecutionCatalog`,
+проверяет tuple contract, тип, непустую identity и уникальность каждого
+`execution_id`, затем возвращает отсортированный tuple.
+
+`ListExperimentExecutions` добавлен в явный
+`src.application.public_api`.
+
+Внутренний port не экспортируется как публичный Application use case.
+
+### 28.3 CLI contract
+
+Создан `ListExperimentExecutionsCommand` и route:
+
+`list-experiment-executions`.
+
+Versioned JSON schema 1 содержит:
+
+- `execution_count`;
+- детерминированно упорядоченный массив `execution_ids`.
+
+Route поддерживает pretty и compact JSON.
+
+Exit codes:
+
+- `0` — listing успешно сформирован, включая пустой список;
+- `1` — catalog contract отклонён;
+- `2` — command dependency не настроена.
+
+### 28.4 Production composition
+
+Главный `build_research_cli` использует один и тот же
+`SqliteExperimentExecutionRecorder` для:
+
+- append-only записи execution snapshots;
+- чтения полной execution history;
+- обнаружения сохранённых execution identities.
+
+Production integration tests подтверждают object identity общего
+adapter и чтение listing через реальный CLI route из той же SQLite
+database.
+
+### 28.5 Подтверждённые границы
+
+Execution listing остаётся read-only навигационным use case.
+
+Slice не добавил:
+
+- новую Research, ExperimentExecution или Knowledge entity;
+- новый artifact type или artifact envelope;
+- новую persistence schema;
+- status filters, pagination или runtime queue semantics;
+- HTTP или MCP route;
+- workflow, lifecycle, pipeline или orchestration engine.
+
+Knowledge feature freeze и локальный indicator plugin contract
+сохранены.

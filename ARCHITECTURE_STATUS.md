@@ -251,7 +251,9 @@ Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandida
 - минимальный immutable `ExperimentExecution` lifecycle;
 - append-only SQLite snapshots технического выполнения;
 - public read-only `GetExperimentExecutionHistory`;
+- public read-only `ListExperimentExecutions`;
 - production CLI query для полной истории технического выполнения;
+- production CLI query для обнаружения сохранённых execution identities;
 - production execution tracking для одиночного market research;
 - production execution tracking для Market Research Campaign;
 - production execution tracking для comparative analysis;
