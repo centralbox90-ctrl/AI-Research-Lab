@@ -95,6 +95,18 @@ class ListResearchCyclesCommand(Protocol):
         Return stored research-cycle IDs as JSON.
         """
 
+class ExperimentExecutionHistoryCommand(Protocol):
+    """Command boundary for one technical execution history."""
+
+    def execute(
+        self,
+        execution_id: str,
+        *,
+        indent: int | None = 2,
+    ) -> str | None:
+        """Return execution history JSON or None when missing."""
+
+
 class ListResearchCampaignsCommand(Protocol):
     """
     Command boundary for listing stored research-campaign IDs.
@@ -189,6 +201,9 @@ class ResearchCli:
         list_research_cycles_command: (
             ListResearchCyclesCommand | None
         ) = None,
+        get_experiment_execution_history_command: (
+            ExperimentExecutionHistoryCommand | None
+        ) = None,
         run_research_command: RunResearchCommand | None = None,
         run_comparative_hypothesis_evaluation_command: (
             ComparativeHypothesisEvaluationCommand | None
@@ -220,6 +235,9 @@ class ResearchCli:
         )
         self.list_research_cycles_command = (
             list_research_cycles_command
+        )
+        self.get_experiment_execution_history_command = (
+            get_experiment_execution_history_command
         )
         self.list_research_campaigns_command = (
             list_research_campaigns_command
@@ -282,6 +300,17 @@ class ResearchCli:
                 output_stream,
                 error_stream,
             )
+        if arguments.command == (
+            "get-experiment-execution-history"
+        ):
+            return (
+                self._run_get_experiment_execution_history(
+                    arguments,
+                    output_stream,
+                    error_stream,
+                )
+            )
+
         if arguments.command == "get-research-campaign":
             return self._run_get_research_campaign(
                 arguments,
@@ -411,6 +440,49 @@ class ResearchCli:
         if rendered is None:
             stderr.write(
                 f"Research artifact not found: {arguments.result_id}\n"
+            )
+            return 1
+
+        stdout.write(rendered)
+        stdout.write("\n")
+
+        return 0
+
+    def _run_get_experiment_execution_history(
+        self,
+        arguments: argparse.Namespace,
+        stdout: TextIO,
+        stderr: TextIO,
+    ) -> int:
+        command = (
+            self.get_experiment_execution_history_command
+        )
+
+        if command is None:
+            stderr.write(
+                "Get experiment execution history "
+                "command is not configured.\n"
+            )
+            return 2
+
+        indent = None if arguments.compact else 2
+
+        try:
+            rendered = command.execute(
+                arguments.execution_id,
+                indent=indent,
+            )
+        except (TypeError, ValueError) as error:
+            stderr.write(
+                "Unable to get experiment execution "
+                f"history: {error}\n"
+            )
+            return 1
+
+        if rendered is None:
+            stderr.write(
+                "Experiment execution history not found: "
+                f"{arguments.execution_id}\n"
             )
             return 1
 
@@ -744,6 +816,25 @@ class ResearchCli:
         )
 
         get_artifact_parser.add_argument(
+            "--compact",
+            action="store_true",
+        )
+
+        execution_history_parser = (
+            subparsers.add_parser(
+                "get-experiment-execution-history",
+                help=(
+                    "Return the append-only history of "
+                    "one ExperimentExecution."
+                ),
+            )
+        )
+
+        execution_history_parser.add_argument(
+            "execution_id",
+        )
+
+        execution_history_parser.add_argument(
             "--compact",
             action="store_true",
         )
