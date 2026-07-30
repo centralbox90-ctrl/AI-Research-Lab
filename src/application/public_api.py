@@ -27,6 +27,9 @@ from src.application.get_stored_research_cycle import (
 from src.application.indicator_comparative_hypothesis_evaluation_application import (
     IndicatorComparativeHypothesisEvaluationApplication,
 )
+from src.application.list_experiment_executions import (
+    ListExperimentExecutions,
+)
 from src.application.list_stored_research_cycles import (
     ListStoredResearchCycles,
 )
@@ -52,6 +55,7 @@ __all__ = (
     "IndicatorComparativeHypothesisEvaluationApplication",
     "KnowledgePromotionRejectedError",
     "KnowledgeResearchQuestionsResult",
+    "ListExperimentExecutions",
     "ListStoredResearchCycles",
     "PromoteHypothesisEvaluationToKnowledge",
     "RunMarketResearch",

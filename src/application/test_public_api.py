@@ -11,6 +11,7 @@ EXPECTED_PUBLIC_NAMES = (
     "IndicatorComparativeHypothesisEvaluationApplication",
     "KnowledgePromotionRejectedError",
     "KnowledgeResearchQuestionsResult",
+    "ListExperimentExecutions",
     "ListStoredResearchCycles",
     "PromoteHypothesisEvaluationToKnowledge",
     "RunMarketResearch",
@@ -19,6 +20,7 @@ EXPECTED_PUBLIC_NAMES = (
 
 INTERNAL_NAMES = (
     "BuildKnowledgeGraphSnapshot",
+    "ExperimentExecutionCatalog",
     "ExperimentExecutionHistoryReader",
     "GenerateResearchQuestionsFromKnowledgeSnapshot",
     "KnowledgeGraphRelationRegistrar",
