@@ -188,6 +188,18 @@ class FailingComparativeEvaluationCommand:
         )
 
 
+class RuntimeFailingComparativeEvaluationCommand:
+    def execute(
+        self,
+        request_path: str | Path,
+        *,
+        indent: int | None = 2,
+    ) -> str:
+        raise RuntimeError(
+            "comparative execution failed"
+        )
+
+
 def build_cli_with_comparative_command(
     command: object,
 ) -> ResearchCli:
@@ -285,6 +297,32 @@ def test_research_cli_reports_comparative_error(
             "Unable to run comparative hypothesis "
             "evaluation: invalid comparative request\n"
         )
+    )
+
+
+def test_research_cli_reports_comparative_runtime_failure(
+) -> None:
+    cli = build_cli_with_comparative_command(
+        RuntimeFailingComparativeEvaluationCommand()
+    )
+    stdout = StringIO()
+    stderr = StringIO()
+
+    exit_code = cli.run(
+        [
+            "run-comparative-hypothesis-evaluation",
+            "--request",
+            "failed-evaluation.json",
+        ],
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 1
+    assert stdout.getvalue() == ""
+    assert stderr.getvalue() == (
+        "Unable to run comparative hypothesis "
+        "evaluation: comparative execution failed\n"
     )
 
 

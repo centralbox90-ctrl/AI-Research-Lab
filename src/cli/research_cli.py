@@ -836,7 +836,11 @@ class ResearchCli:
                 arguments.request_path,
                 indent=indent,
             )
-        except (ValueError, LookupError) as error:
+        except (
+            ValueError,
+            LookupError,
+            RuntimeError,
+        ) as error:
             stderr.write(
                 "Unable to run comparative hypothesis "
                 f"evaluation: {error}\n"
