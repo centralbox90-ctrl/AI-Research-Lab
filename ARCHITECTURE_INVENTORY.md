@@ -2521,3 +2521,60 @@ Technical preparation failure остаётся частью
 
 Knowledge feature freeze и локальный indicator plugin contract
 сохранены.
+
+## 38. ExperimentExecution history integrity checkpoint
+
+Commit checkpoint: `edbbe47`.
+
+`SqliteExperimentExecutionRecorder` теперь проверяет целостность всей
+append-only истории технического выполнения до добавления нового
+snapshot.
+
+Первый snapshot обязан иметь состояние `PENDING`.
+
+Разрешены только явные переходы:
+
+- `PENDING → RUNNING`;
+- `PENDING → FAILED`;
+- `PENDING → CANCELLED`;
+- `RUNNING → SUCCEEDED`;
+- `RUNNING → FAILED`;
+- `RUNNING → CANCELLED`.
+
+Recorder отклоняет:
+
+- первый snapshot в непредварительном состоянии;
+- повтор одного состояния;
+- пропуск обязательного перехода;
+- добавление snapshot после terminal state;
+- изменение execution identity между snapshots.
+
+Неизменяемая identity включает:
+
+- `experiment_id`;
+- `specification_fingerprint`;
+- `correlation_id`;
+- `created_at`.
+
+После перехода в `RUNNING` дополнительно запрещено изменение
+`started_at` и `environment_fingerprint`.
+
+Чтение последнего snapshot, validation перехода и добавление следующего
+sequence выполняются внутри одной `BEGIN IMMEDIATE` transaction. Поэтому
+конкурирующая запись не может обойти проверку истории между чтением и
+insert.
+
+Persistence schema и публичные read-only use cases не изменились.
+Существующие Domain transitions остаются единственным способом
+построения корректных snapshots, а storage boundary независимо защищает
+сохранённую историю от некорректных callers.
+
+Technical execution status не используется как scientific evaluation и
+не подменяет Evidence, Finding или HypothesisEvaluation.
+
+Slice не добавил новый workflow, lifecycle, pipeline, orchestration
+engine, artifact type, transport route или Knowledge entity.
+
+Knowledge feature freeze и локальный indicator plugin contract
+сохранены. Добавление нового индикатора по-прежнему требует ровно одного
+production module в `src/indicators/implementations`.

@@ -250,6 +250,7 @@ Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandida
 - явный `src.application.public_api`;
 - минимальный immutable `ExperimentExecution` lifecycle;
 - append-only SQLite snapshots технического выполнения;
+- transactional validation append-only истории ExperimentExecution: обязательный первый PENDING, разрешённые transitions, immutable identity и запрет snapshots после terminal state;
 - public read-only `GetExperimentExecutionHistory`;
 - public read-only `ListExperimentExecutions`;
 - production CLI query для полной истории технического выполнения;
