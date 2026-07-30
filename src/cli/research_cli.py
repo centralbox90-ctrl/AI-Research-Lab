@@ -457,12 +457,19 @@ class ResearchCli:
 
         indent = None if arguments.compact else 2
 
-        rendered = (
-            self.get_research_artifact_command.execute(
-                arguments.result_id,
-                indent=indent,
+        try:
+            rendered = (
+                self.get_research_artifact_command.execute(
+                    arguments.result_id,
+                    indent=indent,
+                )
             )
-        )
+        except (TypeError, ValueError) as error:
+            stderr.write(
+                "Unable to get research artifact: "
+                f"{error}\n"
+            )
+            return 1
 
         if rendered is None:
             stderr.write(

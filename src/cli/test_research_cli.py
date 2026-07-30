@@ -645,3 +645,43 @@ def test_research_cli_reports_unconfigured_knowledge_command(
             "command is not configured.\n"
         )
     )
+
+class FailingResearchArtifactCommand:
+    def execute(
+        self,
+        result_id: str,
+        *,
+        indent: int | None = 2,
+    ) -> str:
+        raise ValueError(
+            "payload_fingerprint does not match payload"
+        )
+
+
+def test_research_cli_reports_artifact_integrity_error(
+) -> None:
+    base_cli, _ = build_cli_with_saved_cycle()
+    cli = ResearchCli(
+        base_cli.get_research_cycle_command,
+        get_research_artifact_command=(
+            FailingResearchArtifactCommand()
+        ),
+    )
+    stdout = StringIO()
+    stderr = StringIO()
+
+    exit_code = cli.run(
+        [
+            "get-research-artifact",
+            "result-corrupted",
+        ],
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 1
+    assert stdout.getvalue() == ""
+    assert stderr.getvalue() == (
+        "Unable to get research artifact: "
+        "payload_fingerprint does not match payload\n"
+    )
