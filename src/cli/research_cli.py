@@ -756,7 +756,11 @@ class ResearchCli:
                 arguments.specification_path,
                 indent=indent,
             )
-        except (ValueError, LookupError) as error:
+        except (
+            ValueError,
+            LookupError,
+            RuntimeError,
+        ) as error:
             stderr.write(
                 f"Unable to run research: {error}\n"
             )

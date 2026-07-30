@@ -685,3 +685,44 @@ def test_research_cli_reports_artifact_integrity_error(
         "Unable to get research artifact: "
         "payload_fingerprint does not match payload\n"
     )
+
+class FailingRunResearchCommand:
+    def execute(
+        self,
+        specification_path: str | Path,
+        *,
+        indent: int | None = 2,
+    ) -> str:
+        raise RuntimeError(
+            "signal generation failed"
+        )
+
+
+def test_research_cli_reports_market_execution_runtime_failure(
+) -> None:
+    base_cli, _ = build_cli_with_saved_cycle()
+    cli = ResearchCli(
+        base_cli.get_research_cycle_command,
+        run_research_command=(
+            FailingRunResearchCommand()
+        ),
+    )
+    stdout = StringIO()
+    stderr = StringIO()
+
+    exit_code = cli.run(
+        [
+            "run-research",
+            "--spec",
+            "failed-experiment.json",
+        ],
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 1
+    assert stdout.getvalue() == ""
+    assert stderr.getvalue() == (
+        "Unable to run research: "
+        "signal generation failed\n"
+    )
