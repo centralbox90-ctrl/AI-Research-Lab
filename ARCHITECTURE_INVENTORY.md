@@ -2275,3 +2275,26 @@ repository, Domain model или общий artifact framework.
 
 Knowledge feature freeze, legacy compatibility и локальный indicator
 plugin contract сохранены.
+
+## 32. CLI artifact integrity error checkpoint
+
+Commit checkpoint: `24ebc63`.
+
+CLI route `get-research-artifact` теперь преобразует ошибки
+integrity validation в контролируемый command result.
+
+При `TypeError` или `ValueError` от Application reader:
+
+- stdout остаётся пустым;
+- stderr содержит диагностическое сообщение;
+- CLI возвращает exit code `1`;
+- необработанное исключение не покидает transport boundary.
+
+Missing artifact и unconfigured command сохраняют существующие
+контракты и exit codes.
+
+Slice не изменил Application use case, envelope schema,
+persistence, HTTP, MCP, Domain или Knowledge contracts.
+
+Новая общая error hierarchy или transport abstraction не
+добавлялась.

@@ -264,6 +264,7 @@ Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandida
 - immutable и идемпотентная SQLite persistence research artifacts по `result_id`;
 - integrity-aware public read path для сохранённых `ResearchArtifactEnvelope`;
 - strict top-level field contract для serialized `ResearchArtifactEnvelope`;
+- controlled CLI error mapping для повреждённых stored artifact envelopes;
 - market research envelope;
 - comparative HypothesisEvaluation envelope;
 - Knowledge research-question envelope;
