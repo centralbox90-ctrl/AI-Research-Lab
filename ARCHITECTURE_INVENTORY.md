@@ -2428,3 +2428,49 @@ Technical execution status не используется как научная �
 
 Knowledge feature freeze и локальный indicator plugin contract
 сохранены.
+
+## 36. Market research preparation failure checkpoint
+
+Commit checkpoint: `1f4005a`.
+
+`MarketResearchSessionFactory` теперь создаёт pending execution identity
+после успешного mapping research graph, но до загрузки dataset и
+построения research context.
+
+Если dataset, context или prepared executor не могут быть созданы,
+factory сохраняет append-only последовательность:
+
+- `PENDING`;
+- `FAILED`.
+
+Terminal snapshot содержит:
+
+- failure stage `PREPARATION`;
+- исходный технический error type;
+- sanitized error message;
+- `started_at = None`;
+- `environment_fingerprint = None`;
+- `result_id = None`.
+
+Execution не переходит в `RUNNING`, поскольку вызов experiment executor
+ещё не начинался.
+
+Исходная preparation error повторно поднимается после записи snapshots,
+поэтому существующий Application и CLI error flow сохраняется.
+
+Успешный путь не выполняет раннюю запись pending snapshot:
+`ExperimentExecutionTrackingExecutor` по-прежнему записывает
+`PENDING → RUNNING → SUCCEEDED` непосредственно вокруг executor call.
+
+Ошибки specification validation и mapping остаются до создания
+technical execution identity и не классифицируются как preparation
+execution failure.
+
+Slice не изменил Domain state machine, execution recorder port,
+persistence schema, artifact schema, HTTP, MCP или Knowledge contracts.
+
+Новый общий workflow, lifecycle, pipeline или orchestration engine не
+добавлялся.
+
+Knowledge feature freeze и локальный indicator plugin contract
+сохранены.

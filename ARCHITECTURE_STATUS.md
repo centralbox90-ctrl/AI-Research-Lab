@@ -258,6 +258,7 @@ Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandida
 - end-to-end acceptance test production market research path: run → validated stored envelope → execution listing → append-only execution history;
 - end-to-end acceptance test failed market execution path: persisted `PENDING → RUNNING → FAILED` history без создания research artifact;
 - controlled `run-research` mapping для technical `RuntimeError`: exit code `1`, пустой stdout и диагностический stderr;
+- production preparation failure tracking для dataset/context preparation: `PENDING → FAILED` со stage `PREPARATION` без перехода в `RUNNING`;
 - production execution tracking для Market Research Campaign;
 - production execution tracking для comparative analysis;
 - deterministic specification fingerprints;
