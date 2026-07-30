@@ -2298,3 +2298,49 @@ persistence, HTTP, MCP, Domain или Knowledge contracts.
 
 Новая общая error hierarchy или transport abstraction не
 добавлялась.
+
+## 33. Market research production lifecycle acceptance checkpoint
+
+Commit checkpoint: `a7706d4`.
+
+Добавлен end-to-end acceptance test существующего production market
+research path через публичный CLI boundary.
+
+Один тест использует одну временную SQLite database и последовательно:
+
+1. запускает `run-research` по валидной generated market specification;
+2. получает созданный research result;
+3. обнаруживает техническое выполнение через
+   `list-experiment-executions`;
+4. читает полную append-only историю через
+   `get-experiment-execution-history`;
+5. загружает сохранённый validated envelope через
+   `get-research-artifact`.
+
+Тест подтверждает точную последовательность execution snapshots:
+
+- `PENDING`;
+- `RUNNING`;
+- `SUCCEEDED`.
+
+Terminal execution, research result и artifact envelope согласованы по:
+
+- `execution_id`;
+- `result_id`;
+- `correlation_id`;
+- `specification_fingerprint`;
+- `environment_fingerprint`;
+- typed source references.
+
+Проверка проходит через реальный `main`, production composition root,
+generated market-data provider, SQLite artifact store и SQLite execution
+recorder.
+
+Slice добавил только acceptance test и не изменил production-код,
+Application contracts, persistence schema или artifact schema.
+
+Новый общий workflow, lifecycle, pipeline или orchestration engine не
+добавлялся.
+
+Knowledge feature freeze и локальный indicator plugin contract
+сохранены.

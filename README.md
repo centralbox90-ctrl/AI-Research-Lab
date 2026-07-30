@@ -22,6 +22,7 @@ AI Research Lab — исследовательская платформа для
 - integrity validation сохранённых artifact envelopes при публичном чтении;
 - read-only просмотр append-only истории `ExperimentExecution` через CLI;
 - read-only обнаружение сохранённых `ExperimentExecution` identities через CLI;
+- end-to-end проверка связи production market research result, validated envelope и append-only `ExperimentExecution` history;
 - composition roots для сборки прикладных сценариев;
 - append-only Knowledge persistence и repository-backed feedback path;
 - read-only HTTP API с OpenAPI 3.1 contract;
