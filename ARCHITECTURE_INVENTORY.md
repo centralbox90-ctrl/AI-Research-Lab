@@ -2390,3 +2390,41 @@ Technical failure остаётся состоянием `ExperimentExecution` и
 
 Knowledge feature freeze и локальный indicator plugin contract
 сохранены.
+
+## 35. Market execution runtime failure CLI checkpoint
+
+Commit checkpoint: `db0fbb6`.
+
+CLI route `run-research` теперь преобразует технический
+`RuntimeError` от существующего Application execution path в
+контролируемый command result.
+
+При runtime failure:
+
+- stdout остаётся пустым;
+- stderr содержит сообщение `Unable to run research` и причину;
+- CLI возвращает exit code `1`;
+- исходное исключение не покидает transport boundary.
+
+Изменение не перехватывает произвольный `Exception` и не вводит общую
+error hierarchy. Существующие `ValueError` и `LookupError` contracts
+сохранены.
+
+Запись `ExperimentExecution` в состоянии `FAILED` выполняется ниже
+CLI boundary существующим tracking executor до возврата command result.
+
+Slice изменил только `ResearchCli` error mapping и его автоматический
+тест.
+
+Application use cases, execution recorder, persistence schema,
+artifact schema, HTTP, MCP, Domain и Knowledge contracts не
+изменялись.
+
+Technical execution status не используется как научная оценка и не
+подменяет Evidence, Finding или HypothesisEvaluation.
+
+Новый общий workflow, lifecycle, pipeline или orchestration engine не
+добавлялся.
+
+Knowledge feature freeze и локальный indicator plugin contract
+сохранены.
