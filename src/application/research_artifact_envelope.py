@@ -390,12 +390,26 @@ def load_research_artifact_envelope(
         "payload",
     )
 
-    for field_name in required_fields:
-        if field_name not in serialized:
-            raise ValueError(
-                "serialized envelope is missing "
-                f"{field_name}"
-            )
+    fields = set(serialized)
+    expected_fields = set(required_fields)
+    missing_fields = sorted(
+        expected_fields - fields
+    )
+    unknown_fields = sorted(
+        fields - expected_fields
+    )
+
+    if missing_fields:
+        raise ValueError(
+            "serialized envelope is missing fields: "
+            + ", ".join(missing_fields)
+        )
+
+    if unknown_fields:
+        raise ValueError(
+            "serialized envelope has unknown fields: "
+            + ", ".join(unknown_fields)
+        )
 
     created_at_value = serialized["created_at"]
 

@@ -365,6 +365,28 @@ def test_loader_rejects_changed_payload() -> None:
         )
 
 
+def test_loader_rejects_unknown_envelope_fields(
+) -> None:
+    serialized = build_factory().create(
+        artifact_type="market_research_cycle",
+        payload_schema_version=1,
+        provenance={},
+        payload=build_payload(),
+    ).to_dict()
+    serialized["unexpected"] = True
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "serialized envelope has unknown "
+            "fields: unexpected"
+        ),
+    ):
+        load_research_artifact_envelope(
+            serialized
+        )
+
+
 def test_validates_source_reference_version() -> None:
     with pytest.raises(
         ValueError,
