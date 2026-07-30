@@ -136,6 +136,25 @@ class SqliteExperimentExecutionRecorder:
             for row in rows
         )
 
+    def list_execution_ids(
+        self,
+    ) -> tuple[str, ...]:
+        """Return distinct execution identities deterministically."""
+
+        with self._connection() as connection:
+            rows = connection.execute(
+                """
+                SELECT DISTINCT execution_id
+                FROM experiment_execution_snapshots
+                ORDER BY execution_id
+                """
+            ).fetchall()
+
+        return tuple(
+            str(row[0])
+            for row in rows
+        )
+
     @contextmanager
     def _connection(
         self,

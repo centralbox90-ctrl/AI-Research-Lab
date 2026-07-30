@@ -214,6 +214,39 @@ def test_returns_empty_result_for_missing_execution(
     ) == ()
 
 
+def test_lists_execution_ids_deterministically(
+    tmp_path: Path,
+) -> None:
+    recorder = SqliteExperimentExecutionRecorder(
+        tmp_path / "executions.db"
+    )
+
+    recorder.record(
+        build_pending("execution-2")
+    )
+    recorder.record(
+        build_pending("execution-1")
+    )
+    recorder.record(
+        build_running("execution-1")
+    )
+
+    assert recorder.list_execution_ids() == (
+        "execution-1",
+        "execution-2",
+    )
+
+
+def test_lists_no_execution_ids_for_empty_storage(
+    tmp_path: Path,
+) -> None:
+    recorder = SqliteExperimentExecutionRecorder(
+        tmp_path / "executions.db"
+    )
+
+    assert recorder.list_execution_ids() == ()
+
+
 @pytest.mark.parametrize(
     "execution_id, error_type, message",
     (
