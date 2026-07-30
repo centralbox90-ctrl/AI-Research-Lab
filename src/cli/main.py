@@ -13,6 +13,9 @@ from src.application import (
 from src.application.get_experiment_execution_history import (
     GetExperimentExecutionHistory,
 )
+from src.application.list_experiment_executions import (
+    ListExperimentExecutions,
+)
 from src.application.artifact_comparison_input_extractor import (
     ArtifactComparisonInputExtractor,
 )
@@ -82,6 +85,9 @@ from src.cli.get_stored_research_artifact_command import (
 from src.cli.get_stored_research_cycle_command import (
     GetStoredResearchCycleCommand,
 )
+from src.cli.list_experiment_executions_command import (
+    ListExperimentExecutionsCommand,
+)
 from src.cli.list_stored_research_cycles_command import (
     ListStoredResearchCyclesCommand,
 )
@@ -145,6 +151,20 @@ def build_research_cli(
         GetExperimentExecutionHistoryCommand(
             application=(
                 execution_history_application
+            ),
+        )
+    )
+
+    execution_listing_application = (
+        ListExperimentExecutions(
+            catalog=execution_recorder,
+        )
+    )
+
+    execution_listing_command = (
+        ListExperimentExecutionsCommand(
+            application=(
+                execution_listing_application
             ),
         )
     )
@@ -376,6 +396,9 @@ def build_research_cli(
             compare_artifacts_command
         ),
         list_research_cycles_command=list_command,
+        list_experiment_executions_command=(
+            execution_listing_command
+        ),
         get_experiment_execution_history_command=(
             execution_history_command
         ),

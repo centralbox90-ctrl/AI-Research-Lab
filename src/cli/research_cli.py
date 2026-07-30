@@ -95,6 +95,17 @@ class ListResearchCyclesCommand(Protocol):
         Return stored research-cycle IDs as JSON.
         """
 
+class ListExperimentExecutionsCommand(Protocol):
+    """Command boundary for discovering technical executions."""
+
+    def execute(
+        self,
+        *,
+        indent: int | None = 2,
+    ) -> str:
+        """Return execution identities as JSON."""
+
+
 class ExperimentExecutionHistoryCommand(Protocol):
     """Command boundary for one technical execution history."""
 
@@ -201,6 +212,9 @@ class ResearchCli:
         list_research_cycles_command: (
             ListResearchCyclesCommand | None
         ) = None,
+        list_experiment_executions_command: (
+            ListExperimentExecutionsCommand | None
+        ) = None,
         get_experiment_execution_history_command: (
             ExperimentExecutionHistoryCommand | None
         ) = None,
@@ -235,6 +249,9 @@ class ResearchCli:
         )
         self.list_research_cycles_command = (
             list_research_cycles_command
+        )
+        self.list_experiment_executions_command = (
+            list_experiment_executions_command
         )
         self.get_experiment_execution_history_command = (
             get_experiment_execution_history_command
@@ -338,6 +355,16 @@ class ResearchCli:
                 output_stream,
                 error_stream,
             )
+
+        if arguments.command == (
+            "list-experiment-executions"
+        ):
+            return self._run_list_experiment_executions(
+                arguments,
+                output_stream,
+                error_stream,
+            )
+
         if arguments.command == "list-research-campaigns":
             return self._run_list_research_campaigns(
                 arguments,
@@ -571,6 +598,41 @@ class ResearchCli:
         rendered = self.list_research_cycles_command.execute(
             indent=indent,
         )
+
+        stdout.write(rendered)
+        stdout.write("\n")
+
+        return 0
+
+    def _run_list_experiment_executions(
+        self,
+        arguments: argparse.Namespace,
+        stdout: TextIO,
+        stderr: TextIO,
+    ) -> int:
+        command = (
+            self.list_experiment_executions_command
+        )
+
+        if command is None:
+            stderr.write(
+                "List experiment executions command "
+                "is not configured.\n"
+            )
+            return 2
+
+        indent = None if arguments.compact else 2
+
+        try:
+            rendered = command.execute(
+                indent=indent,
+            )
+        except (TypeError, ValueError) as error:
+            stderr.write(
+                "Unable to list experiment executions: "
+                f"{error}\n"
+            )
+            return 1
 
         stdout.write(rendered)
         stdout.write("\n")
@@ -886,6 +948,21 @@ class ResearchCli:
         )
 
         list_cycles_parser.add_argument(
+            "--compact",
+            action="store_true",
+        )
+
+        list_executions_parser = (
+            subparsers.add_parser(
+                "list-experiment-executions",
+                help=(
+                    "List persisted ExperimentExecution "
+                    "identities."
+                ),
+            )
+        )
+
+        list_executions_parser.add_argument(
             "--compact",
             action="store_true",
         )
