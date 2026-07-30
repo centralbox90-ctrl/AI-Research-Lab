@@ -28,6 +28,7 @@ AI Research Lab — исследовательская платформа для
 - append-only фиксация market research preparation failure до перехода execution в `RUNNING`;
 - SQLite acceptance-проверка восстановления preparation failure history через production CLI;
 - транзакционная проверка целостности append-only истории ExperimentExecution, допустимых переходов и неизменяемой execution identity;
+- проверка persisted `ExperimentExecution` history при чтении: sequence, status, payload identity и полный порядок переходов;
 - composition roots для сборки прикладных сценариев;
 - append-only Knowledge persistence и repository-backed feedback path;
 - read-only HTTP API с OpenAPI 3.1 contract;

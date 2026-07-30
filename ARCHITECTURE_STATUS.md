@@ -251,6 +251,7 @@ Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandida
 - минимальный immutable `ExperimentExecution` lifecycle;
 - append-only SQLite snapshots технического выполнения;
 - transactional validation append-only истории ExperimentExecution: обязательный первый PENDING, разрешённые transitions, immutable identity и запрет snapshots после terminal state;
+- read-time validation persisted `ExperimentExecution` history: непрерывный sequence, согласованные status/payload и execution identity, обязательный первый `PENDING` и допустимые transitions;
 - public read-only `GetExperimentExecutionHistory`;
 - public read-only `ListExperimentExecutions`;
 - production CLI query для полной истории технического выполнения;

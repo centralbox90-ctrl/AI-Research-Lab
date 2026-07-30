@@ -2578,3 +2578,46 @@ engine, artifact type, transport route или Knowledge entity.
 Knowledge feature freeze и локальный indicator plugin contract
 сохранены. Добавление нового индикатора по-прежнему требует ровно одного
 production module в `src/indicators/implementations`.
+
+## 39. Persisted ExperimentExecution read integrity checkpoint
+
+Commit checkpoint: `f43a254`.
+
+`SqliteExperimentExecutionRecorder.history` теперь проверяет полную
+persisted цепочку после десериализации и до возврата вызывающему
+Application use case.
+
+Read boundary подтверждает:
+
+- начало sequence с единицы;
+- отсутствие пропусков sequence;
+- совпадение индексированного status с status внутри payload;
+- совпадение ключа `execution_id` с identity внутри payload;
+- обязательное начальное состояние `PENDING`;
+- допустимый переход между каждой соседней парой snapshots;
+- отсутствие snapshots после terminal state;
+- неизменяемость execution identity;
+- неизменяемость running context после начала выполнения.
+
+Проверка использует тот же специализированный transition contract,
+который защищает append-only запись. Отдельная state machine,
+универсальный history framework или новый lifecycle aggregate не
+создавались.
+
+Повреждение SQLite rows, ручная запись в database или legacy defect
+теперь не могут быть представлены публичному
+`GetExperimentExecutionHistory` как корректная техническая история.
+
+Пустая история отсутствующего execution остаётся допустимым read-only
+результатом.
+
+Persistence schema, Domain model, public Application API, CLI routes,
+artifact envelopes, HTTP и MCP contracts не изменились.
+
+Technical execution history не является scientific evaluation и не
+подменяет Evidence, Finding или HypothesisEvaluation.
+
+Knowledge feature freeze сохранён. Добавление нового индикатора
+по-прежнему является локальным изменением ровно одного production
+module в `src/indicators/implementations`, экспортирующего immutable
+`INDICATOR`.
