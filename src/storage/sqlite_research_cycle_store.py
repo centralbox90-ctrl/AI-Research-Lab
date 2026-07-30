@@ -37,21 +37,38 @@ class SqliteResearchCycleStore:
         )
 
         with self._get_connection() as connection:
-            connection.execute(
+            connection.execute("BEGIN IMMEDIATE")
+
+            row = connection.execute(
                 """
-                INSERT INTO research_cycles (
-                    result_id,
-                    payload
-                )
-                VALUES (?, ?)
-                ON CONFLICT(result_id)
-                DO UPDATE SET payload = excluded.payload
+                SELECT payload
+                FROM research_cycles
+                WHERE result_id = ?
                 """,
-                (
-                    result_id,
-                    payload,
-                ),
-            )
+                (result_id,),
+            ).fetchone()
+
+            if row is None:
+                connection.execute(
+                    """
+                    INSERT INTO research_cycles (
+                        result_id,
+                        payload
+                    )
+                    VALUES (?, ?)
+                    """,
+                    (
+                        result_id,
+                        payload,
+                    ),
+                )
+                return
+
+            if str(row[0]) != payload:
+                raise ValueError(
+                    "result_id already stores a "
+                    "different research cycle"
+                )
 
     def get(
         self,

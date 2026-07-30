@@ -1,5 +1,9 @@
 from pathlib import Path
 
+import pytest
+
+import pytest
+
 from src.storage import SqliteResearchCycleStore
 
 
@@ -41,37 +45,67 @@ def test_sqlite_research_cycle_store_saves_and_loads_payload(
     assert loaded_cycle["hypothesis_decision"]["is_supported"] is True
 
 
-def test_sqlite_research_cycle_store_updates_existing_payload(
+def test_sqlite_research_cycle_store_accepts_idempotent_save(
     tmp_path: Path,
 ) -> None:
     store = SqliteResearchCycleStore(
         db_path=tmp_path / "research_cycles.db",
     )
+    serialized_cycle = {
+        "result": {
+            "id": "result-001",
+            "success": True,
+        },
+    }
 
     store.save(
         result_id="result-001",
-        serialized_cycle={
-            "result": {
-                "id": "result-001",
-                "success": False,
-            },
-        },
+        serialized_cycle=serialized_cycle,
     )
+    store.save(
+        result_id="result-001",
+        serialized_cycle=serialized_cycle,
+    )
+
+    assert store.get("result-001") == serialized_cycle
+
+
+def test_sqlite_research_cycle_store_rejects_payload_replacement(
+    tmp_path: Path,
+) -> None:
+    store = SqliteResearchCycleStore(
+        db_path=tmp_path / "research_cycles.db",
+    )
+    original_cycle = {
+        "result": {
+            "id": "result-001",
+            "success": False,
+        },
+    }
 
     store.save(
         result_id="result-001",
-        serialized_cycle={
-            "result": {
-                "id": "result-001",
-                "success": True,
-            },
-        },
+        serialized_cycle=original_cycle,
     )
 
-    loaded_cycle = store.get("result-001")
+    with pytest.raises(
+        ValueError,
+        match=(
+            "result_id already stores a "
+            "different research cycle"
+        ),
+    ):
+        store.save(
+            result_id="result-001",
+            serialized_cycle={
+                "result": {
+                    "id": "result-001",
+                    "success": True,
+                },
+            },
+        )
 
-    assert loaded_cycle is not None
-    assert loaded_cycle["result"]["success"] is True
+    assert store.get("result-001") == original_cycle
 
 
 def test_sqlite_research_cycle_store_returns_none_when_missing(
