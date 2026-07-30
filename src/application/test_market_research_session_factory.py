@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 import pandas as pd
+import pytest
 
 from src.application.canonical_market_dataset import (
     CanonicalMarketDataset,
@@ -24,6 +25,10 @@ from src.application.market_research_context_factory import (
 )
 from src.application.market_research_session_factory import (
     MarketResearchSessionFactory,
+)
+from src.research.experiment_execution import (
+    ExperimentExecutionFailureStage,
+    ExperimentExecutionStatus,
 )
 
 
@@ -304,3 +309,59 @@ def test_created_session_executes_experiment() -> None:
 
     assert result.metrics["total_trades"] == 1
     assert result.success is True
+
+class FailingMarketDataProvider:
+    def load(
+        self,
+        specification: MarketExperimentSpecification,
+    ) -> CanonicalMarketDataset:
+        raise RuntimeError(
+            "market data unavailable"
+        )
+
+
+def test_factory_records_preparation_failure(
+) -> None:
+    recorder = RecordingExecutionRecorder()
+    specification = build_specification()
+    factory = MarketResearchSessionFactory(
+        data_provider=FailingMarketDataProvider(),
+        signal_provider=FakeSignalProvider(),
+        context_factory=build_context_factory(),
+        execution_recorder=recorder,
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match="market data unavailable",
+    ):
+        factory.create(
+            specification
+        )
+
+    assert len(recorder.executions) == 2
+
+    pending, failed = recorder.executions
+
+    assert pending.status is (
+        ExperimentExecutionStatus.PENDING
+    )
+    assert pending.specification_fingerprint == (
+        specification.fingerprint
+    )
+    assert failed.status is (
+        ExperimentExecutionStatus.FAILED
+    )
+    assert failed.started_at is None
+    assert failed.environment_fingerprint is None
+    assert failed.result_id is None
+    assert failed.failure is not None
+    assert failed.failure.stage is (
+        ExperimentExecutionFailureStage.PREPARATION
+    )
+    assert failed.failure.error_type == (
+        "RuntimeError"
+    )
+    assert failed.failure.message == (
+        "market data unavailable"
+    )

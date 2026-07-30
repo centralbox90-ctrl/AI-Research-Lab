@@ -32,6 +32,10 @@ from src.application.prepared_market_backtest_executor import (
     PreparedMarketBacktestExecutor,
 )
 from src.application.system_clock import SystemClock
+from src.research.experiment_execution import (
+    ExperimentExecutionFailure,
+    ExperimentExecutionFailureStage,
+)
 from src.research.research_graph import (
     ResearchGraph,
 )
@@ -91,25 +95,10 @@ class MarketResearchSessionFactory:
             specification
         )
 
-        dataset = self._data_provider.load(
-            specification
-        )
-
-        context = self._context_factory.create(
-            specification=specification,
-            dataset=dataset,
-        )
-
         graph = ResearchGraph(
             question=mapped.question,
             hypothesis=mapped.hypothesis,
             experiment=mapped.experiment,
-        )
-
-        prepared_executor = PreparedMarketBacktestExecutor(
-            specification=specification,
-            market_data=context.market_data,
-            signal_provider=self._signal_provider,
         )
 
         execution = (
@@ -119,15 +108,64 @@ class MarketResearchSessionFactory:
             )
         )
 
-        executor = ExperimentExecutionTrackingExecutor(
-            executor=prepared_executor,
-            execution=execution,
-            environment_fingerprint=(
-                context.environment.fingerprint()
-            ),
-            recorder=self._execution_recorder,
-            clock=self._clock,
-        )
+        try:
+            dataset = self._data_provider.load(
+                specification
+            )
+
+            context = self._context_factory.create(
+                specification=specification,
+                dataset=dataset,
+            )
+
+            prepared_executor = (
+                PreparedMarketBacktestExecutor(
+                    specification=specification,
+                    market_data=context.market_data,
+                    signal_provider=(
+                        self._signal_provider
+                    ),
+                )
+            )
+
+            executor = (
+                ExperimentExecutionTrackingExecutor(
+                    executor=prepared_executor,
+                    execution=execution,
+                    environment_fingerprint=(
+                        context.environment.fingerprint()
+                    ),
+                    recorder=(
+                        self._execution_recorder
+                    ),
+                    clock=self._clock,
+                )
+            )
+        except Exception as error:
+            failure = ExperimentExecutionFailure(
+                stage=(
+                    ExperimentExecutionFailureStage
+                    .PREPARATION
+                ),
+                error_type=type(error).__name__,
+                message=(
+                    str(error).strip()
+                    or type(error).__name__
+                ),
+            )
+            failed = execution.fail(
+                failure=failure,
+                finished_at=self._clock.now(),
+            )
+
+            self._execution_recorder.record(
+                execution
+            )
+            self._execution_recorder.record(
+                failed
+            )
+
+            raise
 
         return MarketResearchSession(
             context=context,
