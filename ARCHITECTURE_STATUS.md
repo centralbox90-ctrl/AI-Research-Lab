@@ -253,7 +253,6 @@ Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandida
 - transactional validation append-only истории ExperimentExecution: обязательный первый PENDING, разрешённые transitions, immutable identity и запрет snapshots после terminal state;
 - read-time validation persisted `ExperimentExecution` history: непрерывный sequence, согласованные status/payload и execution identity, обязательный первый `PENDING` и допустимые transitions;
 - production CLI acceptance для повреждённой persisted execution history: exit code `1`, пустой stdout и диагностический stderr без выхода исключения за transport boundary;
-- production CLI acceptance для повреждённой persisted execution history: exit code `1`, пустой stdout и диагностический stderr без выхода исключения за transport boundary;
 - public read-only `GetExperimentExecutionHistory`;
 - public read-only `ListExperimentExecutions`;
 - production CLI query для полной истории технического выполнения;
