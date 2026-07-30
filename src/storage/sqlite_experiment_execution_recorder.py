@@ -147,7 +147,10 @@ class SqliteExperimentExecutionRecorder:
         with self._connection() as connection:
             rows = connection.execute(
                 """
-                SELECT payload
+                SELECT
+                    sequence,
+                    status,
+                    payload
                 FROM experiment_execution_snapshots
                 WHERE execution_id = ?
                 ORDER BY sequence
@@ -155,10 +158,17 @@ class SqliteExperimentExecutionRecorder:
                 (normalized_id,),
             ).fetchall()
 
-        return tuple(
-            _deserialize_execution(row[0])
+        snapshots = tuple(
+            _deserialize_execution(row[2])
             for row in rows
         )
+        _validate_stored_execution_history(
+            execution_id=normalized_id,
+            rows=rows,
+            snapshots=snapshots,
+        )
+
+        return snapshots
 
     def list_execution_ids(
         self,
@@ -302,6 +312,70 @@ def _validate_next_execution_snapshot(
                     f"{field_name} must not change "
                     "after execution starts"
                 )
+
+def _validate_stored_execution_history(
+    *,
+    execution_id: str,
+    rows: list[tuple[object, ...]],
+    snapshots: tuple[ExperimentExecution, ...],
+) -> None:
+    if not snapshots:
+        return
+
+    for index, (row, snapshot) in enumerate(
+        zip(
+            rows,
+            snapshots,
+            strict=True,
+        ),
+        start=1,
+    ):
+        sequence = row[0]
+        stored_status = row[1]
+
+        if sequence != index:
+            if index == 1:
+                raise ValueError(
+                    "stored execution history must "
+                    "start at sequence 1"
+                )
+
+            raise ValueError(
+                "stored execution history sequence "
+                "is not contiguous"
+            )
+
+        if stored_status != snapshot.status.value:
+            raise ValueError(
+                "stored execution status does not "
+                "match payload"
+            )
+
+        if snapshot.execution_id != execution_id:
+            raise ValueError(
+                "stored execution_id does not "
+                "match payload"
+            )
+
+    if (
+        snapshots[0].status
+        is not ExperimentExecutionStatus.PENDING
+    ):
+        raise ValueError(
+            "stored execution history must "
+            "start with PENDING"
+        )
+
+    for previous, current in zip(
+        snapshots,
+        snapshots[1:],
+        strict=False,
+    ):
+        _validate_next_execution_snapshot(
+            previous,
+            current,
+        )
+
 
 def _deserialize_execution(
     payload: object,

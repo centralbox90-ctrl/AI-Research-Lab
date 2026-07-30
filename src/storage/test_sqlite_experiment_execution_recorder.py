@@ -532,3 +532,191 @@ def test_rejects_changed_running_context(
         pending,
         running,
     )
+
+def insert_raw_snapshot(
+    db_path: Path,
+    *,
+    execution_id: str,
+    sequence: int,
+    status: str,
+    snapshot: ExperimentExecution,
+) -> None:
+    payload = json.dumps(
+        snapshot.to_dict(),
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    )
+
+    with sqlite3.connect(db_path) as connection:
+        connection.execute(
+            """
+            INSERT INTO experiment_execution_snapshots (
+                execution_id,
+                sequence,
+                status,
+                payload
+            )
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                execution_id,
+                sequence,
+                status,
+                payload,
+            ),
+        )
+
+
+def test_rejects_stored_history_with_sequence_gap(
+    tmp_path: Path,
+) -> None:
+    db_path = tmp_path / "executions.db"
+    recorder = SqliteExperimentExecutionRecorder(
+        db_path
+    )
+    pending = build_pending()
+
+    insert_raw_snapshot(
+        db_path,
+        execution_id=pending.execution_id,
+        sequence=2,
+        status=pending.status.value,
+        snapshot=pending,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "stored execution history must "
+            "start at sequence 1"
+        ),
+    ):
+        recorder.history(
+            pending.execution_id
+        )
+
+
+def test_rejects_stored_status_mismatch(
+    tmp_path: Path,
+) -> None:
+    db_path = tmp_path / "executions.db"
+    recorder = SqliteExperimentExecutionRecorder(
+        db_path
+    )
+    pending = build_pending()
+
+    insert_raw_snapshot(
+        db_path,
+        execution_id=pending.execution_id,
+        sequence=1,
+        status="RUNNING",
+        snapshot=pending,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "stored execution status does not "
+            "match payload"
+        ),
+    ):
+        recorder.history(
+            pending.execution_id
+        )
+
+
+def test_rejects_stored_execution_id_mismatch(
+    tmp_path: Path,
+) -> None:
+    db_path = tmp_path / "executions.db"
+    recorder = SqliteExperimentExecutionRecorder(
+        db_path
+    )
+    pending = build_pending()
+
+    insert_raw_snapshot(
+        db_path,
+        execution_id="stored-execution",
+        sequence=1,
+        status=pending.status.value,
+        snapshot=pending,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "stored execution_id does not "
+            "match payload"
+        ),
+    ):
+        recorder.history(
+            "stored-execution"
+        )
+
+
+def test_rejects_non_pending_stored_history(
+    tmp_path: Path,
+) -> None:
+    db_path = tmp_path / "executions.db"
+    recorder = SqliteExperimentExecutionRecorder(
+        db_path
+    )
+    running = build_running()
+
+    insert_raw_snapshot(
+        db_path,
+        execution_id=running.execution_id,
+        sequence=1,
+        status=running.status.value,
+        snapshot=running,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "stored execution history must "
+            "start with PENDING"
+        ),
+    ):
+        recorder.history(
+            running.execution_id
+        )
+
+
+def test_rejects_invalid_stored_transition(
+    tmp_path: Path,
+) -> None:
+    db_path = tmp_path / "executions.db"
+    recorder = SqliteExperimentExecutionRecorder(
+        db_path
+    )
+    pending = build_pending()
+    succeeded = build_succeeded()
+
+    insert_raw_snapshot(
+        db_path,
+        execution_id=pending.execution_id,
+        sequence=1,
+        status=pending.status.value,
+        snapshot=pending,
+    )
+    insert_raw_snapshot(
+        db_path,
+        execution_id=succeeded.execution_id,
+        sequence=2,
+        status=succeeded.status.value,
+        snapshot=succeeded,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "invalid execution status transition: "
+            "PENDING -> SUCCEEDED"
+        ),
+    ):
+        recorder.history(
+            pending.execution_id
+        )
