@@ -2156,3 +2156,49 @@ Slice не добавил:
 
 Knowledge feature freeze и локальный indicator plugin contract
 сохранены.
+
+## 29. Immutable research artifact persistence checkpoint
+
+Commit checkpoint: `efda1fd`.
+
+Этот раздел фиксирует усиление существующей persistence-границы
+`SqliteResearchCycleStore` без добавления нового artifact store.
+
+### 29.1 Сохранение по result identity
+
+Первичная запись нового `result_id` сохраняет canonical JSON payload
+в существующей таблице `research_cycles`.
+
+Повторная запись того же `result_id` разрешена только при полном
+совпадении canonical serialized payload.
+
+Такой retry является идемпотентным и не изменяет persistent state.
+
+Другой payload под существующим `result_id` отклоняется до записи.
+Первоначальный artifact остаётся неизменным.
+
+### 29.2 Transaction boundary
+
+Проверка существующего payload и возможная первичная вставка
+выполняются внутри `BEGIN IMMEDIATE` transaction.
+
+Silent last-write-wins replacement между concurrent writers одного
+SQLite database больше невозможен.
+
+### 29.3 Подтверждённые границы
+
+Slice не изменил:
+
+- `SerializedResearchCycleStore` Application port;
+- JSON schema сохранённых research artifacts;
+- таблицу `research_cycles`;
+- публичные Application use cases;
+- Domain или Knowledge models;
+- CLI, HTTP или MCP routes.
+
+Новый repository base class, artifact framework, workflow, lifecycle,
+pipeline или orchestration engine не добавлялись.
+
+Standalone Evidence и Finding contracts остаются legacy.
+Knowledge feature freeze и локальный indicator plugin contract
+сохранены.

@@ -18,6 +18,7 @@ AI Research Lab — исследовательская платформа для
 - формирование evidence, Findings и формальная оценка гипотезы;
 - запуск полного сравнительного Analysis-потока через JSON CLI-команду;
 - воспроизводимое планирование и запуск рыночных исследовательских кампаний из согласованных JSON-контрактов;
+- immutable и идемпотентное хранение research artifacts по `result_id`;
 - read-only просмотр append-only истории `ExperimentExecution` через CLI;
 - read-only обнаружение сохранённых `ExperimentExecution` identities через CLI;
 - composition roots для сборки прикладных сценариев;

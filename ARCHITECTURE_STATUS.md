@@ -261,6 +261,7 @@ Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandida
 - reproducимые independent generated market-data periods;
 - явное разделение technical execution и scientific interpretation;
 - общий `ResearchArtifactEnvelope` на границах хранения и обмена;
+- immutable и идемпотентная SQLite persistence research artifacts по `result_id`;
 - market research envelope;
 - comparative HypothesisEvaluation envelope;
 - Knowledge research-question envelope;
