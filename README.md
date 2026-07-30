@@ -25,6 +25,7 @@ AI Research Lab — исследовательская платформа для
 - end-to-end проверка связи production market research result, validated envelope и append-only `ExperimentExecution` history;
 - end-to-end проверка persisted failure history без создания research artifact для неуспешного market execution;
 - контролируемое CLI-представление runtime failure команды `run-research`;
+- контролируемое CLI-представление runtime failure вложенного Campaign experiment;
 - append-only фиксация market research preparation failure до перехода execution в `RUNNING`;
 - SQLite acceptance-проверка восстановления preparation failure history через production CLI;
 - транзакционная проверка целостности append-only истории ExperimentExecution, допустимых переходов и неизменяемой execution identity;

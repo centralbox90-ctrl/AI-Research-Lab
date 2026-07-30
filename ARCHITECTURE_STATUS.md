@@ -265,6 +265,7 @@ Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandida
 - production preparation failure tracking для dataset/context preparation: `PENDING → FAILED` со stage `PREPARATION` без перехода в `RUNNING`;
 - SQLite acceptance test подтверждает восстановление persisted preparation failure через CLI после повторного открытия database;
 - production execution tracking для Market Research Campaign;
+- controlled `run-market-research-campaign` mapping для вложенного technical `RuntimeError`: exit code `1`, пустой stdout и диагностический stderr;
 - production execution tracking для comparative analysis;
 - deterministic specification fingerprints;
 - reproducимые independent generated market-data periods;

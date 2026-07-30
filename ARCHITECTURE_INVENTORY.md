@@ -2722,3 +2722,46 @@ HypothesisEvaluation.
 Knowledge feature freeze и локальный indicator plugin contract
 сохранены. Добавление нового индикатора остаётся изменением ровно одного
 production module в `src/indicators/implementations`.
+
+## 42. Campaign runtime failure boundary checkpoint
+
+Commit checkpoint: `b183923`.
+
+CLI route `run-market-research-campaign` теперь контролируемо
+обрабатывает `RuntimeError` от вложенного market experiment.
+
+Ранее Campaign route обрабатывал validation и registration errors через
+`ValueError` и `LookupError`, но technical runtime failure мог
+покинуть transport boundary.
+
+Теперь при таком отказе CLI сохраняет единый command contract:
+
+- exit code равен `1`;
+- stdout остаётся пустым;
+- stderr содержит Campaign operation context;
+- исходная диагностическая причина сохраняется;
+- исключение не выходит за границу `ResearchCli`.
+
+Вложенный market research application по-прежнему владеет
+`ExperimentExecution` transitions и persistence. Campaign CLI не
+создаёт собственный parallel lifecycle и не изменяет технические
+snapshots.
+
+Существующие individual execution paths сохраняют
+`PENDING → RUNNING → FAILED` и failure provenance. Campaign transport
+только преобразует уже зафиксированный technical failure в
+контролируемый CLI result.
+
+Campaign planning, полное разрешение registrations до первого запуска,
+artifact envelope, correlation, persistence schema и Domain contracts
+не изменялись.
+
+Slice не добавил campaign aggregate execution, workflow runtime,
+scheduler, retries, worker state или универсальный lifecycle engine.
+
+Technical execution failure не подменяет Evidence, Finding или
+HypothesisEvaluation.
+
+Knowledge feature freeze и локальный indicator plugin contract
+сохранены. Добавление нового индикатора остаётся изменением ровно одного
+production module в `src/indicators/implementations`.
