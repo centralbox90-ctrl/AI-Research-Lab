@@ -1984,3 +1984,93 @@ Knowledge feature freeze и локальный indicator plugin contract
   Application use case;
 - общий workflow, lifecycle, pipeline или orchestration engine не
   добавлялся.
+
+## 27. ExperimentExecution history checkpoint
+
+Commit checkpoint: `79445e9`.
+
+Этот раздел фиксирует завершённый read-only vertical slice для
+существующих append-only `ExperimentExecution` snapshots.
+
+### 27.1 Public Application use case
+
+Создан публичный use case `GetExperimentExecutionHistory`.
+
+Use case:
+
+- нормализует execution identity;
+- читает полную append-only history через отдельный port;
+- проверяет tuple contract и тип каждого snapshot;
+- отклоняет snapshots другой execution identity;
+- возвращает пустой tuple для отсутствующей history.
+
+`GetExperimentExecutionHistory` добавлен в явный
+`src.application.public_api`.
+
+Use case не изменяет execution state и не интерпретирует научные
+результаты.
+
+### 27.2 Internal read port
+
+Создан внутренний `ExperimentExecutionHistoryReader`.
+
+Port определяет только операцию `history` и не экспортируется как
+публичный Application use case.
+
+Write-only `ExperimentExecutionRecorder` не расширялся.
+Общий repository base class не создавался.
+
+### 27.3 CLI contract
+
+Создан `GetExperimentExecutionHistoryCommand` и route:
+
+`get-experiment-execution-history <execution_id>`.
+
+Versioned JSON schema 1 содержит:
+
+- `execution_id`;
+- `snapshot_count`;
+- упорядоченный массив `snapshots`.
+
+Route поддерживает pretty и compact JSON.
+
+Exit codes:
+
+- `0` — history найдена;
+- `1` — history отсутствует или identifier отклонён;
+- `2` — command dependency не настроена.
+
+### 27.4 Production composition
+
+Главный `build_research_cli` использует один
+`SqliteExperimentExecutionRecorder` как write adapter и как read
+adapter для `GetExperimentExecutionHistory`.
+
+Новая таблица, второй repository и копирование snapshots не
+создавались.
+
+Production integration test записывает последовательность
+`PENDING` → `RUNNING` → `SUCCEEDED` и читает её через реальный CLI
+route из той же SQLite database.
+
+### 27.5 Архитектурная граница
+
+`ExperimentExecution.status` описывает только техническое
+выполнение и не смешивается с `Evidence`, `Finding`,
+`HypothesisEvaluation` или Knowledge promotion.
+
+Queue, retries, scheduling, leases и heartbeat не добавлялись.
+
+### 27.6 Подтверждённые ограничения
+
+На commit `79445e9`:
+
+- route остаётся read-only;
+- HTTP и MCP surfaces не расширялись;
+- persistence schema не изменялась;
+- execution history не объявлялась новым artifact type;
+- Knowledge feature freeze сохранён;
+- добавление indicator остаётся локальным изменением одного
+  production module;
+- общий workflow, lifecycle, pipeline или orchestration engine не
+  добавлялся.

@@ -250,6 +250,8 @@ Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandida
 - явный `src.application.public_api`;
 - минимальный immutable `ExperimentExecution` lifecycle;
 - append-only SQLite snapshots технического выполнения;
+- public read-only `GetExperimentExecutionHistory`;
+- production CLI query для полной истории технического выполнения;
 - production execution tracking для одиночного market research;
 - production execution tracking для Market Research Campaign;
 - production execution tracking для comparative analysis;
