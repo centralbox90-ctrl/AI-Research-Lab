@@ -266,6 +266,7 @@ Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandida
 - SQLite acceptance test подтверждает восстановление persisted preparation failure через CLI после повторного открытия database;
 - production execution tracking для Market Research Campaign;
 - controlled `run-market-research-campaign` mapping для вложенного technical `RuntimeError`: exit code `1`, пустой stdout и диагностический stderr;
+- controlled `run-comparative-hypothesis-evaluation` mapping для technical `RuntimeError`: exit code `1`, пустой stdout и диагностический stderr;
 - production execution tracking для comparative analysis;
 - deterministic specification fingerprints;
 - reproducимые independent generated market-data periods;

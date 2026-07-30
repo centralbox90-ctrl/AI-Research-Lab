@@ -2765,3 +2765,42 @@ HypothesisEvaluation.
 Knowledge feature freeze и локальный indicator plugin contract
 сохранены. Добавление нового индикатора остаётся изменением ровно одного
 production module в `src/indicators/implementations`.
+
+## 43. Comparative runtime failure boundary checkpoint
+
+Commit checkpoint: `2ec0f75`.
+
+CLI route `run-comparative-hypothesis-evaluation` теперь
+контролируемо обрабатывает `RuntimeError` от comparative execution
+path.
+
+Ранее comparative route преобразовывал `ValueError` и `LookupError`
+в контролируемый CLI result, но technical runtime failure мог покинуть
+transport boundary.
+
+Теперь CLI contract для такого отказа совпадает с одиночным market
+research и Campaign routes:
+
+- exit code равен `1`;
+- stdout остаётся пустым;
+- stderr содержит comparative operation context;
+- исходная диагностическая причина сохраняется;
+- исключение не выходит за границу `ResearchCli`.
+
+Существующий comparative Application Layer по-прежнему владеет
+`ExperimentExecution` tracking и scientific analysis flow. CLI не
+создаёт собственные lifecycle transitions.
+
+Technical `FAILED` остаётся состоянием выполнения и не определяет
+состояние `HypothesisEvaluation`. Evidence, Finding и scientific
+evaluation contracts не изменялись.
+
+Request loader, execution specification, correlation, artifact
+envelope, Knowledge promotion и persistence schema не изменялись.
+
+Slice не добавил workflow runtime, retries, scheduler, worker state или
+универсальный lifecycle engine.
+
+Knowledge feature freeze и локальный indicator plugin contract
+сохранены. Новый индикатор по-прежнему добавляется ровно одним
+production module в `src/indicators/implementations`.
