@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
@@ -181,5 +182,72 @@ def test_main_reports_missing_execution_history(
         == (
             "Experiment execution history not found: "
             "execution-missing\n"
+        )
+    )
+
+def test_main_reports_corrupt_execution_history(
+    tmp_path: Path,
+) -> None:
+    database_path = (
+        tmp_path / "research-cycles.db"
+    )
+    recorder = (
+        SqliteExperimentExecutionRecorder(
+            db_path=database_path
+        )
+    )
+    pending = build_history()[0]
+    payload = json.dumps(
+        pending.to_dict(),
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    )
+
+    with sqlite3.connect(
+        database_path
+    ) as connection:
+        connection.execute(
+            """
+            INSERT INTO experiment_execution_snapshots (
+                execution_id,
+                sequence,
+                status,
+                payload
+            )
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                pending.execution_id,
+                2,
+                pending.status.value,
+                payload,
+            ),
+        )
+
+    stdout = StringIO()
+    stderr = StringIO()
+
+    exit_code = main(
+        [
+            "--database",
+            str(database_path),
+            "get-experiment-execution-history",
+            pending.execution_id,
+            "--compact",
+        ],
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 1
+    assert stdout.getvalue() == ""
+    assert (
+        stderr.getvalue()
+        == (
+            "Unable to get experiment execution "
+            "history: stored execution history "
+            "must start at sequence 1\n"
         )
     )
