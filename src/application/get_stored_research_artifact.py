@@ -1,5 +1,9 @@
 from typing import Any
 
+from src.application.research_artifact_envelope import (
+    is_research_artifact_envelope,
+    load_research_artifact_envelope,
+)
 from src.application.serialized_research_cycle_store import (
     SerializedResearchCycleStore,
 )
@@ -23,6 +27,18 @@ class GetStoredResearchArtifact:
         self,
         result_id: str,
     ) -> dict[str, Any] | None:
-        return self.store.get(
+        stored = self.store.get(
             result_id,
         )
+
+        if stored is None:
+            return None
+
+        if not is_research_artifact_envelope(
+            stored
+        ):
+            return stored
+
+        return load_research_artifact_envelope(
+            stored
+        ).to_dict()
