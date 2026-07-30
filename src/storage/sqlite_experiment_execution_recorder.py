@@ -60,14 +60,38 @@ class SqliteExperimentExecutionRecorder:
 
             row = connection.execute(
                 """
-                SELECT COALESCE(MAX(sequence), 0)
+                SELECT
+                    sequence,
+                    payload
                 FROM experiment_execution_snapshots
                 WHERE execution_id = ?
+                ORDER BY sequence DESC
+                LIMIT 1
                 """,
                 (execution.execution_id,),
             ).fetchone()
 
-            sequence = int(row[0]) + 1
+            if row is None:
+                if (
+                    execution.status
+                    is not
+                    ExperimentExecutionStatus.PENDING
+                ):
+                    raise ValueError(
+                        "first execution snapshot "
+                        "must be PENDING"
+                    )
+
+                sequence = 1
+            else:
+                previous = _deserialize_execution(
+                    row[1]
+                )
+                _validate_next_execution_snapshot(
+                    previous,
+                    execution,
+                )
+                sequence = int(row[0]) + 1
 
             connection.execute(
                 """
@@ -201,6 +225,83 @@ class SqliteExperimentExecutionRecorder:
                 """
             )
 
+
+_ALLOWED_EXECUTION_TRANSITIONS = {
+    ExperimentExecutionStatus.PENDING: frozenset(
+        {
+            ExperimentExecutionStatus.RUNNING,
+            ExperimentExecutionStatus.FAILED,
+            ExperimentExecutionStatus.CANCELLED,
+        }
+    ),
+    ExperimentExecutionStatus.RUNNING: frozenset(
+        {
+            ExperimentExecutionStatus.SUCCEEDED,
+            ExperimentExecutionStatus.FAILED,
+            ExperimentExecutionStatus.CANCELLED,
+        }
+    ),
+}
+
+_EXECUTION_IDENTITY_FIELDS = (
+    "experiment_id",
+    "specification_fingerprint",
+    "correlation_id",
+    "created_at",
+)
+
+
+def _validate_next_execution_snapshot(
+    previous: ExperimentExecution,
+    current: ExperimentExecution,
+) -> None:
+    if previous.is_terminal:
+        raise ValueError(
+            "terminal execution cannot accept "
+            "another snapshot"
+        )
+
+    allowed_statuses = (
+        _ALLOWED_EXECUTION_TRANSITIONS[
+            previous.status
+        ]
+    )
+
+    if current.status not in allowed_statuses:
+        raise ValueError(
+            "invalid execution status transition: "
+            f"{previous.status.value} -> "
+            f"{current.status.value}"
+        )
+
+    for field_name in (
+        _EXECUTION_IDENTITY_FIELDS
+    ):
+        if (
+            getattr(previous, field_name)
+            != getattr(current, field_name)
+        ):
+            raise ValueError(
+                f"{field_name} must not change "
+                "between execution snapshots"
+            )
+
+    if (
+        previous.status
+        is ExperimentExecutionStatus.RUNNING
+    ):
+        for field_name in (
+            "environment_fingerprint",
+            "started_at",
+        ):
+            if (
+                getattr(previous, field_name)
+                != getattr(current, field_name)
+            ):
+                raise ValueError(
+                    f"{field_name} must not change "
+                    "after execution starts"
+                )
 
 def _deserialize_execution(
     payload: object,

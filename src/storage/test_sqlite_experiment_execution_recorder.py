@@ -137,19 +137,24 @@ def test_persists_across_instances(
     tmp_path: Path,
 ) -> None:
     db_path = tmp_path / "executions.db"
-    execution = build_succeeded()
+    pending = build_pending()
+    running = build_running()
+    succeeded = build_succeeded()
     recorder = SqliteExperimentExecutionRecorder(
         db_path
     )
-    recorder.record(execution)
+
+    recorder.record(pending)
+    recorder.record(running)
+    recorder.record(succeeded)
 
     reopened = SqliteExperimentExecutionRecorder(
         db_path
     )
 
     assert reopened.get_latest(
-        execution.execution_id
-    ) == execution
+        succeeded.execution_id
+    ) == succeeded
 
 
 def test_round_trips_failure(
@@ -158,7 +163,9 @@ def test_round_trips_failure(
     recorder = SqliteExperimentExecutionRecorder(
         tmp_path / "executions.db"
     )
-    failed = build_running().fail(
+    pending = build_pending()
+    running = build_running()
+    failed = running.fail(
         failure=ExperimentExecutionFailure(
             stage=(
                 ExperimentExecutionFailureStage.EXECUTION
@@ -172,6 +179,8 @@ def test_round_trips_failure(
         ),
     )
 
+    recorder.record(pending)
+    recorder.record(running)
     recorder.record(failed)
 
     assert recorder.get_latest(
@@ -336,4 +345,190 @@ def test_is_exported_from_storage() -> None:
     assert (
         ExportedRecorder
         is SqliteExperimentExecutionRecorder
+    )
+
+def test_rejects_non_pending_first_snapshot(
+    tmp_path: Path,
+) -> None:
+    recorder = SqliteExperimentExecutionRecorder(
+        tmp_path / "executions.db"
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "first execution snapshot "
+            "must be PENDING"
+        ),
+    ):
+        recorder.record(
+            build_running()
+        )
+
+    assert recorder.list_execution_ids() == ()
+
+
+def test_rejects_skipped_execution_transition(
+    tmp_path: Path,
+) -> None:
+    recorder = SqliteExperimentExecutionRecorder(
+        tmp_path / "executions.db"
+    )
+    pending = build_pending()
+    succeeded = build_succeeded()
+
+    recorder.record(pending)
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "invalid execution status transition: "
+            "PENDING -> SUCCEEDED"
+        ),
+    ):
+        recorder.record(succeeded)
+
+    assert recorder.history(
+        pending.execution_id
+    ) == (pending,)
+
+
+def test_rejects_duplicate_execution_snapshot(
+    tmp_path: Path,
+) -> None:
+    recorder = SqliteExperimentExecutionRecorder(
+        tmp_path / "executions.db"
+    )
+    pending = build_pending()
+
+    recorder.record(pending)
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "invalid execution status transition: "
+            "PENDING -> PENDING"
+        ),
+    ):
+        recorder.record(pending)
+
+    assert recorder.history(
+        pending.execution_id
+    ) == (pending,)
+
+
+def test_rejects_snapshot_after_terminal_state(
+    tmp_path: Path,
+) -> None:
+    recorder = SqliteExperimentExecutionRecorder(
+        tmp_path / "executions.db"
+    )
+    pending = build_pending()
+    running = build_running()
+    succeeded = build_succeeded()
+
+    recorder.record(pending)
+    recorder.record(running)
+    recorder.record(succeeded)
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "terminal execution cannot accept "
+            "another snapshot"
+        ),
+    ):
+        recorder.record(succeeded)
+
+    assert recorder.history(
+        succeeded.execution_id
+    ) == (
+        pending,
+        running,
+        succeeded,
+    )
+
+
+def test_rejects_changed_execution_identity(
+    tmp_path: Path,
+) -> None:
+    recorder = SqliteExperimentExecutionRecorder(
+        tmp_path / "executions.db"
+    )
+    pending = build_pending()
+    changed_pending = ExperimentExecution(
+        execution_id=pending.execution_id,
+        experiment_id="different-experiment",
+        specification_fingerprint=(
+            pending.specification_fingerprint
+        ),
+        correlation_id=pending.correlation_id,
+        created_at=pending.created_at,
+    )
+    changed_running = changed_pending.start(
+        environment_fingerprint=(
+            ENVIRONMENT_FINGERPRINT
+        ),
+        started_at=(
+            CREATED_AT
+            + timedelta(seconds=1)
+        ),
+    )
+
+    recorder.record(pending)
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "experiment_id must not change "
+            "between execution snapshots"
+        ),
+    ):
+        recorder.record(changed_running)
+
+    assert recorder.history(
+        pending.execution_id
+    ) == (pending,)
+
+
+def test_rejects_changed_running_context(
+    tmp_path: Path,
+) -> None:
+    recorder = SqliteExperimentExecutionRecorder(
+        tmp_path / "executions.db"
+    )
+    pending = build_pending()
+    running = build_running()
+    changed_running = pending.start(
+        environment_fingerprint="c" * 64,
+        started_at=(
+            CREATED_AT
+            + timedelta(seconds=1)
+        ),
+    )
+    changed_succeeded = changed_running.succeed(
+        result_id="execution-1-result",
+        finished_at=(
+            CREATED_AT
+            + timedelta(seconds=2)
+        ),
+    )
+
+    recorder.record(pending)
+    recorder.record(running)
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "environment_fingerprint must not "
+            "change after execution starts"
+        ),
+    ):
+        recorder.record(changed_succeeded)
+
+    assert recorder.history(
+        pending.execution_id
+    ) == (
+        pending,
+        running,
     )
