@@ -262,6 +262,7 @@ Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandida
 - явное разделение technical execution и scientific interpretation;
 - общий `ResearchArtifactEnvelope` на границах хранения и обмена;
 - immutable и идемпотентная SQLite persistence research artifacts по `result_id`;
+- integrity-aware public read path для сохранённых `ResearchArtifactEnvelope`;
 - market research envelope;
 - comparative HypothesisEvaluation envelope;
 - Knowledge research-question envelope;

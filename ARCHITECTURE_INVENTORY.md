@@ -2202,3 +2202,52 @@ pipeline или orchestration engine не добавлялись.
 Standalone Evidence и Finding contracts остаются legacy.
 Knowledge feature freeze и локальный indicator plugin contract
 сохранены.
+
+## 30. Stored envelope integrity checkpoint
+
+Commit checkpoint: `58cc264`.
+
+Этот раздел фиксирует integrity-aware public read path для
+сохранённых research artifact envelopes.
+
+### 30.1 Public Application read boundary
+
+`GetStoredResearchArtifact` получает application-safe dictionary
+через существующий `SerializedResearchCycleStore`.
+
+Если сохранённое значение является `ResearchArtifactEnvelope`,
+use case повторно загружает его через существующий
+`load_research_artifact_envelope`.
+
+До возврата клиенту проверяются:
+
+- envelope schema version;
+- обязательные metadata fields;
+- timestamp и source reference contracts;
+- JSON-safe provenance и payload;
+- соответствие `payload_fingerprint` фактическому payload.
+
+Повреждённый envelope отклоняется на Application boundary и не
+передаётся в CLI, HTTP или MCP adapter.
+
+### 30.2 Legacy compatibility
+
+Сохранённый legacy research artifact без envelope markers
+возвращается через существующий compatibility path без изменения.
+
+Missing artifact по-прежнему возвращает `None`.
+
+### 30.3 Подтверждённые границы
+
+Slice переиспользует существующий envelope loader и не добавляет:
+
+- новый artifact loader framework;
+- новый public Application use case;
+- новый DTO или artifact type;
+- новую persistence schema;
+- новый CLI, HTTP или MCP route;
+- Domain или Knowledge model;
+- workflow, lifecycle, pipeline или orchestration engine.
+
+Knowledge feature freeze и локальный indicator plugin contract
+сохранены.
