@@ -2344,3 +2344,49 @@ Application contracts, persistence schema или artifact schema.
 
 Knowledge feature freeze и локальный indicator plugin contract
 сохранены.
+
+## 34. Failed market execution lifecycle acceptance checkpoint
+
+Commit checkpoint: `9476102`.
+
+Добавлен acceptance test существующего technical failure path для
+одиночного market research execution.
+
+Тест собирает реальный `RunMarketResearch` application graph через
+`build_market_research_application` и использует одну SQLite database
+для artifact store и execution recorder.
+
+Контролируемая ошибка возникает внутри signal provider после создания
+research context и перехода технического выполнения в `RUNNING`.
+
+Append-only execution history сохраняет точную последовательность:
+
+- `PENDING`;
+- `RUNNING`;
+- `FAILED`.
+
+Через production CLI route `get-experiment-execution-history`
+подтверждаются:
+
+- identity исходной specification;
+- сохранённый `environment_fingerprint`;
+- отсутствие `result_id`;
+- failure stage `EXECUTION`;
+- тип `RuntimeError`;
+- sanitized failure message.
+
+Production CLI route `list-research-cycles` подтверждает, что failed
+execution не создаёт частичный research artifact.
+
+Slice добавил только acceptance test и не изменил production-код,
+Application contracts, persistence schema, artifact schema или CLI
+routes.
+
+Technical failure остаётся состоянием `ExperimentExecution` и не
+преобразуется в Evidence, Finding или HypothesisEvaluation.
+
+Новый общий workflow, lifecycle, pipeline или orchestration engine не
+добавлялся.
+
+Knowledge feature freeze и локальный indicator plugin contract
+сохранены.

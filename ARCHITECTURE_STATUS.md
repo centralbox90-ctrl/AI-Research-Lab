@@ -256,6 +256,7 @@ Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandida
 - production CLI query для обнаружения сохранённых execution identities;
 - production execution tracking для одиночного market research;
 - end-to-end acceptance test production market research path: run → validated stored envelope → execution listing → append-only execution history;
+- end-to-end acceptance test failed market execution path: persisted `PENDING → RUNNING → FAILED` history без создания research artifact;
 - production execution tracking для Market Research Campaign;
 - production execution tracking для comparative analysis;
 - deterministic specification fingerprints;
