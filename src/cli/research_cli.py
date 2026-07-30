@@ -797,7 +797,11 @@ class ResearchCli:
                     arguments.correlation_id
                 ),
             )
-        except (ValueError, LookupError) as error:
+        except (
+            ValueError,
+            LookupError,
+            RuntimeError,
+        ) as error:
             stderr.write(
                 f"Unable to run market research campaign: {error}\n"
             )

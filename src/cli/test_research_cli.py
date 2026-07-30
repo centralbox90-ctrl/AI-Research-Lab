@@ -343,6 +343,20 @@ class FailingMarketResearchCampaignCommand:
     ) -> str:
         raise ValueError("invalid campaign design")
 
+class RuntimeFailingMarketResearchCampaignCommand:
+    def execute(
+        self,
+        design_path: str | Path,
+        registration_path: str | Path,
+        *,
+        indent: int | None = 2,
+        correlation_id: str | None = None,
+    ) -> str:
+        raise RuntimeError(
+            "campaign experiment failed"
+        )
+
+
 def build_cli_with_campaign_command(
     command: object,
 ) -> ResearchCli:
@@ -448,6 +462,34 @@ def test_research_cli_reports_campaign_error() -> None:
             "Unable to run market research campaign: "
             "invalid campaign design\n"
         )
+    )
+
+
+def test_research_cli_reports_campaign_runtime_failure(
+) -> None:
+    cli = build_cli_with_campaign_command(
+        RuntimeFailingMarketResearchCampaignCommand()
+    )
+    stdout = StringIO()
+    stderr = StringIO()
+
+    exit_code = cli.run(
+        [
+            "run-market-research-campaign",
+            "--design",
+            "campaign-design.json",
+            "--registrations",
+            "registrations.json",
+        ],
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 1
+    assert stdout.getvalue() == ""
+    assert stderr.getvalue() == (
+        "Unable to run market research campaign: "
+        "campaign experiment failed\n"
     )
 
 
