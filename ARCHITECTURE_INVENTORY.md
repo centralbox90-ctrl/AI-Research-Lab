@@ -2676,3 +2676,49 @@ HypothesisEvaluation.
 Knowledge feature freeze и локальный indicator plugin contract
 сохранены. Новый индикатор по-прежнему добавляется ровно одним
 production module в `src/indicators/implementations`.
+
+## 41. Integrity-aware latest execution checkpoint
+
+Commit checkpoint: `a5e4413`.
+
+`SqliteExperimentExecutionRecorder.get_latest` больше не выполняет
+отдельный запрос только последнего persistence row.
+
+Метод использует существующий validated history read path и возвращает
+последний snapshot только после проверки всей persisted
+`ExperimentExecution` history.
+
+Это гарантирует, что корректный последний payload не скрывает
+повреждение более ранних snapshots.
+
+Перед возвратом latest execution подтверждаются:
+
+- начало sequence с единицы;
+- непрерывность sequence;
+- совпадение indexed status и payload status;
+- совпадение persistence key и payload execution identity;
+- обязательный первый `PENDING`;
+- допустимость всех transitions;
+- неизменяемость execution identity;
+- неизменяемость running context;
+- отсутствие snapshots после terminal state.
+
+Для отсутствующей execution identity `get_latest` по-прежнему возвращает
+`None`.
+
+Отдельный latest query и его частичный validation path удалены.
+Единственным read contract для одного execution становится полная
+validated append-only history.
+
+Persistence schema, public Application API, Domain model, CLI, HTTP,
+MCP и artifact contracts не изменялись.
+
+Slice не добавил workflow runtime, scheduler, retry policy, worker
+state или универсальный lifecycle engine.
+
+Technical execution status не подменяет Evidence, Finding или
+HypothesisEvaluation.
+
+Knowledge feature freeze и локальный indicator plugin contract
+сохранены. Добавление нового индикатора остаётся изменением ровно одного
+production module в `src/indicators/implementations`.
