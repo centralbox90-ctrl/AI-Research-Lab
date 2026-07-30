@@ -2474,3 +2474,50 @@ persistence schema, artifact schema, HTTP, MCP или Knowledge contracts.
 
 Knowledge feature freeze и локальный indicator plugin contract
 сохранены.
+
+## 37. Persisted preparation failure acceptance checkpoint
+
+Commit checkpoint: `86458aa`.
+
+Добавлен SQLite acceptance test существующего market research
+preparation failure path.
+
+Тест собирает application через `build_market_research_application` и
+использует одну database для `SqliteResearchCycleStore` и
+`SqliteExperimentExecutionRecorder`.
+
+Контролируемая ошибка market-data provider возникает до построения
+research context и до вызова experiment executor.
+
+После ошибки новый recorder открывает ту же SQLite database, а
+production CLI route `get-experiment-execution-history` восстанавливает
+точную последовательность:
+
+- `PENDING`;
+- `FAILED`.
+
+Восстановленный terminal snapshot подтверждает:
+
+- failure stage `PREPARATION`;
+- тот же `specification_fingerprint`;
+- отсутствие `started_at`;
+- отсутствие `environment_fingerprint`;
+- отсутствие `result_id`;
+- сохранённые error type и sanitized message;
+- наличие terminal `finished_at`.
+
+Production CLI route `list-research-cycles` возвращает пустой список:
+partial research artifact не создаётся.
+
+Slice добавил только acceptance test и не изменил production-код,
+Application contracts, persistence schema, artifact schema или CLI
+routes.
+
+Technical preparation failure остаётся частью
+`ExperimentExecution` и не подменяет scientific evaluation.
+
+Новый общий workflow, lifecycle, pipeline или orchestration engine не
+добавлялся.
+
+Knowledge feature freeze и локальный indicator plugin contract
+сохранены.
