@@ -115,26 +115,14 @@ class SqliteExperimentExecutionRecorder:
         self,
         execution_id: str,
     ) -> ExperimentExecution | None:
-        normalized_id = _normalize_execution_id(
+        history = self.history(
             execution_id
         )
 
-        with self._connection() as connection:
-            row = connection.execute(
-                """
-                SELECT payload
-                FROM experiment_execution_snapshots
-                WHERE execution_id = ?
-                ORDER BY sequence DESC
-                LIMIT 1
-                """,
-                (normalized_id,),
-            ).fetchone()
-
-        if row is None:
+        if not history:
             return None
 
-        return _deserialize_execution(row[0])
+        return history[-1]
 
     def history(
         self,

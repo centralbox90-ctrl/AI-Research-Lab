@@ -720,3 +720,39 @@ def test_rejects_invalid_stored_transition(
         recorder.history(
             pending.execution_id
         )
+
+def test_get_latest_rejects_invalid_stored_history(
+    tmp_path: Path,
+) -> None:
+    db_path = tmp_path / "executions.db"
+    recorder = SqliteExperimentExecutionRecorder(
+        db_path
+    )
+    pending = build_pending()
+    succeeded = build_succeeded()
+
+    insert_raw_snapshot(
+        db_path,
+        execution_id=pending.execution_id,
+        sequence=1,
+        status=pending.status.value,
+        snapshot=pending,
+    )
+    insert_raw_snapshot(
+        db_path,
+        execution_id=succeeded.execution_id,
+        sequence=2,
+        status=succeeded.status.value,
+        snapshot=succeeded,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "invalid execution status transition: "
+            "PENDING -> SUCCEEDED"
+        ),
+    ):
+        recorder.get_latest(
+            pending.execution_id
+        )
