@@ -10,6 +10,9 @@ from src.application import (
     GetStoredResearchCycle,
     ListStoredResearchCycles,
 )
+from src.application.get_experiment_execution_history import (
+    GetExperimentExecutionHistory,
+)
 from src.application.artifact_comparison_input_extractor import (
     ArtifactComparisonInputExtractor,
 )
@@ -70,6 +73,9 @@ from src.cli.export_research_artifact_command import (
 from src.cli.generate_research_questions_from_knowledge_repositories_command import (
     GenerateResearchQuestionsFromKnowledgeRepositoriesCommand,
 )
+from src.cli.get_experiment_execution_history_command import (
+    GetExperimentExecutionHistoryCommand,
+)
 from src.cli.get_stored_research_artifact_command import (
     GetStoredResearchArtifactCommand,
 )
@@ -126,6 +132,20 @@ def build_research_cli(
     execution_recorder = (
         SqliteExperimentExecutionRecorder(
             db_path=db_path,
+        )
+    )
+
+    execution_history_application = (
+        GetExperimentExecutionHistory(
+            reader=execution_recorder,
+        )
+    )
+
+    execution_history_command = (
+        GetExperimentExecutionHistoryCommand(
+            application=(
+                execution_history_application
+            ),
         )
     )
 
@@ -356,6 +376,9 @@ def build_research_cli(
             compare_artifacts_command
         ),
         list_research_cycles_command=list_command,
+        get_experiment_execution_history_command=(
+            execution_history_command
+        ),
         run_research_command=run_command,
         generate_research_questions_command=(
             knowledge_question_command
