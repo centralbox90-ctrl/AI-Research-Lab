@@ -238,3 +238,107 @@ def test_market_research_failure_lifecycle_is_persisted(
     )
 
     assert stored_result_ids == []
+
+class UnavailableMarketDataProvider:
+    def load(
+        self,
+        specification: MarketExperimentSpecification,
+    ) -> pd.DataFrame:
+        raise RuntimeError(
+            "market data unavailable"
+        )
+
+
+def test_market_research_preparation_failure_is_persisted(
+    tmp_path: Path,
+) -> None:
+    database_path = (
+        tmp_path / "preparation-failure.db"
+    )
+    store = SqliteResearchCycleStore(
+        db_path=database_path,
+    )
+    recorder = SqliteExperimentExecutionRecorder(
+        db_path=database_path,
+    )
+    specification = build_specification()
+    application = build_market_research_application(
+        data_provider=(
+            UnavailableMarketDataProvider()
+        ),
+        signal_provider=(
+            FailingMarketSignalProvider()
+        ),
+        store=store,
+        execution_recorder=recorder,
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match="market data unavailable",
+    ):
+        application.execute(
+            specification
+        )
+
+    assert store.list_result_ids() == []
+
+    reopened_recorder = (
+        SqliteExperimentExecutionRecorder(
+            db_path=database_path,
+        )
+    )
+    execution_ids = (
+        reopened_recorder.list_execution_ids()
+    )
+
+    assert len(execution_ids) == 1
+
+    execution_id = execution_ids[0]
+    history = run_cli(
+        database_path,
+        "get-experiment-execution-history",
+        execution_id,
+        "--compact",
+    )
+
+    assert history["schema_version"] == 1
+    assert history["execution_id"] == execution_id
+    assert history["snapshot_count"] == 2
+    assert [
+        snapshot["status"]
+        for snapshot in history["snapshots"]
+    ] == [
+        "PENDING",
+        "FAILED",
+    ]
+
+    pending, failed = history[
+        "snapshots"
+    ]
+
+    assert pending[
+        "specification_fingerprint"
+    ] == specification.fingerprint
+    assert failed[
+        "specification_fingerprint"
+    ] == specification.fingerprint
+    assert failed["started_at"] is None
+    assert failed[
+        "environment_fingerprint"
+    ] is None
+    assert failed["result_id"] is None
+    assert failed["finished_at"] is not None
+    assert failed["failure"] == {
+        "stage": "PREPARATION",
+        "error_type": "RuntimeError",
+        "message": "market data unavailable",
+    }
+
+    stored_result_ids = run_cli(
+        database_path,
+        "list-research-cycles",
+        "--compact",
+    )
+
+    assert stored_result_ids == []
