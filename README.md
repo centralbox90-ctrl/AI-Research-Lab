@@ -29,6 +29,7 @@ AI Research Lab — исследовательская платформа для
 - SQLite acceptance-проверка восстановления preparation failure history через production CLI;
 - транзакционная проверка целостности append-only истории ExperimentExecution, допустимых переходов и неизменяемой execution identity;
 - проверка persisted `ExperimentExecution` history при чтении: sequence, status, payload identity и полный порядок переходов;
+- CLI acceptance-проверка контролируемого отказа при чтении повреждённой persisted `ExperimentExecution` history;
 - composition roots для сборки прикладных сценариев;
 - append-only Knowledge persistence и repository-backed feedback path;
 - read-only HTTP API с OpenAPI 3.1 contract;
