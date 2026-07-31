@@ -624,3 +624,177 @@ def test_main_runs_real_comparative_request_to_evaluation(
             payloads[2]["result_id"]
             is not None
         )
+
+def test_main_persists_failed_comparative_execution(
+    tmp_path: Path,
+) -> None:
+    first_specification = (
+        build_comparative_market_specification_payload(
+            start_at=(
+                "2026-01-01T00:00:00Z"
+            ),
+            end_at=(
+                "2026-01-01T01:00:00Z"
+            ),
+            experiment_title=(
+                "Insufficient comparative replication one"
+            ),
+        )
+    )
+    second_specification = (
+        build_comparative_market_specification_payload(
+            start_at=(
+                "2026-02-01T00:00:00Z"
+            ),
+            end_at=(
+                "2026-02-01T01:00:00Z"
+            ),
+            experiment_title=(
+                "Insufficient comparative replication two"
+            ),
+        )
+    )
+    request_payload = {
+        "hypothesis_id": "hypothesis-rsi-failure",
+        "correlation_id": (
+            "comparative-failure-42"
+        ),
+        "requests": [
+            {
+                "market_specifications": [
+                    first_specification,
+                    second_specification,
+                ],
+                "indicator_id": "rsi",
+                "outcome_specification": {
+                    "horizons": [1],
+                    "price_field": "close",
+                },
+                "horizon": 1,
+                "statement": (
+                    "Insufficient data should fail "
+                    "comparative execution."
+                ),
+                "applicable_markets": [
+                    "EURUSD:H1",
+                ],
+            },
+        ],
+    }
+    request_path = (
+        tmp_path / "failed-comparative-request.json"
+    )
+    request_path.write_text(
+        json.dumps(
+            request_payload,
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    database_path = (
+        tmp_path / "research-cycles.db"
+    )
+    stdout = StringIO()
+    stderr = StringIO()
+
+    exit_code = main(
+        [
+            "--database",
+            str(database_path),
+            "run-comparative-hypothesis-evaluation",
+            "--request",
+            str(request_path),
+            "--compact",
+        ],
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 1
+    assert stdout.getvalue() == ""
+    assert stderr.getvalue() == (
+        "Unable to run comparative hypothesis "
+        "evaluation: warmup_bars must not "
+        "exceed series length\n"
+    )
+
+    with sqlite3.connect(
+        database_path
+    ) as connection:
+        execution_rows = connection.execute(
+            """
+            SELECT
+                execution_id,
+                sequence,
+                status,
+                payload
+            FROM experiment_execution_snapshots
+            ORDER BY sequence
+            """
+        ).fetchall()
+
+    assert len(execution_rows) == 3
+    assert len(
+        {
+            row[0]
+            for row in execution_rows
+        }
+    ) == 1
+    assert [
+        row[1]
+        for row in execution_rows
+    ] == [1, 2, 3]
+    assert [
+        row[2]
+        for row in execution_rows
+    ] == [
+        "PENDING",
+        "RUNNING",
+        "FAILED",
+    ]
+
+    payloads = [
+        json.loads(row[3])
+        for row in execution_rows
+    ]
+
+    assert [
+        payload["status"]
+        for payload in payloads
+    ] == [
+        "PENDING",
+        "RUNNING",
+        "FAILED",
+    ]
+    assert all(
+        payload["correlation_id"]
+        == "comparative-failure-42"
+        for payload in payloads
+    )
+
+    pending, running, failed = payloads
+
+    assert pending[
+        "specification_fingerprint"
+    ] == running[
+        "specification_fingerprint"
+    ]
+    assert failed[
+        "specification_fingerprint"
+    ] == running[
+        "specification_fingerprint"
+    ]
+    assert failed[
+        "environment_fingerprint"
+    ] == running[
+        "environment_fingerprint"
+    ]
+    assert failed["result_id"] is None
+    assert failed["failure"] == {
+        "stage": "EXECUTION",
+        "error_type": "ValueError",
+        "message": (
+            "warmup_bars must not exceed "
+            "series length"
+        ),
+    }
