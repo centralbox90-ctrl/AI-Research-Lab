@@ -341,30 +341,3 @@ def test_rejects_legacy_artifact_with_invalid_history(
         ),
     ):
         application.execute("result-legacy")
-
-
-def test_rejects_legacy_artifact_with_invalid_history(
-) -> None:
-    legacy = {
-        "artifact_version": 1,
-        "cycle": {
-            "result": {
-                "id": "result-legacy",
-            },
-        },
-        "history": [
-            "invalid-event",
-        ],
-    }
-    application = GetStoredResearchArtifact(
-        store=StubStore(legacy)
-    )
-
-    with pytest.raises(
-        ValueError,
-        match=(
-            "legacy market research history "
-            "must be an array of objects"
-        ),
-    ):
-        application.execute("result-legacy")
