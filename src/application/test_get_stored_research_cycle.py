@@ -139,3 +139,49 @@ def test_get_stored_research_cycle_rejects_corrupted_envelope(
         ),
     ):
         use_case.execute("result-003")
+
+
+def test_get_stored_research_cycle_rejects_storage_identity_mismatch(
+    tmp_path: Path,
+) -> None:
+    db_path = tmp_path / "research_cycles.db"
+    first_store = SqliteResearchCycleStore(
+        db_path=db_path,
+    )
+    serialized = ResearchArtifactEnvelopeFactory(
+        producer="market-research",
+        producer_version="git:test",
+    ).create(
+        artifact_type="market_research_cycle",
+        payload_schema_version=1,
+        provenance={},
+        payload={
+            "artifact_version": 1,
+            "cycle": {
+                "result": {
+                    "id": "result-payload",
+                },
+            },
+        },
+    ).to_dict()
+
+    first_store.save(
+        result_id="result-storage",
+        serialized_cycle=serialized,
+    )
+
+    second_store = SqliteResearchCycleStore(
+        db_path=db_path,
+    )
+    use_case = GetStoredResearchCycle(
+        store=second_store,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "market_research_cycle result id does "
+            "not match storage key"
+        ),
+    ):
+        use_case.execute("result-storage")

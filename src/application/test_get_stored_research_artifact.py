@@ -125,3 +125,20 @@ def test_rejects_stored_envelope_with_changed_payload(
         ),
     ):
         application.execute("result-001")
+
+
+def test_rejects_market_research_cycle_with_storage_identity_mismatch(
+) -> None:
+    serialized = build_envelope()
+    application = GetStoredResearchArtifact(
+        store=StubStore(serialized)
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "market_research_cycle result id does "
+            "not match storage key"
+        ),
+    ):
+        application.execute("result-other")
