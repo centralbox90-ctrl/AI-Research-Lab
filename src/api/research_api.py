@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from hmac import compare_digest
+
 from flask import Flask, jsonify, request
 
 from src.api.openapi import (
@@ -35,6 +37,26 @@ def _stored_artifact_integrity_response(
     )
 
 
+def _unauthorized_response():
+    response = jsonify(
+        {
+            "schema_version": 1,
+            "error": {
+                "code": "unauthorized",
+                "message": (
+                    "A valid Bearer token is required."
+                ),
+            },
+        }
+    )
+    response.status_code = 401
+    response.headers["WWW-Authenticate"] = (
+        'Bearer realm="ai-research-lab"'
+    )
+
+    return response
+
+
 def create_research_api(
     *,
     compare_stored_research_artifacts: (
@@ -46,6 +68,7 @@ def create_research_api(
     list_stored_research_cycles: (
         ListStoredResearchCycles
     ),
+    api_token: str | None = None,
 ) -> Flask:
     """
     Create the HTTP adapter for public research use cases.
@@ -90,12 +113,69 @@ def create_research_api(
             "a callable execute method"
         )
 
+    if api_token is not None:
+        if not isinstance(api_token, str):
+            raise TypeError(
+                "api_token must be a string or None"
+            )
+
+        if not api_token.strip():
+            raise ValueError(
+                "api_token must not be empty"
+            )
+
+        if api_token != api_token.strip():
+            raise ValueError(
+                "api_token must not contain "
+                "surrounding whitespace"
+            )
+
+    expected_api_token = (
+        api_token.encode("utf-8")
+        if api_token is not None
+        else None
+    )
+
     application = Flask(__name__)
+
+    @application.before_request
+    def require_api_token():
+        if expected_api_token is None:
+            return None
+
+        authorization = request.headers.get(
+            "Authorization",
+            "",
+        )
+        (
+            scheme,
+            separator,
+            provided_token,
+        ) = authorization.partition(" ")
+
+        if (
+            separator != " "
+            or scheme.casefold() != "bearer"
+            or not provided_token
+        ):
+            return _unauthorized_response()
+
+        if not compare_digest(
+            provided_token.encode("utf-8"),
+            expected_api_token,
+        ):
+            return _unauthorized_response()
+
+        return None
 
     @application.get("/openapi.json")
     def get_openapi_document():
         return jsonify(
-            build_openapi_document()
+            build_openapi_document(
+                bearer_auth_required=(
+                    api_token is not None
+                )
+            )
         )
 
     @application.get(

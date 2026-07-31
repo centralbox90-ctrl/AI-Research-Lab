@@ -68,6 +68,60 @@ def test_builds_repository_backed_research_api(
     }
 
 
+def test_builds_api_with_bearer_authentication(
+    tmp_path: Path,
+) -> None:
+    application = build_research_api(
+        db_path=(
+            tmp_path / "research-cycles.db"
+        ),
+        api_token=(
+            "private-api-token-value"
+        ),
+    )
+    client = application.test_client()
+
+    unauthorized_response = client.get(
+        "/v1/research-cycles"
+    )
+
+    assert unauthorized_response.status_code == 401
+
+    authorized_response = client.get(
+        "/v1/research-cycles",
+        headers={
+            "Authorization": (
+                "Bearer private-api-token-value"
+            ),
+        },
+    )
+
+    assert authorized_response.status_code == 200
+    assert authorized_response.get_json() == {
+        "schema_version": 1,
+        "count": 0,
+        "result_ids": [],
+    }
+
+    openapi_response = client.get(
+        "/openapi.json",
+        headers={
+            "Authorization": (
+                "Bearer private-api-token-value"
+            ),
+        },
+    )
+
+    assert openapi_response.status_code == 200
+    assert openapi_response.get_json()[
+        "security"
+    ] == [
+        {
+            "BearerAuth": [],
+        },
+    ]
+
+
 def test_builds_api_with_empty_database(
     tmp_path: Path,
 ) -> None:

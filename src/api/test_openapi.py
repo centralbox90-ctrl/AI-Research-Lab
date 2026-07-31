@@ -10,7 +10,7 @@ def test_builds_openapi_31_document(
     assert document["openapi"] == "3.1.0"
     assert document["info"] == {
         "title": "AI Research Lab API",
-        "version": "1.1.0",
+        "version": "1.2.0",
         "description": (
             "Read-only access to stored "
             "research results."
@@ -98,6 +98,69 @@ def test_builds_openapi_31_document(
         "404",
         "422",
     }
+
+
+def test_documents_optional_bearer_authentication(
+) -> None:
+    local_document = build_openapi_document()
+
+    assert "security" not in local_document
+    assert (
+        "securitySchemes"
+        not in local_document["components"]
+    )
+
+    private_document = build_openapi_document(
+        bearer_auth_required=True,
+    )
+
+    assert private_document["security"] == [
+        {
+            "BearerAuth": [],
+        },
+    ]
+    assert private_document["components"][
+        "securitySchemes"
+    ] == {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+        },
+    }
+
+    unauthorized_schema = (
+        private_document["components"]["schemas"][
+            "UnauthorizedError"
+        ]
+    )
+
+    assert unauthorized_schema["properties"][
+        "error"
+    ]["properties"]["code"]["const"] == (
+        "unauthorized"
+    )
+
+    for path_item in private_document[
+        "paths"
+    ].values():
+        for operation in path_item.values():
+            assert operation["responses"]["401"] == {
+                "description": (
+                    "A valid Bearer token "
+                    "is required."
+                ),
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": (
+                                "#/components/"
+                                "schemas/"
+                                "UnauthorizedError"
+                            ),
+                        },
+                    },
+                },
+            }
 
 
 def test_defines_exact_transport_schemas(

@@ -25,6 +25,8 @@ def build_research_api(
     db_path: str | Path = (
         RESEARCH_CYCLE_DATABASE_PATH
     ),
+    *,
+    api_token: str | None = None,
 ) -> Flask:
     """
     Build the production HTTP dependency graph.
@@ -66,4 +68,5 @@ def build_research_api(
         list_stored_research_cycles=(
             list_stored_research_cycles
         ),
+        api_token=api_token,
     )

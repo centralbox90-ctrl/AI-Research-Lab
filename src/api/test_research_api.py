@@ -112,6 +112,152 @@ class MissingExecute:
     pass
 
 
+def test_requires_valid_bearer_token(
+) -> None:
+    list_use_case = StubListStoredResearchCycles(
+        [
+            "result-001",
+        ]
+    )
+    application = create_research_api(
+        compare_stored_research_artifacts=(
+            StubCompareStoredResearchArtifacts()
+        ),
+        get_stored_research_artifact=(
+            StubGetStoredResearchArtifact({})
+        ),
+        list_stored_research_cycles=(
+            list_use_case
+        ),
+        api_token="private-api-token-value",
+    )
+    client = application.test_client()
+
+    missing_response = client.get(
+        "/v1/research-cycles"
+    )
+
+    assert missing_response.status_code == 401
+    assert missing_response.get_json() == {
+        "schema_version": 1,
+        "error": {
+            "code": "unauthorized",
+            "message": (
+                "A valid Bearer token is required."
+            ),
+        },
+    }
+    assert (
+        missing_response.headers[
+            "WWW-Authenticate"
+        ]
+        == 'Bearer realm="ai-research-lab"'
+    )
+    assert list_use_case.calls == 0
+
+    invalid_response = client.get(
+        "/v1/research-cycles",
+        headers={
+            "Authorization": "Bearer invalid-token",
+        },
+    )
+
+    assert invalid_response.status_code == 401
+    assert list_use_case.calls == 0
+
+    authorized_response = client.get(
+        "/v1/research-cycles",
+        headers={
+            "Authorization": (
+                "Bearer private-api-token-value"
+            ),
+        },
+    )
+
+    assert authorized_response.status_code == 200
+    assert list_use_case.calls == 1
+
+    openapi_response = client.get(
+        "/openapi.json",
+        headers={
+            "Authorization": (
+                "Bearer private-api-token-value"
+            ),
+        },
+    )
+
+    assert openapi_response.status_code == 200
+    assert openapi_response.get_json()[
+        "security"
+    ] == [
+        {
+            "BearerAuth": [],
+        },
+    ]
+
+    openapi_response = client.get(
+        "/openapi.json",
+        headers={
+            "Authorization": (
+                "Bearer private-api-token-value"
+            ),
+        },
+    )
+
+    assert openapi_response.status_code == 200
+    assert openapi_response.get_json()[
+        "security"
+    ] == [
+        {
+            "BearerAuth": [],
+        },
+    ]
+
+
+def test_rejects_invalid_api_token_configuration(
+) -> None:
+    invalid_configurations = (
+        (
+            "",
+            "api_token must not be empty",
+        ),
+        (
+            "   ",
+            "api_token must not be empty",
+        ),
+        (
+            " private-api-token ",
+            (
+                "api_token must not contain "
+                "surrounding whitespace"
+            ),
+        ),
+    )
+
+    for api_token, expected_message in (
+        invalid_configurations
+    ):
+        try:
+            create_research_api(
+                compare_stored_research_artifacts=(
+                    StubCompareStoredResearchArtifacts()
+                ),
+                get_stored_research_artifact=(
+                    StubGetStoredResearchArtifact({})
+                ),
+                list_stored_research_cycles=(
+                    StubListStoredResearchCycles([])
+                ),
+                api_token=api_token,
+            )
+        except ValueError as error:
+            assert str(error) == expected_message
+        else:
+            raise AssertionError(
+                "ValueError was not raised"
+            )
+
+
 def test_lists_stored_research_cycles(
 ) -> None:
     use_case = StubListStoredResearchCycles(
@@ -337,7 +483,7 @@ def test_serves_openapi_document(
 
     assert document["openapi"] == "3.1.0"
     assert document["info"]["version"] == (
-        "1.1.0"
+        "1.2.0"
     )
     assert set(document["paths"]) == {
         "/v1/research-artifact-comparisons",

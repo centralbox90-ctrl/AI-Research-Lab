@@ -8,6 +8,11 @@ from src.storage import (
 )
 
 
+VALID_API_TOKEN = (
+    "test-private-api-token-0123456789abcdef"
+)
+
+
 class StubApplication:
     pass
 
@@ -41,13 +46,21 @@ def configure_production_server(
     RecordingServe,
     list[Path],
 ]:
+    monkeypatch.setenv(
+        production_server.API_TOKEN_ENVIRONMENT_VARIABLE,
+        VALID_API_TOKEN,
+    )
     application = StubApplication()
     recording_serve = RecordingServe()
     database_paths: list[Path] = []
 
     def build_application(
         db_path: str | Path,
+        *,
+        api_token: str | None = None,
     ) -> StubApplication:
+        assert api_token == VALID_API_TOKEN
+
         database_paths.append(
             Path(db_path)
         )
@@ -191,6 +204,44 @@ def test_rejects_invalid_thread_count(
         )
 
     assert error.value.code == 2
+
+
+def test_requires_production_api_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv(
+        production_server.API_TOKEN_ENVIRONMENT_VARIABLE,
+        raising=False,
+    )
+
+    with pytest.raises(
+        SystemExit,
+    ) as error:
+        production_server.main([])
+
+    assert error.value.code == 2
+
+
+def test_rejects_invalid_production_api_tokens(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for value in (
+        "",
+        "short-token",
+        f" {VALID_API_TOKEN}",
+        "т" * 32,
+    ):
+        monkeypatch.setenv(
+            production_server.API_TOKEN_ENVIRONMENT_VARIABLE,
+            value,
+        )
+
+        with pytest.raises(
+            SystemExit,
+        ) as error:
+            production_server.main([])
+
+        assert error.value.code == 2
 
 
 def test_accepts_loopback_hosts() -> None:

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 
 def build_openapi_document(
+    *,
+    bearer_auth_required: bool = False,
 ) -> dict[str, object]:
     """
     Build the versioned HTTP transport contract.
@@ -10,11 +12,19 @@ def build_openapi_document(
     Domain and persistence models are not exposed.
     """
 
-    return {
+    if not isinstance(
+        bearer_auth_required,
+        bool,
+    ):
+        raise TypeError(
+            "bearer_auth_required must be a boolean"
+        )
+
+    document = {
         "openapi": "3.1.0",
         "info": {
             "title": "AI Research Lab API",
-            "version": "1.1.0",
+            "version": "1.2.0",
             "description": (
                 "Read-only access to stored "
                 "research results."
@@ -582,3 +592,71 @@ def build_openapi_document(
             },
         },
     }
+
+    if bearer_auth_required:
+        components = document["components"]
+        components["securitySchemes"] = {
+            "BearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+            },
+        }
+        components["schemas"][
+            "UnauthorizedError"
+        ] = {
+            "type": "object",
+            "additionalProperties": False,
+            "required": [
+                "schema_version",
+                "error",
+            ],
+            "properties": {
+                "schema_version": {
+                    "type": "integer",
+                    "const": 1,
+                },
+                "error": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": [
+                        "code",
+                        "message",
+                    ],
+                    "properties": {
+                        "code": {
+                            "type": "string",
+                            "const": "unauthorized",
+                        },
+                        "message": {
+                            "type": "string",
+                            "minLength": 1,
+                        },
+                    },
+                },
+            },
+        }
+        document["security"] = [
+            {"BearerAuth": []},
+        ]
+
+        for path_item in document["paths"].values():
+            for operation in path_item.values():
+                operation["responses"]["401"] = {
+                    "description": (
+                        "A valid Bearer token "
+                        "is required."
+                    ),
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": (
+                                    "#/components/"
+                                    "schemas/"
+                                    "UnauthorizedError"
+                                ),
+                            },
+                        },
+                    },
+                }
+
+    return document

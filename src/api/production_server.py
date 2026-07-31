@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import argparse
-from ipaddress import ip_address
+import os
 from collections.abc import Sequence
+from ipaddress import ip_address
 from pathlib import Path
 
 from waitress import serve
@@ -15,14 +16,21 @@ from src.storage import (
 )
 
 
+API_TOKEN_ENVIRONMENT_VARIABLE = (
+    "AI_RESEARCH_LAB_API_TOKEN"
+)
+MINIMUM_API_TOKEN_LENGTH = 32
+
+
 def main(
     argv: Sequence[str] | None = None,
 ) -> int:
     """
     Run the HTTP API through the production WSGI server.
 
-    TLS termination, authentication and external network
-    exposure remain deployment responsibilities.
+    TLS termination and external network exposure remain
+    deployment responsibilities. Bearer authentication is
+    required by this production entry point.
     """
 
     parser = argparse.ArgumentParser(
@@ -77,8 +85,14 @@ def main(
         else list(argv)
     )
 
+    try:
+        api_token = _load_api_token()
+    except ValueError as error:
+        parser.error(str(error))
+
     application = build_research_api(
         db_path=arguments.database,
+        api_token=api_token,
     )
 
     serve(
@@ -89,6 +103,41 @@ def main(
     )
 
     return 0
+
+
+def _load_api_token() -> str:
+    value = os.environ.get(
+        API_TOKEN_ENVIRONMENT_VARIABLE
+    )
+
+    if value is None or not value.strip():
+        raise ValueError(
+            f"{API_TOKEN_ENVIRONMENT_VARIABLE} "
+            "must be set"
+        )
+
+    if value != value.strip():
+        raise ValueError(
+            f"{API_TOKEN_ENVIRONMENT_VARIABLE} "
+            "must not contain surrounding whitespace"
+        )
+
+    if len(value) < MINIMUM_API_TOKEN_LENGTH:
+        raise ValueError(
+            f"{API_TOKEN_ENVIRONMENT_VARIABLE} "
+            "must contain at least "
+            f"{MINIMUM_API_TOKEN_LENGTH} characters"
+        )
+
+    try:
+        value.encode("ascii")
+    except UnicodeEncodeError as error:
+        raise ValueError(
+            f"{API_TOKEN_ENVIRONMENT_VARIABLE} "
+            "must contain only ASCII characters"
+        ) from error
+
+    return value
 
 
 def _parse_host(value: str) -> str:
