@@ -133,6 +133,90 @@ def test_main_reports_missing_research_cycle(
     )
 
 
+def test_main_reports_corrupt_research_cycle(
+    tmp_path: Path,
+) -> None:
+    db_path = tmp_path / "research_cycles.db"
+    store = SqliteResearchCycleStore(
+        db_path=db_path,
+    )
+    store.save(
+        result_id="result-corrupted",
+        serialized_cycle={
+            "result": {
+                "id": "different-result",
+            },
+        },
+    )
+    stdout = StringIO()
+    stderr = StringIO()
+
+    exit_code = main(
+        [
+            "--database",
+            str(db_path),
+            "get-research-cycle",
+            "result-corrupted",
+        ],
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 1
+    assert stdout.getvalue() == ""
+    assert stderr.getvalue() == (
+        "Unable to get research cycle: "
+        "stored research artifact 'result-corrupted' "
+        "failed integrity validation: "
+        "legacy research cycle result id does "
+        "not match storage key\n"
+    )
+
+
+def test_main_rejects_corrupt_research_artifact_export(
+    tmp_path: Path,
+) -> None:
+    db_path = tmp_path / "research_cycles.db"
+    output_path = tmp_path / "artifact.json"
+    store = SqliteResearchCycleStore(
+        db_path=db_path,
+    )
+    store.save(
+        result_id="result-corrupted",
+        serialized_cycle={
+            "result": {
+                "id": "different-result",
+            },
+        },
+    )
+    stdout = StringIO()
+    stderr = StringIO()
+
+    exit_code = main(
+        [
+            "--database",
+            str(db_path),
+            "export-research-artifact",
+            "result-corrupted",
+            "--output",
+            str(output_path),
+        ],
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 1
+    assert stdout.getvalue() == ""
+    assert not output_path.exists()
+    assert stderr.getvalue() == (
+        "Unable to export research artifact: "
+        "stored research artifact 'result-corrupted' "
+        "failed integrity validation: "
+        "legacy research cycle result id does "
+        "not match storage key\n"
+    )
+
+
 def test_build_research_cli_configures_comparative_command(
     tmp_path: Path,
 ) -> None:

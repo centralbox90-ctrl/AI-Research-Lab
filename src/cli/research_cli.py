@@ -427,10 +427,19 @@ class ResearchCli:
     ) -> int:
         indent = None if arguments.compact else 2
 
-        rendered = self.get_research_cycle_command.execute(
-            arguments.result_id,
-            indent=indent,
-        )
+        try:
+            rendered = (
+                self.get_research_cycle_command.execute(
+                    arguments.result_id,
+                    indent=indent,
+                )
+            )
+        except (TypeError, ValueError) as error:
+            stderr.write(
+                "Unable to get research cycle: "
+                f"{error}\n"
+            )
+            return 1
 
         if rendered is None:
             stderr.write(
@@ -537,12 +546,19 @@ class ResearchCli:
             )
             return 2
 
-        exported_path = (
-            self.export_research_artifact_command.execute(
-                arguments.result_id,
-                arguments.output_path,
+        try:
+            exported_path = (
+                self.export_research_artifact_command.execute(
+                    arguments.result_id,
+                    arguments.output_path,
+                )
             )
-        )
+        except (TypeError, ValueError) as error:
+            stderr.write(
+                "Unable to export research artifact: "
+                f"{error}\n"
+            )
+            return 1
 
         if exported_path is None:
             stderr.write(
