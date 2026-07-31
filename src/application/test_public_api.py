@@ -16,6 +16,7 @@ EXPECTED_PUBLIC_NAMES = (
     "PromoteHypothesisEvaluationToKnowledge",
     "RunMarketResearch",
     "RunMarketResearchCampaign",
+    "StoredResearchArtifactIntegrityError",
 )
 
 INTERNAL_NAMES = (

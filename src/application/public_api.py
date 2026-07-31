@@ -20,6 +20,7 @@ from src.application.get_experiment_execution_history import (
 )
 from src.application.get_stored_research_artifact import (
     GetStoredResearchArtifact,
+    StoredResearchArtifactIntegrityError,
 )
 from src.application.get_stored_research_cycle import (
     GetStoredResearchCycle,
@@ -60,4 +61,5 @@ __all__ = (
     "PromoteHypothesisEvaluationToKnowledge",
     "RunMarketResearch",
     "RunMarketResearchCampaign",
+    "StoredResearchArtifactIntegrityError",
 )

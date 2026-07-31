@@ -1,5 +1,6 @@
 from src.application.get_stored_research_artifact import (
     GetStoredResearchArtifact,
+    StoredResearchArtifactIntegrityError,
 )
 from src.application.serialized_research_cycle_store import (
     SerializedResearchCycleStore,
@@ -31,9 +32,12 @@ class ListStoredResearchCycles:
             )
 
             if artifact is None:
-                raise ValueError(
-                    "listed research artifact is "
-                    f"missing: {result_id}"
+                raise StoredResearchArtifactIntegrityError(
+                    result_id=result_id,
+                    reason=(
+                        "listed research artifact "
+                        "is missing"
+                    ),
                 )
 
         return result_ids

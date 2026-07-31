@@ -6,6 +6,7 @@ import pytest
 
 from src.application.get_stored_research_artifact import (
     GetStoredResearchArtifact,
+    StoredResearchArtifactIntegrityError,
 )
 from src.application.research_artifact_envelope import (
     ResearchArtifactEnvelopeFactory,
@@ -159,13 +160,23 @@ def test_rejects_market_research_cycle_with_storage_identity_mismatch(
     )
 
     with pytest.raises(
-        ValueError,
+        StoredResearchArtifactIntegrityError,
         match=(
             "market_research_cycle result id does "
             "not match storage key"
         ),
-    ):
+    ) as error:
         application.execute("result-other")
+
+    assert error.value.result_id == "result-other"
+    assert error.value.reason == (
+        "market_research_cycle result id does "
+        "not match storage key"
+    )
+    assert isinstance(
+        error.value.__cause__,
+        ValueError,
+    )
 
 
 def test_rejects_market_research_cycle_with_missing_payload_field(

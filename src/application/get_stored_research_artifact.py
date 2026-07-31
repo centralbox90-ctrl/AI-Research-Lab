@@ -11,6 +11,24 @@ from src.application.serialized_research_cycle_store import (
 )
 
 
+class StoredResearchArtifactIntegrityError(ValueError):
+    """Raised when stored artifact data fails integrity validation."""
+
+    def __init__(
+        self,
+        *,
+        result_id: str,
+        reason: str,
+    ) -> None:
+        self.result_id = result_id
+        self.reason = reason
+
+        super().__init__(
+            f"stored research artifact {result_id!r} "
+            f"failed integrity validation: {reason}"
+        )
+
+
 class GetStoredResearchArtifact:
     """
     Retrieves a stored research artifact from persistent storage.
@@ -26,6 +44,22 @@ class GetStoredResearchArtifact:
         self.store = store
 
     def execute(
+        self,
+        result_id: str,
+    ) -> dict[str, Any] | None:
+        try:
+            return self._execute_validated(
+                result_id
+            )
+        except StoredResearchArtifactIntegrityError:
+            raise
+        except (TypeError, ValueError) as error:
+            raise StoredResearchArtifactIntegrityError(
+                result_id=result_id,
+                reason=str(error),
+            ) from error
+
+    def _execute_validated(
         self,
         result_id: str,
     ) -> dict[str, Any] | None:

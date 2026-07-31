@@ -3,6 +3,9 @@ from pathlib import Path
 import pytest
 
 from src.application import ListStoredResearchCycles
+from src.application.get_stored_research_artifact import (
+    StoredResearchArtifactIntegrityError,
+)
 from src.storage import SqliteResearchCycleStore
 
 
@@ -89,10 +92,12 @@ def test_list_stored_research_cycles_fails_closed_on_identity_mismatch(
     )
 
     with pytest.raises(
-        ValueError,
+        StoredResearchArtifactIntegrityError,
         match=(
             "legacy research cycle result id does "
             "not match storage key"
         ),
-    ):
+    ) as error:
         use_case.execute()
+
+    assert error.value.result_id == "result-002"
