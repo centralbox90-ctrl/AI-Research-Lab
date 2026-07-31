@@ -406,6 +406,56 @@ collision semantics.
 По результатам decision gate новые Campaign, HypothesisEvaluation,
 Knowledge-question, Evidence или Finding stores сейчас не создаются.
 
+## Production hardening completion
+
+Audit baseline: `7d92d81`.
+Local test baseline: `2448 passed`.
+
+Утверждённый архитектурный scope завершил этап
+post-consolidation production hardening.
+
+### Подтверждённые closure criteria
+
+1. `ExperimentExecution` остаётся отдельным от Evidence, Finding,
+   HypothesisEvaluation и Knowledge.
+2. Append-only execution history проверяется при записи и при всех
+   публичных вариантах чтения: history, latest и listing.
+3. `ResearchArtifactEnvelope` используется как storage и exchange
+   boundary, а не как базовый класс доменных моделей.
+4. Modern и legacy market research artifacts проходят эквивалентную
+   integrity policy.
+5. Storage key проверяется против identity внутри artifact payload.
+6. Listing сохранённых research cycles работает fail-closed.
+7. Получение cycle, получение artifact, export и comparison не
+   обходят validated Application reader.
+8. CLI, HTTP и MCP преобразуют integrity failures в контролируемые
+   transport results.
+9. Стабильный `src.application.public_api` защищён точным allowlist.
+10. Artifact persistence расширяется только при наличии
+    подтверждённого persisted consumer.
+
+### Решение по дальнейшему scope
+
+Новые stores для Campaign result, HypothesisEvaluation, Knowledge
+questions, standalone Evidence и Finding сейчас не требуются.
+
+Legacy comparative file artifacts сохраняют специализированные
+export, load и comparison boundaries.
+
+Legacy serialized ResearchCampaign остаётся отдельной compatibility
+boundary и не считается persistence executed Campaign artifact.
+
+Architecture program не расширяется универсальным workflow engine,
+scheduler, retry runtime, queue, worker state или общим artifact
+repository.
+
+Knowledge feature freeze сохраняется.
+
+Дальнейшие security, authentication, authorization, TLS, deployment,
+observability, UX и operational requirements относятся к отдельной
+product-readiness программе и не являются незавершёнными частями
+утверждённого архитектурного scope.
+
 ## Приоритеты следующего этапа
 
 Knowledge feature development остаётся замороженной. Разрешены

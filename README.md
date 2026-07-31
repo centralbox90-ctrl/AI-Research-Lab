@@ -19,7 +19,9 @@ AI Research Lab — исследовательская платформа для
 - запуск полного сравнительного Analysis-потока через JSON CLI-команду;
 - воспроизводимое планирование и запуск рыночных исследовательских кампаний из согласованных JSON-контрактов;
 - immutable и идемпотентное хранение research artifacts по `result_id`;
-- integrity validation сохранённых artifact envelopes при публичном чтении;
+- integrity validation modern envelopes и typed legacy artifacts при публичном чтении;
+- проверка storage identity и fail-closed listing сохранённых research cycles;
+- controlled integrity errors для CLI, HTTP и MCP read surfaces;
 - read-only просмотр append-only истории `ExperimentExecution` через CLI;
 - read-only обнаружение сохранённых `ExperimentExecution` identities через CLI;
 - end-to-end проверка связи production market research result, validated envelope и append-only `ExperimentExecution` history;
@@ -43,7 +45,7 @@ AI Research Lab — исследовательская платформа для
 - read-only MCP adapter с repository-backed stdio server;
 - автоматическая проверка чистого checkout через GitHub Actions.
 
-Основной этап архитектурной консолидации завершён. Knowledge feature development временно заморожена; текущий этап развивает внешние adapters поверх стабильного Application API.
+Основной этап архитектурной консолидации и production hardening утверждённого архитектурного scope завершён. Knowledge feature development временно заморожена. Дальнейшая работа разделяется на consumer-driven research capabilities и отдельную product-readiness программу: security, deployment, UX и operations.
 
 ## Архитектурный цикл
 
