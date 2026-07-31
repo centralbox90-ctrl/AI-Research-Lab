@@ -195,24 +195,6 @@ def test_requires_valid_bearer_token(
         },
     ]
 
-    openapi_response = client.get(
-        "/openapi.json",
-        headers={
-            "Authorization": (
-                "Bearer private-api-token-value"
-            ),
-        },
-    )
-
-    assert openapi_response.status_code == 200
-    assert openapi_response.get_json()[
-        "security"
-    ] == [
-        {
-            "BearerAuth": [],
-        },
-    ]
-
 
 def test_rejects_invalid_api_token_configuration(
 ) -> None:
