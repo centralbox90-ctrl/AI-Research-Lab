@@ -2856,3 +2856,51 @@ state или универсальный lifecycle engine.
 Knowledge feature freeze и локальный indicator plugin contract
 сохранены. Новый индикатор по-прежнему добавляется ровно одним
 production module в `src/indicators/implementations`.
+
+## 45. Integrity-aware execution listing checkpoint
+
+Commit checkpoint: `42d3cdb`.
+
+`SqliteExperimentExecutionRecorder.list_execution_ids` больше не
+возвращает persistence identities только на основании distinct database
+keys.
+
+После детерминированного получения идентификаторов recorder загружает
+каждую соответствующую history через единый validated read path.
+
+Перед включением identity в успешный результат подтверждаются:
+
+- корректный JSON каждого snapshot;
+- поддерживаемая schema version;
+- начало sequence с единицы;
+- непрерывность sequence;
+- совпадение indexed status и payload status;
+- совпадение persistence key и payload execution identity;
+- обязательный первый `PENDING`;
+- допустимость всех transitions;
+- неизменяемость execution identity;
+- неизменяемость running context;
+- отсутствие snapshots после terminal state.
+
+Если хотя бы одна сохранённая history повреждена, listing не публикует
+частично доверенный каталог и завершает чтение integrity error.
+
+Для пустого storage результат остаётся пустым tuple. Для валидного
+storage сохраняются уникальность и детерминированный порядок execution
+identities.
+
+`history`, `get_latest` и `list_execution_ids` теперь используют
+один уровень требований к persisted execution integrity.
+
+Persistence schema, Application use cases, CLI routes, response DTO,
+Domain model, HTTP, MCP и artifact contracts не изменялись.
+
+Slice не добавил кеш, materialized catalog, workflow runtime,
+scheduler, retries, worker state или универсальный lifecycle engine.
+
+Technical execution catalog не является scientific Evidence, Finding
+или HypothesisEvaluation.
+
+Knowledge feature freeze и локальный indicator plugin contract
+сохранены. Новый индикатор по-прежнему добавляется ровно одним
+production module в `src/indicators/implementations`.

@@ -34,6 +34,7 @@ AI Research Lab — исследовательская платформа для
 - проверка persisted `ExperimentExecution` history при чтении: sequence, status, payload identity и полный порядок переходов;
 - CLI acceptance-проверка контролируемого отказа при чтении повреждённой persisted `ExperimentExecution` history;
 - integrity-aware чтение latest `ExperimentExecution` только после проверки всей append-only history;
+- integrity-aware listing сохранённых `ExperimentExecution` identities с проверкой каждой append-only history;
 - composition roots для сборки прикладных сценариев;
 - append-only Knowledge persistence и repository-backed feedback path;
 - read-only HTTP API с OpenAPI 3.1 contract;
