@@ -157,10 +157,22 @@ def test_get_stored_research_cycle_rejects_storage_identity_mismatch(
         provenance={},
         payload={
             "artifact_version": 1,
+            "specification": {},
             "cycle": {
                 "result": {
                     "id": "result-payload",
                 },
+                "evaluation": {},
+                "statistical_evaluation": {},
+                "robustness_evaluation": {},
+                "contradiction_evaluation": {},
+                "evidence_strength_evaluation": {},
+                "hypothesis_decision": {},
+                "next_experiment_selection": {},
+                "evidence": {},
+                "analysis": {},
+                "conclusion": {},
+                "knowledge": {},
             },
         },
     ).to_dict()
