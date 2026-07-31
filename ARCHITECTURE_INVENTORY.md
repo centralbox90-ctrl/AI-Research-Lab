@@ -2904,3 +2904,59 @@ Technical execution catalog не является scientific Evidence, Finding
 Knowledge feature freeze и локальный indicator plugin contract
 сохранены. Новый индикатор по-прежнему добавляется ровно одним
 production module в `src/indicators/implementations`.
+
+## 46. Execution listing CLI integrity checkpoint
+
+Commit checkpoint: `3bf1bfd`.
+
+Добавлен production CLI acceptance test повреждённой persisted
+`ExperimentExecution` history при выполнении
+`list-experiment-executions`.
+
+Тест создаёт execution через настоящий
+`SqliteExperimentExecutionRecorder`, после чего напрямую имитирует
+повреждение persistence sequence: первый snapshot перемещается с
+sequence `1` на sequence `2`.
+
+Затем вызывается настоящий production entry point `main` с общей
+SQLite database и CLI route `list-experiment-executions`.
+
+Фактический read path:
+
+SQLite rows
+→ `SqliteExperimentExecutionRecorder.list_execution_ids`
+→ validated `history` для найденной identity
+→ `ListExperimentExecutions`
+→ `ListExperimentExecutionsCommand`
+→ `ResearchCli`.
+
+Recorder обнаруживает повреждение history до возврата каталога.
+Частичный список execution identities не публикуется.
+
+CLI сохраняет установленный error contract:
+
+- exit code равен `1`;
+- stdout остаётся пустым;
+- stderr содержит operation context;
+- точная причина integrity violation сохраняется;
+- исключение не покидает transport boundary.
+
+Production-код в этом slice не изменялся. Существующие storage
+validation и CLI error mapping уже обеспечивали требуемое поведение;
+добавлено end-to-end доказательство production wiring.
+
+`history`, `get_latest` и `list_execution_ids` теперь имеют
+storage-level и CLI-level integrity coverage.
+
+Persistence schema, Domain model, public Application API, response DTO,
+HTTP, MCP и artifact contracts не изменялись.
+
+Slice не добавил materialized catalog, workflow runtime, scheduler,
+retries, worker state или универсальный lifecycle engine.
+
+Technical execution catalog не подменяет Evidence, Finding или
+HypothesisEvaluation.
+
+Knowledge feature freeze и локальный indicator plugin contract
+сохранены. Новый индикатор по-прежнему добавляется ровно одним
+production module в `src/indicators/implementations`.

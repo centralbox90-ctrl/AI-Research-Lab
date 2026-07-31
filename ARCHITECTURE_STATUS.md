@@ -255,6 +255,7 @@ Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandida
 - production CLI acceptance для повреждённой persisted execution history: exit code `1`, пустой stdout и диагностический stderr без выхода исключения за transport boundary;
 - integrity-aware `get_latest`: последний `ExperimentExecution` возвращается только после проверки полной persisted history;
 - integrity-aware `list_execution_ids`: каждая обнаруженная identity возвращается только после проверки полной persisted history;
+- production CLI acceptance повреждённого execution listing: exit code `1`, пустой stdout и диагностический stderr без публикации частичного каталога;
 - public read-only `GetExperimentExecutionHistory`;
 - public read-only `ListExperimentExecutions`;
 - production CLI query для полной истории технического выполнения;
