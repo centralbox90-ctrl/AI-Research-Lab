@@ -347,6 +347,65 @@ Research Engine, Observation Layer и существующие indicators при
   deployment configuration отсутствуют; отдельный ChatGPT adapter
   добавляется только при подтверждённом consumer contract.
 
+## Artifact persistence decision gate
+
+Audit baseline: `d2da1d4`.
+
+Публичное чтение сохранённых market research cycles теперь использует
+единую integrity policy.
+
+Подтверждены:
+
+- полная validation `ResearchArtifactEnvelope`;
+- повторное вычисление payload fingerprint;
+- проверка artifact type и payload schema version;
+- typed validation modern и legacy payload;
+- совпадение storage key с `result_id` внутри payload;
+- fail-closed listing без публикации частично доверенного списка;
+- единая Application integrity error;
+- контролируемое отображение corruption через CLI, HTTP и MCP.
+
+Legacy compatibility допускает отличающееся представление данных, но не
+ослабляет требования целостности.
+
+### Матрица persistence-решений
+
+| Artifact boundary | Producer и envelope | Store и validated reader | Решение |
+|---|---|---|---|
+| `market_research_cycle` | Production producer и envelope подключены | SQLite store, validated public reader, CLI, HTTP и MCP | Required и completed |
+| `market_research_campaign` | Production envelope и specialized loader существуют | Persisted reopen consumer отсутствует | Deferred до подтверждения долговременного чтения |
+| `hypothesis_evaluation` | Production envelope и specialized loader существуют | Store и public persisted consumer отсутствуют | Deferred; первый кандидат при появлении reopen, audit или delayed Knowledge promotion scenario |
+| `knowledge_research_questions` | Production envelope и specialized loader существуют | Результат воспроизводится из authoritative Knowledge repositories | Deferred; отдельный store не требуется |
+| `indicator_comparative_research` | Legacy file producer, exporter и loader используются | Validated file-based comparison consumer существует | Сохранить специализированную file boundary без общего SQLite store |
+| standalone `indicator_comparative_evidence` и `indicator_comparative_finding` | Specialized presenters существуют | Самостоятельный persisted consumer отсутствует | Отдельную persistence не добавлять |
+| serialized `ResearchCampaign` | Legacy campaign-definition serializer и SQLite store существуют | Legacy CLI compatibility readers существуют | Не смешивать с executed Campaign artifact; мигрировать только по ADR-006 |
+
+Наличие envelope или loader само по себе не является основанием для
+создания persistence.
+
+Новый store разрешён только при наличии сценария:
+
+producer → envelope → store → validated reader → public use case →
+подтверждённый transport consumer.
+
+### Artifact identities
+
+- `artifact_id` идентифицирует envelope;
+- `result_id` идентифицирует исследовательский результат;
+- `execution_id` идентифицирует техническую попытку;
+- `experiment_id` идентифицирует определение эксперимента;
+- `campaign_plan_id` идентифицирует план Campaign;
+- `correlation_id` используется только для tracing.
+
+Эти identities не являются взаимозаменяемыми aliases.
+
+Для каждого нового persisted artifact type до реализации необходимо
+явно определить storage key, payload identity, правило их совпадения и
+collision semantics.
+
+По результатам decision gate новые Campaign, HypothesisEvaluation,
+Knowledge-question, Evidence или Finding stores сейчас не создаются.
+
 ## Приоритеты следующего этапа
 
 Knowledge feature development остаётся замороженной. Разрешены
