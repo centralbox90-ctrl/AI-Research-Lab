@@ -1,6 +1,11 @@
 from pathlib import Path
 
+import pytest
+
 from src.application import GetStoredResearchCycle
+from src.application.research_artifact_envelope import (
+    ResearchArtifactEnvelopeFactory,
+)
 from src.storage import SqliteResearchCycleStore
 
 
@@ -89,3 +94,48 @@ def test_get_stored_research_cycle_reads_data_from_new_store_instance(
     assert stored is not None
     assert stored["result"]["id"] == "result-002"
     assert stored["result"]["success"] is True
+
+
+def test_get_stored_research_cycle_rejects_corrupted_envelope(
+    tmp_path: Path,
+) -> None:
+    store = SqliteResearchCycleStore(
+        db_path=tmp_path / "research_cycles.db",
+    )
+    serialized = ResearchArtifactEnvelopeFactory(
+        producer="market-research",
+        producer_version="git:test",
+    ).create(
+        artifact_type="market_research_cycle",
+        payload_schema_version=1,
+        provenance={},
+        payload={
+            "artifact_version": 1,
+            "cycle": {
+                "result": {
+                    "id": "result-003",
+                },
+            },
+        },
+    ).to_dict()
+    serialized["payload"]["cycle"]["result"][
+        "id"
+    ] = "result-tampered"
+
+    store.save(
+        result_id="result-003",
+        serialized_cycle=serialized,
+    )
+
+    use_case = GetStoredResearchCycle(
+        store=store,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "payload_fingerprint does not "
+            "match payload"
+        ),
+    ):
+        use_case.execute("result-003")

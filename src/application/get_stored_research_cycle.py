@@ -1,5 +1,8 @@
 from typing import Any
 
+from src.application.get_stored_research_artifact import (
+    GetStoredResearchArtifact,
+)
 from src.application.serialized_research_cycle_store import (
     SerializedResearchCycleStore,
 )
@@ -17,10 +20,16 @@ class GetStoredResearchCycle:
         self,
         store: SerializedResearchCycleStore,
     ) -> None:
-        self.store = store
+        self._artifact_reader = (
+            GetStoredResearchArtifact(
+                store=store,
+            )
+        )
 
     def execute(
         self,
         result_id: str,
     ) -> dict[str, Any] | None:
-        return self.store.get(result_id)
+        return self._artifact_reader.execute(
+            result_id
+        )
