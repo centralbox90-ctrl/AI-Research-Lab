@@ -193,6 +193,38 @@ def test_rejects_invalid_thread_count(
     assert error.value.code == 2
 
 
+def test_accepts_loopback_hosts() -> None:
+    assert production_server._parse_host(
+        "localhost"
+    ) == "localhost"
+    assert production_server._parse_host(
+        "127.0.0.2"
+    ) == "127.0.0.2"
+    assert production_server._parse_host(
+        "::1"
+    ) == "::1"
+
+
+def test_rejects_non_loopback_hosts() -> None:
+    for value in (
+        "0.0.0.0",
+        "::",
+        "192.168.1.25",
+        "research.example.com",
+    ):
+        with pytest.raises(
+            SystemExit,
+        ) as error:
+            production_server.main(
+                [
+                    "--host",
+                    value,
+                ]
+            )
+
+        assert error.value.code == 2
+
+
 def test_rejects_empty_host() -> None:
     with pytest.raises(
         SystemExit,

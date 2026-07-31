@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from ipaddress import ip_address
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -48,7 +49,7 @@ def main(
         type=_parse_host,
         default="127.0.0.1",
         help=(
-            "Interface to bind. "
+            "Loopback interface to bind. "
             "Defaults to 127.0.0.1."
         ),
     )
@@ -96,6 +97,23 @@ def _parse_host(value: str) -> str:
     if not normalized:
         raise argparse.ArgumentTypeError(
             "host must not be empty"
+        )
+
+    if normalized.casefold() == "localhost":
+        return "localhost"
+
+    try:
+        address = ip_address(normalized)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(
+            "host must be localhost or "
+            "a loopback IP address"
+        ) from error
+
+    if not address.is_loopback:
+        raise argparse.ArgumentTypeError(
+            "host must be localhost or "
+            "a loopback IP address"
         )
 
     return normalized
