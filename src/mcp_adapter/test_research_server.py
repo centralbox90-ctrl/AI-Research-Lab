@@ -4,6 +4,9 @@ from mcp import Client
 from src.application.artifact_comparison_factory import (
     ArtifactComparisonFactory,
 )
+from src.application.public_api import (
+    StoredResearchArtifactIntegrityError,
+)
 from src.mcp_adapter import (
     create_research_mcp_server,
 )
@@ -86,6 +89,25 @@ class StubGetStoredResearchArtifact:
         self.calls.append(result_id)
 
         return self.artifact
+
+
+class FailingGetStoredResearchArtifact:
+    def execute(
+        self,
+        result_id: str,
+    ):
+        raise StoredResearchArtifactIntegrityError(
+            result_id=result_id,
+            reason="payload fingerprint mismatch",
+        )
+
+
+class FailingListStoredResearchCycles:
+    def execute(self):
+        raise StoredResearchArtifactIntegrityError(
+            result_id="result-corrupt",
+            reason="storage identity mismatch",
+        )
 
 
 class MissingExecute:
@@ -524,3 +546,73 @@ def test_rejects_invalid_comparison_dependency(
                 StubListStoredResearchCycles([])
             ),
         )
+
+
+@pytest.mark.anyio
+async def test_reports_listing_integrity_error_through_mcp(
+) -> None:
+    server = create_research_mcp_server(
+        compare_stored_research_artifacts=(
+            StubCompareStoredResearchArtifacts()
+        ),
+        get_stored_research_artifact=(
+            StubGetStoredResearchArtifact(None)
+        ),
+        list_stored_research_cycles=(
+            FailingListStoredResearchCycles()
+        ),
+    )
+
+    async with Client(
+        server,
+        raise_exceptions=True,
+    ) as client:
+        result = await client.call_tool(
+            "list_research_cycles",
+            {},
+        )
+
+    assert result.is_error is True
+    assert result.content
+    assert (
+        "stored research artifact 'result-corrupt' "
+        "failed integrity validation: "
+        "storage identity mismatch"
+        in result.content[0].text
+    )
+
+
+@pytest.mark.anyio
+async def test_reports_artifact_integrity_error_through_mcp(
+) -> None:
+    server = create_research_mcp_server(
+        compare_stored_research_artifacts=(
+            StubCompareStoredResearchArtifacts()
+        ),
+        get_stored_research_artifact=(
+            FailingGetStoredResearchArtifact()
+        ),
+        list_stored_research_cycles=(
+            StubListStoredResearchCycles([])
+        ),
+    )
+
+    async with Client(
+        server,
+        raise_exceptions=True,
+    ) as client:
+        result = await client.call_tool(
+            "get_research_artifact",
+            {
+                "result_id": "result-corrupt",
+            },
+        )
+
+    assert result.is_error is True
+    assert result.content
+    assert (
+        "stored research artifact 'result-corrupt' "
+        "failed integrity validation: "
+        "payload fingerprint mismatch"
+        in result.content[0].text
+    )

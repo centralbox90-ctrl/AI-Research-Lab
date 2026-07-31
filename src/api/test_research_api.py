@@ -2,6 +2,9 @@ from src.api import create_research_api
 from src.application.artifact_comparison_factory import (
     ArtifactComparisonFactory,
 )
+from src.application.public_api import (
+    StoredResearchArtifactIntegrityError,
+)
 
 
 class StubGetStoredResearchArtifact:
@@ -36,6 +39,25 @@ class StubListStoredResearchCycles:
         self.calls += 1
 
         return list(self.result_ids)
+
+
+class FailingGetStoredResearchArtifact:
+    def execute(
+        self,
+        result_id: str,
+    ):
+        raise StoredResearchArtifactIntegrityError(
+            result_id=result_id,
+            reason="payload fingerprint mismatch",
+        )
+
+
+class FailingListStoredResearchCycles:
+    def execute(self):
+        raise StoredResearchArtifactIntegrityError(
+            result_id="result-corrupt",
+            reason="storage identity mismatch",
+        )
 
 
 class StubCompareStoredResearchArtifacts:
@@ -486,3 +508,75 @@ def test_rejects_invalid_comparison_dependency(
         raise AssertionError(
             "TypeError was not raised"
         )
+
+
+def test_reports_stored_artifact_integrity_error(
+) -> None:
+    application = create_research_api(
+        compare_stored_research_artifacts=(
+            StubCompareStoredResearchArtifacts()
+        ),
+        get_stored_research_artifact=(
+            FailingGetStoredResearchArtifact()
+        ),
+        list_stored_research_cycles=(
+            StubListStoredResearchCycles([])
+        ),
+    )
+    response = application.test_client().get(
+        "/v1/research-artifacts/result-corrupt"
+    )
+
+    assert response.status_code == 422
+    assert response.get_json() == {
+        "schema_version": 1,
+        "error": {
+            "code": (
+                "stored_research_artifact_"
+                "integrity_error"
+            ),
+            "message": (
+                "stored research artifact "
+                "'result-corrupt' failed integrity "
+                "validation: payload fingerprint mismatch"
+            ),
+            "result_id": "result-corrupt",
+            "reason": "payload fingerprint mismatch",
+        },
+    }
+
+
+def test_reports_stored_artifact_listing_integrity_error(
+) -> None:
+    application = create_research_api(
+        compare_stored_research_artifacts=(
+            StubCompareStoredResearchArtifacts()
+        ),
+        get_stored_research_artifact=(
+            StubGetStoredResearchArtifact({})
+        ),
+        list_stored_research_cycles=(
+            FailingListStoredResearchCycles()
+        ),
+    )
+    response = application.test_client().get(
+        "/v1/research-cycles"
+    )
+
+    assert response.status_code == 422
+    assert response.get_json() == {
+        "schema_version": 1,
+        "error": {
+            "code": (
+                "stored_research_artifact_"
+                "integrity_error"
+            ),
+            "message": (
+                "stored research artifact "
+                "'result-corrupt' failed integrity "
+                "validation: storage identity mismatch"
+            ),
+            "result_id": "result-corrupt",
+            "reason": "storage identity mismatch",
+        },
+    }

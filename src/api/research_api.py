@@ -9,7 +9,30 @@ from src.application.public_api import (
     CompareStoredResearchArtifacts,
     GetStoredResearchArtifact,
     ListStoredResearchCycles,
+    StoredResearchArtifactIntegrityError,
 )
+
+
+def _stored_artifact_integrity_response(
+    error: StoredResearchArtifactIntegrityError,
+):
+    return (
+        jsonify(
+            {
+                "schema_version": 1,
+                "error": {
+                    "code": (
+                        "stored_research_artifact_"
+                        "integrity_error"
+                    ),
+                    "message": str(error),
+                    "result_id": error.result_id,
+                    "reason": error.reason,
+                },
+            }
+        ),
+        422,
+    )
 
 
 def create_research_api(
@@ -81,11 +104,16 @@ def create_research_api(
     def get_research_artifact(
         result_id: str,
     ):
-        artifact = (
-            get_stored_research_artifact.execute(
-                result_id
+        try:
+            artifact = (
+                get_stored_research_artifact.execute(
+                    result_id
+                )
             )
-        )
+        except StoredResearchArtifactIntegrityError as error:
+            return _stored_artifact_integrity_response(
+                error
+            )
 
         if artifact is None:
             return (
@@ -307,9 +335,14 @@ def create_research_api(
         "/v1/research-cycles"
     )
     def list_research_cycles():
-        result_ids = (
-            list_stored_research_cycles.execute()
-        )
+        try:
+            result_ids = (
+                list_stored_research_cycles.execute()
+            )
+        except StoredResearchArtifactIntegrityError as error:
+            return _stored_artifact_integrity_response(
+                error
+            )
 
         if not isinstance(result_ids, list):
             raise TypeError(

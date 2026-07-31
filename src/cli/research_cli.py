@@ -602,9 +602,18 @@ class ResearchCli:
 
         indent = None if arguments.compact else 2
 
-        rendered = self.list_research_cycles_command.execute(
-            indent=indent,
-        )
+        try:
+            rendered = (
+                self.list_research_cycles_command.execute(
+                    indent=indent,
+                )
+            )
+        except (TypeError, ValueError) as error:
+            stderr.write(
+                "Unable to list research cycles: "
+                f"{error}\n"
+            )
+            return 1
 
         stdout.write(rendered)
         stdout.write("\n")
