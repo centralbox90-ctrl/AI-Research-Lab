@@ -267,6 +267,7 @@ Immutable KnowledgeCandidate, KnowledgeItem, KnowledgeRevision, KnowledgeCandida
 - production execution tracking для Market Research Campaign;
 - controlled `run-market-research-campaign` mapping для вложенного technical `RuntimeError`: exit code `1`, пустой stdout и диагностический stderr;
 - controlled `run-comparative-hypothesis-evaluation` mapping для technical `RuntimeError`: exit code `1`, пустой stdout и диагностический stderr;
+- production SQLite acceptance для failed comparative execution: persisted `PENDING → RUNNING → FAILED` с correlation, fingerprints и failure provenance;
 - production execution tracking для comparative analysis;
 - deterministic specification fingerprints;
 - reproducимые independent generated market-data periods;

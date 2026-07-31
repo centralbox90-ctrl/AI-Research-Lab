@@ -27,6 +27,7 @@ AI Research Lab — исследовательская платформа для
 - контролируемое CLI-представление runtime failure команды `run-research`;
 - контролируемое CLI-представление runtime failure вложенного Campaign experiment;
 - контролируемое CLI-представление runtime failure comparative execution;
+- SQLite acceptance-проверка persisted failure lifecycle comparative execution;
 - append-only фиксация market research preparation failure до перехода execution в `RUNNING`;
 - SQLite acceptance-проверка восстановления preparation failure history через production CLI;
 - транзакционная проверка целостности append-only истории ExperimentExecution, допустимых переходов и неизменяемой execution identity;

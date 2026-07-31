@@ -2804,3 +2804,55 @@ Slice не добавил workflow runtime, retries, scheduler, worker state и�
 Knowledge feature freeze и локальный indicator plugin contract
 сохранены. Новый индикатор по-прежнему добавляется ровно одним
 production module в `src/indicators/implementations`.
+
+## 44. Persisted comparative failure lifecycle checkpoint
+
+Commit checkpoint: `b7fe2b4`.
+
+Добавлен production acceptance test failed comparative execution через
+настоящий CLI entry point и SQLite persistence.
+
+Тест передаёт валидный comparative request с двумя независимыми
+generated periods, длина которых недостаточна для warmup выбранного
+indicator research profile.
+
+Dataset создаётся успешно, после чего comparative execution tracker
+фиксирует начало технического выполнения. Indicator calculation
+отклоняет недостаточную длину series внутри tracked execution boundary.
+
+Production path подтверждает:
+
+- CLI возвращает exit code `1`;
+- stdout остаётся пустым;
+- stderr сохраняет comparative operation context и точную причину;
+- SQLite содержит одну execution identity;
+- sequence равен `1, 2, 3`;
+- statuses равны `PENDING, RUNNING, FAILED`;
+- correlation сохраняется во всех snapshots;
+- specification fingerprint остаётся неизменным;
+- environment fingerprint переносится из `RUNNING` в `FAILED`;
+- terminal snapshot не содержит `result_id`;
+- failure stage равен `EXECUTION`;
+- error type и message сохраняются без потери.
+
+Проверка проходит через production composition:
+request JSON → loader → comparative applications → execution tracker →
+SQLite recorder → `ResearchCli`.
+
+Production-код в этом slice не изменялся. Существующие tracking,
+persistence и CLI error contracts уже обеспечивали требуемое поведение;
+добавлено end-to-end доказательство их совместной работы.
+
+Scientific Evidence, Finding и HypothesisEvaluation не создаются из
+failed technical execution. Technical failure не является научным
+выводом.
+
+Persistence schema, Domain model, public Application API, artifact
+envelopes, HTTP, MCP и Knowledge contracts не изменялись.
+
+Slice не добавил workflow runtime, retry policy, scheduler, worker
+state или универсальный lifecycle engine.
+
+Knowledge feature freeze и локальный indicator plugin contract
+сохранены. Новый индикатор по-прежнему добавляется ровно одним
+production module в `src/indicators/implementations`.
