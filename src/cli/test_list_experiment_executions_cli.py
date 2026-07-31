@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
@@ -295,3 +296,51 @@ def test_main_lists_empty_experiment_execution_catalog(
         "execution_count": 0,
         "execution_ids": [],
     }
+
+def test_main_rejects_corrupt_execution_listing(
+    tmp_path: Path,
+) -> None:
+    database_path = (
+        tmp_path / "research-cycles.db"
+    )
+    execution_id = "corrupt-listing-execution"
+    recorder = SqliteExperimentExecutionRecorder(
+        db_path=database_path
+    )
+    recorder.record(
+        build_execution(execution_id)
+    )
+
+    with sqlite3.connect(
+        database_path
+    ) as connection:
+        connection.execute(
+            """
+            UPDATE experiment_execution_snapshots
+            SET sequence = 2
+            WHERE execution_id = ?
+            """,
+            (execution_id,),
+        )
+
+    stdout = StringIO()
+    stderr = StringIO()
+
+    exit_code = main(
+        [
+            "--database",
+            str(database_path),
+            "list-experiment-executions",
+            "--compact",
+        ],
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert exit_code == 1
+    assert stdout.getvalue() == ""
+    assert stderr.getvalue() == (
+        "Unable to list experiment executions: "
+        "stored execution history must "
+        "start at sequence 1\n"
+    )
