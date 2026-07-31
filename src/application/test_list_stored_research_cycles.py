@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from src.application import ListStoredResearchCycles
 from src.storage import SqliteResearchCycleStore
 
@@ -51,3 +53,46 @@ def test_list_stored_research_cycles_returns_empty_list(
     )
 
     assert use_case.execute() == []
+
+
+def test_list_stored_research_cycles_fails_closed_on_identity_mismatch(
+    tmp_path: Path,
+) -> None:
+    database_path = (
+        tmp_path / "research_cycles.db"
+    )
+    first_store = SqliteResearchCycleStore(
+        db_path=database_path,
+    )
+    first_store.save(
+        result_id="result-001",
+        serialized_cycle={
+            "result": {
+                "id": "result-001",
+            },
+        },
+    )
+    first_store.save(
+        result_id="result-002",
+        serialized_cycle={
+            "result": {
+                "id": "result-corrupt",
+            },
+        },
+    )
+
+    reopened_store = SqliteResearchCycleStore(
+        db_path=database_path,
+    )
+    use_case = ListStoredResearchCycles(
+        store=reopened_store,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "legacy research cycle result id does "
+            "not match storage key"
+        ),
+    ):
+        use_case.execute()
