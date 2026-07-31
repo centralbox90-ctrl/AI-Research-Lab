@@ -197,3 +197,36 @@ def test_get_stored_research_cycle_rejects_storage_identity_mismatch(
         ),
     ):
         use_case.execute("result-storage")
+
+
+def test_get_stored_research_cycle_rejects_legacy_storage_identity_mismatch(
+    tmp_path: Path,
+) -> None:
+    db_path = tmp_path / "research_cycles.db"
+    first_store = SqliteResearchCycleStore(
+        db_path=db_path,
+    )
+    first_store.save(
+        result_id="result-storage",
+        serialized_cycle={
+            "result": {
+                "id": "result-payload",
+            },
+        },
+    )
+
+    second_store = SqliteResearchCycleStore(
+        db_path=db_path,
+    )
+    use_case = GetStoredResearchCycle(
+        store=second_store,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "legacy research cycle result id does "
+            "not match storage key"
+        ),
+    ):
+        use_case.execute("result-storage")

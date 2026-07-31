@@ -109,6 +109,7 @@ class MissingStoredResearchArtifactComparer:
 
 def build_artifact(
     *,
+    result_id: str = "result-001",
     artifact_id: str = "artifact-001",
     parent_artifact_id: str | None = None,
     hypothesis: str = "Williams predicts reversal.",
@@ -141,6 +142,9 @@ def build_artifact(
             "timeframe": timeframe,
         },
         "cycle": {
+            "result": {
+                "id": result_id,
+            },
             "evidence": {
                 "data": {
                     "net_profit": -11.17,
@@ -254,6 +258,7 @@ def build_artifacts() -> dict[str, dict[str, Any]]:
             lineage_type="root",
         ),
         "result-002": build_artifact(
+            result_id="result-002",
             artifact_id="artifact-002",
             parent_artifact_id="artifact-001",
             hypothesis=(

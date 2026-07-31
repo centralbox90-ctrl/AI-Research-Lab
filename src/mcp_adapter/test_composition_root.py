@@ -162,6 +162,9 @@ async def test_compares_repository_backed_artifacts_through_mcp(
                 ),
             },
             "cycle": {
+                "result": {
+                    "id": "result-001",
+                },
                 "evidence": {
                     "data": {
                         "net_profit": 1.0,
@@ -188,6 +191,9 @@ async def test_compares_repository_backed_artifacts_through_mcp(
                 ),
             },
             "cycle": {
+                "result": {
+                    "id": "result-002",
+                },
                 "evidence": {
                     "data": {
                         "net_profit": 2.5,

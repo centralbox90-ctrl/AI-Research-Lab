@@ -129,6 +129,9 @@ def test_builds_repository_backed_comparison(
                 ),
             },
             "cycle": {
+                "result": {
+                    "id": "result-001",
+                },
                 "evidence": {
                     "data": {
                         "net_profit": 1.0,
@@ -152,6 +155,9 @@ def test_builds_repository_backed_comparison(
                 ),
             },
             "cycle": {
+                "result": {
+                    "id": "result-002",
+                },
                 "evidence": {
                     "data": {
                         "net_profit": 2.5,

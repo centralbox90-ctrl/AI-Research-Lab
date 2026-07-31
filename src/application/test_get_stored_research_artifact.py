@@ -246,3 +246,125 @@ def test_rejects_market_research_cycle_with_invalid_optional_section(
         ),
     ):
         application.execute("result-001")
+
+
+def test_rejects_legacy_artifact_storage_identity_mismatch(
+) -> None:
+    legacy = {
+        "artifact_version": 1,
+        "cycle": {
+            "result": {
+                "id": "result-payload",
+            },
+        },
+    }
+    application = GetStoredResearchArtifact(
+        store=StubStore(legacy)
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "legacy research cycle result id does "
+            "not match storage key"
+        ),
+    ):
+        application.execute("result-storage")
+
+
+def test_rejects_legacy_cycle_with_invalid_section(
+) -> None:
+    legacy = {
+        "result": {
+            "id": "result-legacy",
+        },
+        "hypothesis_decision": [],
+    }
+    application = GetStoredResearchArtifact(
+        store=StubStore(legacy)
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "legacy research cycle field "
+            "hypothesis_decision must be an object"
+        ),
+    ):
+        application.execute("result-legacy")
+
+
+def test_rejects_legacy_cycle_with_unknown_field(
+) -> None:
+    legacy = {
+        "result": {
+            "id": "result-legacy",
+        },
+        "unexpected": {},
+    }
+    application = GetStoredResearchArtifact(
+        store=StubStore(legacy)
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "legacy research cycle has "
+            "unknown fields: unexpected"
+        ),
+    ):
+        application.execute("result-legacy")
+
+
+def test_rejects_legacy_artifact_with_invalid_history(
+) -> None:
+    legacy = {
+        "artifact_version": 1,
+        "cycle": {
+            "result": {
+                "id": "result-legacy",
+            },
+        },
+        "history": [
+            "invalid-event",
+        ],
+    }
+    application = GetStoredResearchArtifact(
+        store=StubStore(legacy)
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "legacy market research history "
+            "must be an array of objects"
+        ),
+    ):
+        application.execute("result-legacy")
+
+
+def test_rejects_legacy_artifact_with_invalid_history(
+) -> None:
+    legacy = {
+        "artifact_version": 1,
+        "cycle": {
+            "result": {
+                "id": "result-legacy",
+            },
+        },
+        "history": [
+            "invalid-event",
+        ],
+    }
+    application = GetStoredResearchArtifact(
+        store=StubStore(legacy)
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "legacy market research history "
+            "must be an array of objects"
+        ),
+    ):
+        application.execute("result-legacy")
