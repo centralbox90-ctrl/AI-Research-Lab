@@ -172,10 +172,15 @@ class SqliteExperimentExecutionRecorder:
                 """
             ).fetchall()
 
-        return tuple(
+        execution_ids = tuple(
             str(row[0])
             for row in rows
         )
+
+        for execution_id in execution_ids:
+            self.history(execution_id)
+
+        return execution_ids
 
     @contextmanager
     def _connection(

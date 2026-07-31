@@ -756,3 +756,31 @@ def test_get_latest_rejects_invalid_stored_history(
         recorder.get_latest(
             pending.execution_id
         )
+
+def test_rejects_listing_with_corrupt_stored_history(
+    tmp_path: Path,
+) -> None:
+    db_path = tmp_path / "executions.db"
+    recorder = SqliteExperimentExecutionRecorder(
+        db_path
+    )
+    pending = build_pending(
+        "corrupt-listing-execution"
+    )
+
+    insert_raw_snapshot(
+        db_path,
+        execution_id=pending.execution_id,
+        sequence=2,
+        status=pending.status.value,
+        snapshot=pending,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "stored execution history must "
+            "start at sequence 1"
+        ),
+    ):
+        recorder.list_execution_ids()
