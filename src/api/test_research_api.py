@@ -1,3 +1,5 @@
+from typing import get_type_hints
+
 from src.api import create_research_api
 from src.application.artifact_comparison_factory import (
     ArtifactComparisonFactory,
@@ -5,6 +7,15 @@ from src.application.artifact_comparison_factory import (
 from src.application.public_api import (
     StoredResearchArtifactIntegrityError,
 )
+
+
+def test_exposes_resolvable_api_type_hints(
+) -> None:
+    annotations = get_type_hints(
+        create_research_api
+    )
+
+    assert "readiness_check" in annotations
 
 
 class StubGetStoredResearchArtifact:
