@@ -454,6 +454,13 @@ def test_build_web_app_runs_persists_and_reopens_research(
         b"Evaluate a deterministic momentum signal on generated market data."
         in details.data
     )
+    assert b"Technical execution" in details.data
+    assert b"SUCCEEDED" in details.data
+    assert details.data.count(b"&rarr;") == 2
+    assert (
+        b"does not confirm or disprove"
+        in details.data
+    )
 
     artifact_id = artifact["artifact_id"]
     assert isinstance(artifact_id, str)
@@ -473,6 +480,10 @@ def test_build_web_app_runs_persists_and_reopens_research(
         "SUCCEEDED",
     ]
     assert history[-1].result_id == result_id
+    assert (
+        execution_ids[0].encode("utf-8")
+        in details.data
+    )
 
 
 def test_browser_pages_load_shared_stylesheet(

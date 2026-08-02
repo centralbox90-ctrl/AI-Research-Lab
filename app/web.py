@@ -17,8 +17,12 @@ from app.research_submission import (
     create_research_submission_blueprint,
 )
 
-from src.application import (
+from src.application.public_api import (
+    CompareStoredResearchArtifacts,
+    GetExperimentExecutionHistory,
+    GetExperimentExecutionHistoryForResult,
     GetStoredResearchArtifact,
+    ListExperimentExecutions,
     ListStoredResearchCycles,
 )
 from src.application.generated_market_data_provider import (
@@ -36,8 +40,9 @@ from src.application.artifact_comparison import (
 from src.application.artifact_comparison_input_extractor import (
     ArtifactComparisonInputExtractor,
 )
-from src.application.compare_stored_research_artifacts import (
-    CompareStoredResearchArtifacts,
+
+from src.research.experiment_execution import (
+    ExperimentExecution,
 )
 from src.storage import (
     RESEARCH_CYCLE_DATABASE_PATH,
@@ -65,6 +70,16 @@ class StoredResearchArtifactComparer(Protocol):
         artifact_a_result_id: str,
         artifact_b_result_id: str,
     ) -> ArtifactComparison:
+        ...
+
+
+class ExperimentExecutionHistoryForResultGetter(
+    Protocol,
+):
+    def execute(
+        self,
+        result_id: str,
+    ) -> tuple[ExperimentExecution, ...]:
         ...
 
 
@@ -758,6 +773,64 @@ ARTIFACT_DETAILS_TEMPLATE = """
                 Technical execution lifecycle is recorded separately
                 from scientific evaluation.
             </p>
+        </section>
+
+        <section class="execution-summary">
+            <h2>Technical execution</h2>
+
+            {% if execution_summary %}
+                <p class="execution-boundary-note">
+                    Execution status reports whether the technical
+                    attempt completed. It does not confirm or disprove
+                    the scientific hypothesis.
+                </p>
+
+                <dl class="execution-summary-grid">
+                    <dt>Current status</dt>
+                    <dd>{{ execution_summary.status }}</dd>
+
+                    <dt>Lifecycle</dt>
+                    <dd>
+                        {% for status in execution_summary.lifecycle %}
+                            {{ status }}
+                            {% if not loop.last %}&rarr;{% endif %}
+                        {% endfor %}
+                    </dd>
+
+                    <dt>Snapshots</dt>
+                    <dd>{{ execution_summary.snapshot_count }}</dd>
+
+                    <dt>Execution ID</dt>
+                    <dd>{{ execution_summary.execution_id }}</dd>
+
+                    <dt>Experiment ID</dt>
+                    <dd>{{ execution_summary.experiment_id }}</dd>
+
+                    <dt>Created at</dt>
+                    <dd>{{ execution_summary.created_at }}</dd>
+
+                    <dt>Started at</dt>
+                    <dd>
+                        {{
+                            execution_summary.started_at
+                            or "Not available"
+                        }}
+                    </dd>
+
+                    <dt>Finished at</dt>
+                    <dd>
+                        {{
+                            execution_summary.finished_at
+                            or "Not available"
+                        }}
+                    </dd>
+                </dl>
+            {% else %}
+                <p>
+                    No validated technical execution history is linked
+                    to this stored result.
+                </p>
+            {% endif %}
         </section>
 
         <section>
@@ -2243,6 +2316,37 @@ def normalize_history(
     return normalized_history
 
 
+def build_execution_summary(
+    history: tuple[ExperimentExecution, ...],
+) -> dict[str, Any] | None:
+    if not history:
+        return None
+
+    latest = history[-1]
+
+    return {
+        "execution_id": latest.execution_id,
+        "experiment_id": latest.experiment_id,
+        "status": latest.status.value,
+        "lifecycle": tuple(
+            snapshot.status.value
+            for snapshot in history
+        ),
+        "snapshot_count": len(history),
+        "created_at": latest.created_at.isoformat(),
+        "started_at": (
+            latest.started_at.isoformat()
+            if latest.started_at is not None
+            else None
+        ),
+        "finished_at": (
+            latest.finished_at.isoformat()
+            if latest.finished_at is not None
+            else None
+        ),
+    }
+
+
 def build_artifact_details(
     result_id: str,
     artifact: dict[str, Any],
@@ -2518,6 +2622,9 @@ def create_app(
     artifact_getter: StoredResearchArtifactGetter | None = None,
     artifact_comparer: StoredResearchArtifactComparer | None = None,
     *,
+    execution_history_for_result: (
+        ExperimentExecutionHistoryForResultGetter | None
+    ) = None,
     research_runner: MarketResearchRunner | None = None,
     secret_key: str | None = None,
 ) -> Flask:
@@ -2699,6 +2806,17 @@ def create_app(
             artifact=artifact,
         )
 
+        execution_history = (
+            execution_history_for_result.execute(
+                result_id
+            )
+            if execution_history_for_result is not None
+            else ()
+        )
+        execution_summary = build_execution_summary(
+            execution_history
+        )
+
         result_ids = (
             cycle_lister.execute()
             if cycle_lister is not None
@@ -2735,6 +2853,7 @@ def create_app(
         return render_template_string(
             ARTIFACT_DETAILS_TEMPLATE,
             details=details,
+            execution_summary=execution_summary,
             child_artifacts=child_artifacts,
             format_display_value=format_display_value,
         )
@@ -2833,10 +2952,28 @@ def build_web_app(
         input_extractor=ArtifactComparisonInputExtractor(),
     )
 
+    execution_lister = ListExperimentExecutions(
+        catalog=execution_recorder,
+    )
+    execution_history_getter = (
+        GetExperimentExecutionHistory(
+            reader=execution_recorder,
+        )
+    )
+    execution_history_for_result = (
+        GetExperimentExecutionHistoryForResult(
+            execution_lister=execution_lister,
+            history_getter=execution_history_getter,
+        )
+    )
+
     return create_app(
         cycle_lister=cycle_lister,
         artifact_getter=artifact_getter,
         artifact_comparer=artifact_comparer,
+        execution_history_for_result=(
+            execution_history_for_result
+        ),
         research_runner=research_runner,
     )
 

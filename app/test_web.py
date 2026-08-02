@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -7,6 +8,7 @@ from app.web import (
     build_artifact_details,
     build_artifact_index,
     build_artifact_summary,
+    build_execution_summary,
     build_lineage_tree,
     build_web_app,
     create_app,
@@ -16,6 +18,9 @@ from app.web import (
 )
 from src.application.artifact_comparison_factory import (
     ArtifactComparisonFactory,
+)
+from src.research.experiment_execution import (
+    ExperimentExecution,
 )
 from src.storage import SqliteResearchCycleStore
 
@@ -48,6 +53,41 @@ class FakeStoredResearchArtifactGetter:
         result_id: str,
     ) -> dict[str, Any] | None:
         return self.artifacts.get(result_id)
+
+
+def build_execution_history(
+) -> tuple[ExperimentExecution, ...]:
+    pending = ExperimentExecution(
+        execution_id="execution-001",
+        experiment_id="experiment-001",
+        specification_fingerprint="a" * 64,
+        created_at=datetime.fromisoformat(
+            "2026-08-02T10:00:00+00:00"
+        ),
+    )
+    running = pending.start(
+        environment_fingerprint="b" * 64,
+        started_at=datetime.fromisoformat(
+            "2026-08-02T10:00:01+00:00"
+        ),
+    )
+    succeeded = running.succeed(
+        result_id="result-001",
+        finished_at=datetime.fromisoformat(
+            "2026-08-02T10:00:02+00:00"
+        ),
+    )
+
+    return pending, running, succeeded
+
+
+class FakeExperimentExecutionHistoryForResult:
+    def execute(
+        self,
+        result_id: str,
+    ) -> tuple[ExperimentExecution, ...]:
+        assert result_id == "result-001"
+        return build_execution_history()
 
 
 class FakeStoredResearchArtifactComparer:
@@ -480,6 +520,32 @@ def test_build_artifact_details_returns_research_data():
     )
 
 
+def test_build_execution_summary_returns_lifecycle():
+    summary = build_execution_summary(
+        build_execution_history()
+    )
+
+    assert summary is not None
+    assert summary["execution_id"] == "execution-001"
+    assert summary["experiment_id"] == "experiment-001"
+    assert summary["status"] == "SUCCEEDED"
+    assert summary["lifecycle"] == (
+        "PENDING",
+        "RUNNING",
+        "SUCCEEDED",
+    )
+    assert summary["snapshot_count"] == 3
+    assert summary["created_at"] == (
+        "2026-08-02T10:00:00+00:00"
+    )
+    assert summary["started_at"] == (
+        "2026-08-02T10:00:01+00:00"
+    )
+    assert summary["finished_at"] == (
+        "2026-08-02T10:00:02+00:00"
+    )
+
+
 def test_web_index_returns_ui_shell():
 
     app = create_app()
@@ -597,6 +663,9 @@ def test_web_artifact_details_returns_artifact():
         artifact_getter=FakeStoredResearchArtifactGetter(
             build_artifacts(),
         ),
+        execution_history_for_result=(
+            FakeExperimentExecutionHistoryForResult()
+        ),
     )
 
     response = app.test_client().get(
@@ -616,6 +685,12 @@ def test_web_artifact_details_returns_artifact():
         "Technical execution lifecycle is recorded separately"
         in body
     )
+    assert "Technical execution" in body
+    assert 'class="execution-summary"' in body
+    assert "SUCCEEDED" in body
+    assert "execution-001" in body
+    assert body.count("&rarr;") == 2
+    assert "does not confirm or disprove" in body
     assert "Artifact identity" in body
     assert "Research lineage" in body
     assert "Artifact history" in body
@@ -753,8 +828,15 @@ def test_build_web_app_reads_persisted_artifacts(
     )
 
     assert details_response.status_code == 200
-    assert "artifact-002" in details_response.get_data(
+
+    details_body = details_response.get_data(
         as_text=True,
+    )
+
+    assert "artifact-002" in details_body
+    assert (
+        "No validated technical execution history is linked"
+        in details_body
     )
 
 
