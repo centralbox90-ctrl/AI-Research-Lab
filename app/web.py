@@ -85,10 +85,10 @@ class ExperimentExecutionHistoryForResultGetter(
 
 INDEX_TEMPLATE = """
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="utf-8">
-    <title>AI Research Lab</title>
+    <title>Лаборатория исследований ИИ</title>
     <link
         rel="stylesheet"
         href="{{ url_for('static', filename='research_lab.css') }}"
@@ -96,51 +96,51 @@ INDEX_TEMPLATE = """
 </head>
 <body>
     <main>
-        <h1>AI Research Lab</h1>
-        <p>Research artifact interface is running.</p>
-        <nav aria-label="Quick navigation">
+        <h1>Лаборатория исследований ИИ</h1>
+        <p>Интерфейс исследовательских артефактов запущен.</p>
+        <nav aria-label="Быстрая навигация">
             <p>
                 <a href="#dashboard">
-                    Dashboard
+                    Панель исследований
                 </a>
                 |
                 <a href="#filters">
-                    Filters
+                    Фильтры
                 </a>
                 |
                 <a href="#comparison">
-                    Comparison
+                    Сравнение
                 </a>
                 |
                 <a href="#artifacts">
-                    Artifacts
+                    Артефакты
                 </a>
                 {% if research_submission_enabled %}
                     |
                     <a href="{{ url_for('research_submission.new_research') }}">
-                        Run research
+                        Запустить исследование
                     </a>
                 {% endif %}
             </p>
         </nav>
 
         <section id="dashboard">
-            <h2>Research dashboard</h2>
+            <h2>Панель исследований</h2>
 
             <dl>
-                <dt>Total artifacts</dt>
+                <dt>Всего артефактов</dt>
                 <dd>{{ dashboard_statistics.total }}</dd>
 
-                <dt>Root artifacts</dt>
+                <dt>Корневые артефакты</dt>
                 <dd>{{ dashboard_statistics.root_count }}</dd>
 
-                <dt>Child artifacts</dt>
+                <dt>Дочерние артефакты</dt>
                 <dd>{{ dashboard_statistics.child_count }}</dd>
 
-                <dt>Orphan artifacts</dt>
+                <dt>Артефакты-сироты</dt>
                 <dd>{{ dashboard_statistics.orphan_count }}</dd>
 
-                <dt>Average confidence</dt>
+                <dt>Средняя уверенность</dt>
                 <dd>
                     {% if (
                         dashboard_statistics.average_confidence
@@ -153,12 +153,12 @@ INDEX_TEMPLATE = """
                             )
                         }}
                     {% else %}
-                        Not available
+                        Нет данных
                     {% endif %}
                 </dd>
             </dl>
 
-            <h3>Artifacts by symbol</h3>
+            <h3>Артефакты по символам</h3>
 
             {% if dashboard_statistics.symbols %}
                 <ul>
@@ -171,10 +171,10 @@ INDEX_TEMPLATE = """
                     {% endfor %}
                 </ul>
             {% else %}
-                <p>No symbol statistics are available.</p>
+                <p>Статистика по символам отсутствует.</p>
             {% endif %}
 
-            <h3>Artifacts by timeframe</h3>
+            <h3>Артефакты по таймфреймам</h3>
 
             {% if dashboard_statistics.timeframes %}
                 <ul>
@@ -187,17 +187,17 @@ INDEX_TEMPLATE = """
                     {% endfor %}
                 </ul>
             {% else %}
-                <p>No timeframe statistics are available.</p>
+                <p>Статистика по таймфреймам отсутствует.</p>
             {% endif %}
         </section>
 
         <section id="filters">
-            <h2>Filter and sort research artifacts</h2>
+            <h2>Фильтрация и сортировка артефактов</h2>
 
             <form action="{{ url_for('index') }}" method="get">
                 <p>
                     <label for="filter-symbol">
-                        Symbol
+                        Символ
                     </label>
 
                     <input
@@ -210,7 +210,7 @@ INDEX_TEMPLATE = """
 
                 <p>
                     <label for="filter-timeframe">
-                        Timeframe
+                        Таймфрейм
                     </label>
 
                     <input
@@ -223,7 +223,7 @@ INDEX_TEMPLATE = """
 
                 <p>
                     <label for="filter-hypothesis">
-                        Hypothesis
+                        Гипотеза
                     </label>
 
                     <input
@@ -236,7 +236,7 @@ INDEX_TEMPLATE = """
 
                 <p>
                     <label for="filter-lineage-type">
-                        Lineage type
+                        Тип происхождения
                     </label>
 
                     <input
@@ -249,7 +249,7 @@ INDEX_TEMPLATE = """
 
                 <p>
                     <label for="sort-by">
-                        Sort by
+                        Сортировать по
                     </label>
 
                     <select
@@ -262,7 +262,7 @@ INDEX_TEMPLATE = """
                                 selected
                             {% endif %}
                         >
-                            Created at
+                            Дата создания
                         </option>
 
                         <option
@@ -271,7 +271,7 @@ INDEX_TEMPLATE = """
                                 selected
                             {% endif %}
                         >
-                            Confidence
+                            Уверенность
                         </option>
 
                         <option
@@ -280,7 +280,7 @@ INDEX_TEMPLATE = """
                                 selected
                             {% endif %}
                         >
-                            Symbol
+                            Символ
                         </option>
 
                         <option
@@ -289,14 +289,14 @@ INDEX_TEMPLATE = """
                                 selected
                             {% endif %}
                         >
-                            Lineage depth
+                            Глубина происхождения
                         </option>
                     </select>
                 </p>
 
                 <p>
                     <label for="sort-direction">
-                        Sort direction
+                        Порядок сортировки
                     </label>
 
                     <select
@@ -312,7 +312,7 @@ INDEX_TEMPLATE = """
                                 selected
                             {% endif %}
                         >
-                            Descending
+                            По убыванию
                         </option>
 
                         <option
@@ -324,14 +324,14 @@ INDEX_TEMPLATE = """
                                 selected
                             {% endif %}
                         >
-                            Ascending
+                            По возрастанию
                         </option>
                    </select>
                 </p>
 
                 <p>
     <label for="page-size">
-        Items per page
+        Элементов на странице
     </label>
 
     <select
@@ -352,26 +352,26 @@ INDEX_TEMPLATE = """
 </p>
 
                 <button type="submit">
-                    Apply filters and sorting
+                    Применить фильтры и сортировку
                 </button>
 
                 <a href="{{ url_for('index') }}">
-                    Clear filters and sorting
+                    Сбросить фильтры и сортировку
                 </a>
             </form>
 
                        {% if filters_are_active %}
-                <p>Showing {{ pagination.total_items }} of {{ all_artifacts|length }} research artifacts.</p>
+                <p>Показано {{ pagination.total_items }} из {{ all_artifacts|length }} исследовательских артефактов.</p>
             {% endif %}
         </section>
 
         <section id="comparison">
-            <h2>Compare research artifacts</h2>
+            <h2>Сравнение исследовательских артефактов</h2>
 
             <form action="{{ url_for('compare_artifacts') }}" method="get">
                 <p>
                     <label for="artifact-a-result-id">
-                        Previous artifact
+                        Предыдущий артефакт
                     </label>
 
                     <select
@@ -380,7 +380,7 @@ INDEX_TEMPLATE = """
                         required
                     >
                         <option value="">
-                            Select previous artifact
+                            Выберите предыдущий артефакт
                         </option>
 
                         {% for artifact in all_artifacts %}
@@ -397,7 +397,7 @@ INDEX_TEMPLATE = """
 
                 <p>
                     <label for="artifact-b-result-id">
-                        Current artifact
+                        Текущий артефакт
                     </label>
 
                     <select
@@ -406,7 +406,7 @@ INDEX_TEMPLATE = """
                         required
                     >
                         <option value="">
-                            Select current artifact
+                            Выберите текущий артефакт
                         </option>
 
                         {% for artifact in all_artifacts %}
@@ -425,20 +425,20 @@ INDEX_TEMPLATE = """
                     type="submit"
                     {% if all_artifacts|length < 2 %}disabled{% endif %}
                 >
-                    Compare artifacts
+                    Сравнить артефакты
                 </button>
 
                 {% if all_artifacts|length < 2 %}
                     <p>
-                        At least two stored research artifacts are required
-                        for comparison.
+                        Для сравнения требуется как минимум два сохранённых
+                        исследовательских артефакта.
                     </p>
                 {% endif %}
             </form>
         </section>
 
         <section>
-            <h2>Research lineage tree</h2>
+            <h2>Дерево происхождения исследований</h2>
 
             {% if lineage_tree %}
                 <ul>
@@ -459,29 +459,29 @@ INDEX_TEMPLATE = """
                                 <p>{{ node.hypothesis }}</p>
 
                                 <dl>
-                                    <dt>Artifact ID</dt>
+                                    <dt>ID артефакта</dt>
                                     <dd>
                                         {{
                                             node.artifact_id
-                                            or "Not available"
+                                            or "Нет данных"
                                         }}
                                     </dd>
 
-                                    <dt>Result ID</dt>
+                                    <dt>ID результата</dt>
                                     <dd>{{ node.result_id }}</dd>
 
-                                    <dt>Lineage type</dt>
+                                    <dt>Тип происхождения</dt>
                                     <dd>
                                         {{
                                             node.lineage_type
-                                            or "Not available"
+                                            or "Нет данных"
                                         }}
                                     </dd>
 
-                                    <dt>Depth</dt>
+                                    <dt>Глубина</dt>
                                     <dd>{{ node.depth }}</dd>
 
-                                    <dt>Children</dt>
+                                    <dt>Дочерние элементы</dt>
                                     <dd>{{ node.children|length }}</dd>
                                 </dl>
                             </article>
@@ -495,11 +495,11 @@ INDEX_TEMPLATE = """
                     {% endfor %}
                 </ul>
             {% else %}
-                <p>No research lineage is available.</p>
+                <p>Данные о происхождении исследований отсутствуют.</p>
             {% endif %}
 
             {% if orphan_artifacts %}
-                <h3>Artifacts with missing or filtered parents</h3>
+                <h3>Артефакты с отсутствующими или отфильтрованными родителями</h3>
 
                 <ul>
                     {% for artifact in orphan_artifacts %}
@@ -516,7 +516,7 @@ INDEX_TEMPLATE = """
                             </a>
 
                             <p>
-                                Parent:
+                                Родитель:
                                 {{ artifact.parent_artifact_id }}
                             </p>
                         </li>
@@ -526,7 +526,7 @@ INDEX_TEMPLATE = """
         </section>
 
         <section id="artifacts">
-            <h2>Research artifacts</h2>
+            <h2>Исследовательские артефакты</h2>
 
             {% if artifacts %}
                 <ol>
@@ -547,43 +547,43 @@ INDEX_TEMPLATE = """
                                 <p>{{ artifact.hypothesis }}</p>
 
                                 <dl>
-                                    <dt>Confidence</dt>
+                                    <dt>Уверенность</dt>
                                     <dd>
                                         {{
                                             format_display_value(
                                                 artifact.confidence
                                             )
                                             if artifact.confidence is not none
-                                            else "Not available"
+                                            else "Нет данных"
                                         }}
                                     </dd>
 
-                                    <dt>Created</dt>
+                                    <dt>Создан</dt>
                                     <dd>{{ artifact.created_at }}</dd>
 
-                                    <dt>Result ID</dt>
+                                    <dt>ID результата</dt>
                                     <dd>{{ artifact.result_id }}</dd>
 
-                                    <dt>Artifact ID</dt>
+                                    <dt>ID артефакта</dt>
                                     <dd>
                                         {{
                                             artifact.artifact_id
-                                            or "Not available"
+                                            or "Нет данных"
                                         }}
                                     </dd>
 
-                                    <dt>Lineage type</dt>
+                                    <dt>Тип происхождения</dt>
                                     <dd>
                                         {{
                                             artifact.lineage_type
-                                            or "Not available"
+                                            or "Нет данных"
                                         }}
                                     </dd>
 
-                                    <dt>Lineage depth</dt>
+                                    <dt>Глубина происхождения</dt>
                                     <dd>{{ artifact.depth }}</dd>
 
-                                    <dt>Parent artifact</dt>
+                                    <dt>Родительский артефакт</dt>
                                     <dd>
                                         {% if artifact.parent_result_id %}
                                             <a href="{{ url_for(
@@ -603,7 +603,7 @@ INDEX_TEMPLATE = """
                                                 artifact.parent_artifact_id
                                             }}
                                         {% else %}
-                                            No parent artifact
+                                            Нет родительского артефакта
                                         {% endif %}
                                     </dd>
                                 </dl>
@@ -613,16 +613,16 @@ INDEX_TEMPLATE = """
                 </ol>
             {% elif filters_are_active %}
                 <p>
-                    No research artifacts match the active filters.
+                    Нет артефактов, соответствующих выбранным фильтрам.
                 </p>
             {% else %}
-                <p>No stored research artifacts.</p>
+                <p>Сохранённые исследовательские артефакты отсутствуют.</p>
             {% endif %}
 {% if pagination.total_items %}
-    <nav aria-label="Research artifact pagination">
+    <nav aria-label="Пагинация исследовательских артефактов">
         <p>
-            Page {{ pagination.page }}
-            of {{ pagination.total_pages }}
+            Страница {{ pagination.page }}
+            из {{ pagination.total_pages }}
         </p>
 
         {% if pagination.has_previous %}
@@ -637,7 +637,7 @@ INDEX_TEMPLATE = """
                 page=pagination.previous_page,
                 page_size=pagination.page_size
             ) }}">
-                Previous page
+                Предыдущая страница
             </a>
         {% endif %}
 
@@ -653,7 +653,7 @@ INDEX_TEMPLATE = """
                 page=pagination.next_page,
                 page_size=pagination.page_size
             ) }}">
-                Next page
+                Следующая страница
             </a>
         {% endif %}
     </nav>
@@ -667,10 +667,10 @@ INDEX_TEMPLATE = """
 
 ARTIFACT_DETAILS_TEMPLATE = """
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="utf-8">
-    <title>Research artifact</title>
+    <title>Исследовательский артефакт</title>
     <link
         rel="stylesheet"
         href="{{ url_for('static', filename='research_lab.css') }}"
@@ -680,78 +680,78 @@ ARTIFACT_DETAILS_TEMPLATE = """
     <main>
         <p>
             <a href="{{ url_for('index') }}">
-                Back to research artifacts
+                Вернуться к исследовательским артефактам
             </a>
         </p>
 
-        <h1>Research artifact</h1>
+        <h1>Исследовательский артефакт</h1>
 
         <section class="artifact-summary">
-            <h2>Result summary</h2>
+            <h2>Сводка результата</h2>
 
             <p class="artifact-summary-hypothesis">
-                <strong>Hypothesis</strong><br>
+                <strong>Гипотеза</strong><br>
                 {{
                     details.hypothesis
-                    or "Not available"
+                    or "Нет данных"
                 }}
             </p>
 
             <dl class="artifact-summary-grid">
-                <dt>Symbol</dt>
-                <dd>{{ details.symbol or "Not available" }}</dd>
+                <dt>Символ</dt>
+                <dd>{{ details.symbol or "Нет данных" }}</dd>
 
-                <dt>Timeframe</dt>
-                <dd>{{ details.timeframe or "Not available" }}</dd>
+                <dt>Таймфрейм</dt>
+                <dd>{{ details.timeframe or "Нет данных" }}</dd>
 
-                <dt>Scientific result valid</dt>
+                <dt>Научный результат валиден</dt>
                 <dd>
                     {{
                         details.result_is_valid
                         if details.result_is_valid is not none
-                        else "Not available"
+                        else "Нет данных"
                     }}
                 </dd>
 
-                <dt>Evidence strength</dt>
+                <dt>Сила доказательств</dt>
                 <dd>
                     {{
                         details.evidence_strength_level
                         or details.evaluation_strength
-                        or "Not available"
+                        or "Нет данных"
                     }}
                 </dd>
 
-                <dt>Hypothesis decision</dt>
+                <dt>Решение по гипотезе</dt>
                 <dd>
                     {{
                         details.hypothesis_decision
-                        or "Not available"
+                        or "Нет данных"
                     }}
                 </dd>
 
-                <dt>Decision confidence</dt>
+                <dt>Уверенность решения</dt>
                 <dd>
                     {{
                         format_display_value(
                             details.decision_confidence
                         )
                         if details.decision_confidence is not none
-                        else "Not available"
+                        else "Нет данных"
                     }}
                 </dd>
             </dl>
 
-            <h3>Scientific conclusion</h3>
+            <h3>Научный вывод</h3>
             <p>
                 {{
                     details.conclusion_statement
-                    or "No scientific conclusion is available."
+                    or "Научный вывод отсутствует."
                 }}
             </p>
 
             {% if details.summary_metrics %}
-                <h3>Key evidence metrics</h3>
+                <h3>Ключевые метрики доказательств</h3>
 
                 <div class="artifact-summary-metrics">
                     {% for metric in details.summary_metrics %}
@@ -770,26 +770,26 @@ ARTIFACT_DETAILS_TEMPLATE = """
             {% endif %}
 
             <p class="artifact-boundary-note">
-                Technical execution lifecycle is recorded separately
-                from scientific evaluation.
+                Технический жизненный цикл выполнения хранится отдельно
+                от научной оценки.
             </p>
         </section>
 
         <section class="execution-summary">
-            <h2>Technical execution</h2>
+            <h2>Техническое выполнение</h2>
 
             {% if execution_summary %}
                 <p class="execution-boundary-note">
-                    Execution status reports whether the technical
-                    attempt completed. It does not confirm or disprove
-                    the scientific hypothesis.
+                    Статус показывает, завершилась ли техническая
+                    попытка. Он не подтверждает и не опровергает
+                    научную гипотезу.
                 </p>
 
                 <dl class="execution-summary-grid">
-                    <dt>Current status</dt>
+                    <dt>Текущий статус</dt>
                     <dd>{{ execution_summary.status }}</dd>
 
-                    <dt>Lifecycle</dt>
+                    <dt>Жизненный цикл</dt>
                     <dd>
                         {% for status in execution_summary.lifecycle %}
                             {{ status }}
@@ -797,70 +797,70 @@ ARTIFACT_DETAILS_TEMPLATE = """
                         {% endfor %}
                     </dd>
 
-                    <dt>Snapshots</dt>
+                    <dt>Снимки состояния</dt>
                     <dd>{{ execution_summary.snapshot_count }}</dd>
 
-                    <dt>Execution ID</dt>
+                    <dt>ID выполнения</dt>
                     <dd>{{ execution_summary.execution_id }}</dd>
 
-                    <dt>Experiment ID</dt>
+                    <dt>ID эксперимента</dt>
                     <dd>{{ execution_summary.experiment_id }}</dd>
 
-                    <dt>Created at</dt>
+                    <dt>Дата создания</dt>
                     <dd>{{ execution_summary.created_at }}</dd>
 
-                    <dt>Started at</dt>
+                    <dt>Время запуска</dt>
                     <dd>
                         {{
                             execution_summary.started_at
-                            or "Not available"
+                            or "Нет данных"
                         }}
                     </dd>
 
-                    <dt>Finished at</dt>
+                    <dt>Время завершения</dt>
                     <dd>
                         {{
                             execution_summary.finished_at
-                            or "Not available"
+                            or "Нет данных"
                         }}
                     </dd>
                 </dl>
             {% else %}
                 <p>
-                    No validated technical execution history is linked
-                    to this stored result.
+                    С этим сохранённым результатом не связана проверенная
+                    история технического выполнения.
                 </p>
             {% endif %}
         </section>
 
         <section>
-            <h2>Artifact identity</h2>
+            <h2>Идентификаторы артефакта</h2>
 
             <dl>
-                <dt>Result ID</dt>
+                <dt>ID результата</dt>
                 <dd>{{ details.result_id }}</dd>
 
-                <dt>Artifact ID</dt>
-                <dd>{{ details.artifact_id or "Not available" }}</dd>
+                <dt>ID артефакта</dt>
+                <dd>{{ details.artifact_id or "Нет данных" }}</dd>
 
-                <dt>Created at</dt>
-                <dd>{{ details.created_at or "Not available" }}</dd>
+                <dt>Дата создания</dt>
+                <dd>{{ details.created_at or "Нет данных" }}</dd>
 
-                <dt>Executor type</dt>
+                <dt>Тип исполнителя</dt>
                 <dd>
-                    {{ details.executor_type or "Not available" }}
+                    {{ details.executor_type or "Нет данных" }}
                 </dd>
 
-                <dt>Data source</dt>
-                <dd>{{ details.data_source or "Not available" }}</dd>
+                <dt>Источник данных</dt>
+                <dd>{{ details.data_source or "Нет данных" }}</dd>
             </dl>
         </section>
 
         <section>
-            <h2>Research lineage</h2>
+            <h2>Происхождение исследования</h2>
 
             <dl>
-                <dt>Parent artifact ID</dt>
+                <dt>ID родительского артефакта</dt>
                 <dd>
                     {% if details.parent_result_id %}
                         <a href="{{ url_for(
@@ -872,31 +872,31 @@ ARTIFACT_DETAILS_TEMPLATE = """
                     {% elif details.parent_artifact_id %}
                         {{ details.parent_artifact_id }}
                     {% else %}
-                        No parent artifact
+                        Нет родительского артефакта
                     {% endif %}
                 </dd>
 
-                <dt>Lineage type</dt>
-                <dd>{{ details.lineage_type or "Not available" }}</dd>
+                <dt>Тип происхождения</dt>
+                <dd>{{ details.lineage_type or "Нет данных" }}</dd>
 
-                <dt>Change description</dt>
+                <dt>Описание изменения</dt>
                 <dd>
                     {{
                         details.lineage_change_description
-                        or "Not available"
+                        or "Нет данных"
                     }}
                 </dd>
 
-                <dt>Created from experiment</dt>
+                <dt>Создан из эксперимента</dt>
                 <dd>
                     {{
                         details.created_from_experiment
-                        or "Not available"
+                        or "Нет данных"
                     }}
                 </dd>
             </dl>
 
-            <h3>Child artifacts</h3>
+            <h3>Дочерние артефакты</h3>
 
             {% if child_artifacts %}
                 <ul>
@@ -918,22 +918,22 @@ ARTIFACT_DETAILS_TEMPLATE = """
                     {% endfor %}
                 </ul>
             {% else %}
-                <p>No child artifacts.</p>
+                <p>Дочерние артефакты отсутствуют.</p>
             {% endif %}
         </section>
 
         <section>
-            <h2>Artifact history</h2>
+            <h2>История артефакта</h2>
 
             {% if details.history %}
                 <table>
                     <thead>
                         <tr>
-                            <th>Event</th>
-                            <th>Artifact ID</th>
-                            <th>Previous artifact ID</th>
-                            <th>Description</th>
-                            <th>Created at</th>
+                            <th>Событие</th>
+                            <th>ID артефакта</th>
+                            <th>ID предыдущего артефакта</th>
+                            <th>Описание</th>
+                            <th>Дата создания</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -942,31 +942,31 @@ ARTIFACT_DETAILS_TEMPLATE = """
                                 <td>
                                     {{
                                         entry.event_type
-                                        or "Not available"
+                                        or "Нет данных"
                                     }}
                                 </td>
                                 <td>
                                     {{
                                         entry.artifact_id
-                                        or "Not available"
+                                        or "Нет данных"
                                     }}
                                 </td>
                                 <td>
                                     {{
                                         entry.previous_artifact_id
-                                        or "Not available"
+                                        or "Нет данных"
                                     }}
                                 </td>
                                 <td>
                                     {{
                                         entry.description
-                                        or "Not available"
+                                        or "Нет данных"
                                     }}
                                 </td>
                                 <td>
                                     {{
                                         entry.created_at
-                                        or "Not available"
+                                        or "Нет данных"
                                     }}
                                 </td>
                             </tr>
@@ -974,45 +974,45 @@ ARTIFACT_DETAILS_TEMPLATE = """
                     </tbody>
                 </table>
             {% else %}
-                <p>No artifact history is available.</p>
+                <p>История артефакта отсутствует.</p>
             {% endif %}
         </section>
 
         <section>
-            <h2>Research specification</h2>
+            <h2>Спецификация исследования</h2>
 
             <dl>
-                <dt>Question</dt>
-                <dd>{{ details.question or "Not available" }}</dd>
+                <dt>Вопрос</dt>
+                <dd>{{ details.question or "Нет данных" }}</dd>
 
-                <dt>Hypothesis</dt>
-                <dd>{{ details.hypothesis or "Not available" }}</dd>
+                <dt>Гипотеза</dt>
+                <dd>{{ details.hypothesis or "Нет данных" }}</dd>
 
-                <dt>Expected result</dt>
+                <dt>Ожидаемый результат</dt>
                 <dd>
-                    {{ details.expected_result or "Not available" }}
+                    {{ details.expected_result or "Нет данных" }}
                 </dd>
 
-                <dt>Experiment</dt>
-                <dd>{{ details.experiment or "Not available" }}</dd>
+                <dt>Эксперимент</dt>
+                <dd>{{ details.experiment or "Нет данных" }}</dd>
 
-                <dt>Symbol</dt>
-                <dd>{{ details.symbol or "Not available" }}</dd>
+                <dt>Символ</dt>
+                <dd>{{ details.symbol or "Нет данных" }}</dd>
 
-                <dt>Timeframe</dt>
-                <dd>{{ details.timeframe or "Not available" }}</dd>
+                <dt>Таймфрейм</dt>
+                <dd>{{ details.timeframe or "Нет данных" }}</dd>
             </dl>
         </section>
 
         <section>
-            <h2>Evidence metrics</h2>
+            <h2>Метрики доказательств</h2>
 
             {% if details.evidence_metrics %}
                 <table>
                     <thead>
                         <tr>
-                            <th>Metric</th>
-                            <th>Value</th>
+                            <th>Метрика</th>
+                            <th>Значение</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1033,15 +1033,15 @@ ARTIFACT_DETAILS_TEMPLATE = """
                     </tbody>
                 </table>
             {% else %}
-                <p>No evidence metrics are available.</p>
+                <p>Метрики доказательств отсутствуют.</p>
             {% endif %}
         </section>
 
         <section>
-            <h2>Evidence strength</h2>
+            <h2>Сила доказательств</h2>
 
             <dl>
-                <dt>Score</dt>
+                <dt>Оценка</dt>
                 <dd>
                     {{
                         format_display_value(
@@ -1051,19 +1051,19 @@ ARTIFACT_DETAILS_TEMPLATE = """
                             details.evidence_strength_score
                             is not none
                         )
-                        else "Not available"
+                        else "Нет данных"
                     }}
                 </dd>
 
-                <dt>Level</dt>
+                <dt>Уровень</dt>
                 <dd>
                     {{
                         details.evidence_strength_level
-                        or "Not available"
+                        or "Нет данных"
                     }}
                 </dd>
 
-                <dt>Evaluated</dt>
+                <dt>Оценено</dt>
                 <dd>
                     {{
                         details.evidence_strength_evaluated
@@ -1071,13 +1071,13 @@ ARTIFACT_DETAILS_TEMPLATE = """
                             details.evidence_strength_evaluated
                             is not none
                         )
-                        else "Not available"
+                        else "Нет данных"
                     }}
                 </dd>
             </dl>
 
             {% if details.evidence_strength_warnings %}
-                <h3>Warnings</h3>
+                <h3>Предупреждения</h3>
 
                 <ul>
                     {% for warning in (
@@ -1090,29 +1090,29 @@ ARTIFACT_DETAILS_TEMPLATE = """
         </section>
 
         <section>
-            <h2>Experiment evaluation</h2>
+            <h2>Оценка эксперимента</h2>
 
             <dl>
-                <dt>Valid result</dt>
+                <dt>Валидный результат</dt>
                 <dd>
                     {{
                         details.result_is_valid
                         if details.result_is_valid is not none
-                        else "Not available"
+                        else "Нет данных"
                     }}
                 </dd>
 
-                <dt>Evaluation strength</dt>
+                <dt>Сила оценки</dt>
                 <dd>
                     {{
                         details.evaluation_strength
-                        or "Not available"
+                        or "Нет данных"
                     }}
                 </dd>
             </dl>
 
             {% if details.evaluation_warnings %}
-                <h3>Warnings</h3>
+                <h3>Предупреждения</h3>
 
                 <ul>
                     {% for warning in details.evaluation_warnings %}
@@ -1123,61 +1123,61 @@ ARTIFACT_DETAILS_TEMPLATE = """
         </section>
 
         <section>
-            <h2>Statistical evaluation</h2>
+            <h2>Статистическая оценка</h2>
 
             <dl>
-                <dt>Evaluated</dt>
+                <dt>Оценено</dt>
                 <dd>
                     {{
                         details.statistics_evaluated
                         if details.statistics_evaluated is not none
-                        else "Not available"
+                        else "Нет данных"
                     }}
                 </dd>
 
-                <dt>Sample size</dt>
+                <dt>Размер выборки</dt>
                 <dd>
                     {{
                         details.sample_size
                         if details.sample_size is not none
-                        else "Not available"
+                        else "Нет данных"
                     }}
                 </dd>
 
-                <dt>Mean</dt>
+                <dt>Среднее значение</dt>
                 <dd>
                     {{
                         format_display_value(
                             details.statistical_mean
                         )
                         if details.statistical_mean is not none
-                        else "Not available"
+                        else "Нет данных"
                     }}
                 </dd>
 
-                <dt>Standard deviation</dt>
+                <dt>Стандартное отклонение</dt>
                 <dd>
                     {{
                         format_display_value(
                             details.standard_deviation
                         )
                         if details.standard_deviation is not none
-                        else "Not available"
+                        else "Нет данных"
                     }}
                 </dd>
 
-                <dt>Standard error</dt>
+                <dt>Стандартная ошибка</dt>
                 <dd>
                     {{
                         format_display_value(
                             details.standard_error
                         )
                         if details.standard_error is not none
-                        else "Not available"
+                        else "Нет данных"
                     }}
                 </dd>
 
-                <dt>Confidence interval</dt>
+                <dt>Доверительный интервал</dt>
                 <dd>
                     {% if (
                         details.confidence_interval_lower is not none
@@ -1196,22 +1196,22 @@ ARTIFACT_DETAILS_TEMPLATE = """
                             )
                         }}
                     {% else %}
-                        Not available
+                        Нет данных
                     {% endif %}
                 </dd>
 
-                <dt>Confidence level</dt>
+                <dt>Уровень доверия</dt>
                 <dd>
                     {{
                         format_display_value(
                             details.confidence_level
                         )
                         if details.confidence_level is not none
-                        else "Not available"
+                        else "Нет данных"
                     }}
                 </dd>
 
-                <dt>Statistically significant</dt>
+                <dt>Статистически значимо</dt>
                 <dd>
                     {{
                         details.statistically_significant
@@ -1219,35 +1219,35 @@ ARTIFACT_DETAILS_TEMPLATE = """
                             details.statistically_significant
                             is not none
                         )
-                        else "Not available"
+                        else "Нет данных"
                     }}
                 </dd>
 
-                <dt>P-value</dt>
+                <dt>P-значение</dt>
                 <dd>
                     {{
                         format_display_value(
                             details.p_value
                         )
                         if details.p_value is not none
-                        else "Not available"
+                        else "Нет данных"
                     }}
                 </dd>
 
-                <dt>Effect size</dt>
+                <dt>Размер эффекта</dt>
                 <dd>
                     {{
                         format_display_value(
                             details.effect_size
                         )
                         if details.effect_size is not none
-                        else "Not available"
+                        else "Нет данных"
                     }}
                 </dd>
             </dl>
 
             {% if details.statistical_warnings %}
-                <h3>Warnings</h3>
+                <h3>Предупреждения</h3>
 
                 <ul>
                     {% for warning in details.statistical_warnings %}
@@ -1258,48 +1258,48 @@ ARTIFACT_DETAILS_TEMPLATE = """
         </section>
 
         <section>
-            <h2>Hypothesis decision</h2>
+            <h2>Решение по гипотезе</h2>
 
             <dl>
-                <dt>Decision</dt>
+                <dt>Решение</dt>
                 <dd>
                     {{
                         details.hypothesis_decision
-                        or "Not available"
+                        or "Нет данных"
                     }}
                 </dd>
 
-                <dt>Supported</dt>
+                <dt>Поддерживается</dt>
                 <dd>
                     {{
                         details.hypothesis_supported
                         if details.hypothesis_supported is not none
-                        else "Not available"
+                        else "Нет данных"
                     }}
                 </dd>
 
-                <dt>Decision confidence</dt>
+                <dt>Уверенность решения</dt>
                 <dd>
                     {{
                         format_display_value(
                             details.decision_confidence
                         )
                         if details.decision_confidence is not none
-                        else "Not available"
+                        else "Нет данных"
                     }}
                 </dd>
 
-                <dt>Decision reason</dt>
+                <dt>Причина решения</dt>
                 <dd>
                     {{
                         details.decision_reason
-                        or "Not available"
+                        or "Нет данных"
                     }}
                 </dd>
             </dl>
 
             {% if details.decision_failed_requirements %}
-                <h3>Failed requirements</h3>
+                <h3>Невыполненные требования</h3>
 
                 <ul>
                     {% for requirement in (
@@ -1311,7 +1311,7 @@ ARTIFACT_DETAILS_TEMPLATE = """
             {% endif %}
 
             {% if details.decision_warnings %}
-                <h3>Warnings</h3>
+                <h3>Предупреждения</h3>
 
                 <ul>
                     {% for warning in details.decision_warnings %}
@@ -1322,38 +1322,38 @@ ARTIFACT_DETAILS_TEMPLATE = """
         </section>
 
         <section>
-            <h2>Conclusion</h2>
+            <h2>Вывод</h2>
 
             <dl>
-                <dt>Statement</dt>
+                <dt>Формулировка</dt>
                 <dd>
                     {{
                         details.conclusion_statement
-                        or "Not available"
+                        or "Нет данных"
                     }}
                 </dd>
 
-                <dt>Supported</dt>
+                <dt>Поддерживается</dt>
                 <dd>
                     {{
                         details.conclusion_supported
                         if details.conclusion_supported is not none
-                        else "Not available"
+                        else "Нет данных"
                     }}
                 </dd>
 
-                <dt>Confidence</dt>
+                <dt>Уверенность</dt>
                 <dd>
                     {{
                         format_display_value(
                             details.conclusion_confidence
                         )
                         if details.conclusion_confidence is not none
-                        else "Not available"
+                        else "Нет данных"
                     }}
                 </dd>
 
-                <dt>Provisional</dt>
+                <dt>Предварительный</dt>
                 <dd>
                     {{
                         details.conclusion_is_provisional
@@ -1361,25 +1361,25 @@ ARTIFACT_DETAILS_TEMPLATE = """
                             details.conclusion_is_provisional
                             is not none
                         )
-                        else "Not available"
+                        else "Нет данных"
                     }}
                 </dd>
 
-                <dt>Basis</dt>
+                <dt>Основание</dt>
                 <dd>
                     {{
                         details.conclusion_basis
-                        or "Not available"
+                        or "Нет данных"
                     }}
                 </dd>
             </dl>
         </section>
 
         <section>
-            <h2>Next research action</h2>
+            <h2>Следующее исследовательское действие</h2>
 
             <dl>
-                <dt>Selected</dt>
+                <dt>Выбрано</dt>
                 <dd>
                     {{
                         details.next_experiment_selected
@@ -1387,45 +1387,45 @@ ARTIFACT_DETAILS_TEMPLATE = """
                             details.next_experiment_selected
                             is not none
                         )
-                        else "Not available"
+                        else "Нет данных"
                     }}
                 </dd>
 
-                <dt>Action</dt>
+                <dt>Действие</dt>
                 <dd>
                     {{
                         details.next_experiment_action
-                        or "Not available"
+                        or "Нет данных"
                     }}
                 </dd>
 
-                <dt>Priority</dt>
+                <dt>Приоритет</dt>
                 <dd>
                     {{
                         details.next_experiment_priority
-                        or "Not available"
+                        or "Нет данных"
                     }}
                 </dd>
 
-                <dt>Reason</dt>
+                <dt>Причина</dt>
                 <dd>
                     {{
                         details.next_experiment_reason
-                        or "Not available"
+                        or "Нет данных"
                     }}
                 </dd>
 
-                <dt>Target requirement</dt>
+                <dt>Целевое требование</dt>
                 <dd>
                     {{
                         details.next_experiment_target_requirement
-                        or "Not available"
+                        or "Нет данных"
                     }}
                 </dd>
             </dl>
 
             {% if details.next_experiment_recommendations %}
-                <h3>Recommendations</h3>
+                <h3>Рекомендации</h3>
 
                 <ul>
                     {% for recommendation in (
@@ -1437,7 +1437,7 @@ ARTIFACT_DETAILS_TEMPLATE = """
             {% endif %}
 
             {% if details.next_experiment_warnings %}
-                <h3>Warnings</h3>
+                <h3>Предупреждения</h3>
 
                 <ul>
                     {% for warning in (
@@ -1456,10 +1456,10 @@ ARTIFACT_DETAILS_TEMPLATE = """
 
 COMPARISON_TEMPLATE = """
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="utf-8">
-    <title>Research artifact comparison</title>
+    <title>Сравнение исследовательских артефактов</title>
     <link
         rel="stylesheet"
         href="{{ url_for('static', filename='research_lab.css') }}"
@@ -1469,35 +1469,35 @@ COMPARISON_TEMPLATE = """
     <main>
         <p>
             <a href="{{ url_for('index') }}">
-                Back to research artifacts
+                Вернуться к исследовательским артефактам
             </a>
         </p>
 
-        <h1>Research artifact comparison</h1>
+        <h1>Сравнение исследовательских артефактов</h1>
 
         <dl>
-            <dt>Previous artifact</dt>
+            <dt>Предыдущий артефакт</dt>
             <dd>{{ comparison.artifact_a_id }}</dd>
 
-            <dt>Current artifact</dt>
+            <dt>Текущий артефакт</dt>
             <dd>{{ comparison.artifact_b_id }}</dd>
         </dl>
 
         <section>
-            <h2>Hypothesis evolution</h2>
+            <h2>Изменение гипотезы</h2>
 
             <dl>
-                <dt>Previous hypothesis</dt>
+                <dt>Предыдущая гипотеза</dt>
                 <dd>
                     {{
                         comparison
                         .hypothesis_evolution
                         .previous_hypothesis
-                        or "Not available"
+                        or "Нет данных"
                     }}
                 </dd>
 
-                <dt>Current hypothesis</dt>
+                <dt>Текущая гипотеза</dt>
                 <dd>
                     {{
                         comparison
@@ -1506,30 +1506,30 @@ COMPARISON_TEMPLATE = """
                     }}
                 </dd>
 
-                <dt>Change reason</dt>
+                <dt>Причина изменения</dt>
                 <dd>
                     {{
                         comparison
                         .hypothesis_evolution
                         .change_reason
-                        or "No change"
+                        or "Без изменений"
                     }}
                 </dd>
             </dl>
         </section>
 
         <section>
-            <h2>Evidence metric changes</h2>
+            <h2>Изменения метрик доказательств</h2>
 
             {% if comparison.evidence_evolution.metric_deltas %}
                 <table>
                     <thead>
                         <tr>
-                            <th>Metric</th>
-                            <th>Previous</th>
-                            <th>Current</th>
-                            <th>Absolute delta</th>
-                            <th>Direction</th>
+                            <th>Метрика</th>
+                            <th>Предыдущее значение</th>
+                            <th>Текущее значение</th>
+                            <th>Абсолютное изменение</th>
+                            <th>Направление</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1546,7 +1546,7 @@ COMPARISON_TEMPLATE = """
                                             delta.previous_value
                                         )
                                         if delta.previous_value is not none
-                                        else "Not available"
+                                        else "Нет данных"
                                     }}
                                 </td>
                                 <td>
@@ -1555,7 +1555,7 @@ COMPARISON_TEMPLATE = """
                                             delta.current_value
                                         )
                                         if delta.current_value is not none
-                                        else "Not available"
+                                        else "Нет данных"
                                     }}
                                 </td>
                                 <td>
@@ -1564,7 +1564,7 @@ COMPARISON_TEMPLATE = """
                                             delta.absolute_delta
                                         )
                                         if delta.absolute_delta is not none
-                                        else "Not comparable"
+                                        else "Несопоставимо"
                                     }}
                                 </td>
                                 <td>{{ delta.direction }}</td>
@@ -1573,25 +1573,25 @@ COMPARISON_TEMPLATE = """
                     </tbody>
                 </table>
             {% else %}
-                <p>No metric changes are available.</p>
+                <p>Изменения метрик отсутствуют.</p>
             {% endif %}
 
             <p>
-                Evidence change reason:
+                Причина изменения доказательств:
                 {{
                     comparison
                     .evidence_evolution
                     .change_reason
-                    or "No change"
+                    or "Без изменений"
                 }}
             </p>
         </section>
 
         <section>
-            <h2>Confidence evolution</h2>
+            <h2>Изменение уверенности</h2>
 
             <dl>
-                <dt>Previous confidence</dt>
+                <dt>Предыдущая уверенность</dt>
                 <dd>
                     {{
                         format_display_value(
@@ -1602,7 +1602,7 @@ COMPARISON_TEMPLATE = """
                     }}
                 </dd>
 
-                <dt>Current confidence</dt>
+                <dt>Текущая уверенность</dt>
                 <dd>
                     {{
                         format_display_value(
@@ -1613,13 +1613,13 @@ COMPARISON_TEMPLATE = """
                     }}
                 </dd>
 
-                <dt>Change reason</dt>
+                <dt>Причина изменения</dt>
                 <dd>
                     {{
                         comparison
                         .confidence_evolution
                         .change_reason
-                        or "No change"
+                        or "Без изменений"
                     }}
                 </dd>
             </dl>
@@ -1630,13 +1630,45 @@ COMPARISON_TEMPLATE = """
 """
 
 
+_DISPLAY_LABELS = {
+    "PENDING": "Ожидает",
+    "RUNNING": "Выполняется",
+    "SUCCEEDED": "Успешно",
+    "FAILED": "Ошибка",
+    "CANCELLED": "Отменено",
+    "root": "Корневой",
+    "hypothesis_refinement": "Уточнение гипотезы",
+    "weak": "Слабая",
+    "moderate": "Умеренная",
+    "strong": "Сильная",
+    "insufficient": "Недостаточная",
+    "continue_research": "Продолжить исследование",
+    "run_robustness_test": "Запустить тест устойчивости",
+    "generated": "Сгенерированные данные",
+    "historical": "Исторические данные",
+    "market_backtest": "Рыночный бэктест",
+    "increase": "Рост",
+    "decrease": "Снижение",
+    "unchanged": "Без изменений",
+}
+
+
 def format_display_value(
     value: Any,
 ) -> Any:
+    if isinstance(value, bool):
+        return "Да" if value else "Нет"
+
     if isinstance(value, float):
         return round(
             value,
             6,
+        )
+
+    if isinstance(value, str):
+        return _DISPLAY_LABELS.get(
+            value,
+            value,
         )
 
     return value
@@ -1700,11 +1732,11 @@ def build_artifact_summary(
             "parent_result_id": None,
             "lineage_type": None,
             "depth": 0,
-            "symbol": "Unknown symbol",
-            "timeframe": "Unknown timeframe",
-            "hypothesis": "Hypothesis not available",
+            "symbol": "Символ не указан",
+            "timeframe": "Таймфрейм не указан",
+            "hypothesis": "Гипотеза не указана",
             "confidence": None,
-            "created_at": "Not available",
+            "created_at": "Нет данных",
         }
 
     artifact_payload = get_market_research_payload(
@@ -1759,22 +1791,22 @@ def build_artifact_summary(
         "depth": 0,
         "symbol": (
             specification.get("symbol")
-            or "Unknown symbol"
+            or "Символ не указан"
         ),
         "timeframe": (
             specification.get("timeframe")
-            or "Unknown timeframe"
+            or "Таймфрейм не указан"
         ),
         "hypothesis": (
             hypothesis
-            or "Hypothesis not available"
+            or "Гипотеза не указана"
         ),
         "confidence": evidence_strength_evaluation.get(
             "score"
         ),
         "created_at": (
             created_at
-            or "Not available"
+            or "Нет данных"
         ),
     }
 
@@ -2629,6 +2661,7 @@ def create_app(
     secret_key: str | None = None,
 ) -> Flask:
     app = Flask(__name__)
+    app.jinja_env.finalize = format_display_value
     app.config["SECRET_KEY"] = (
         secret_key or token_urlsafe(32)
     )
@@ -2880,7 +2913,7 @@ def create_app(
             abort(
                 400,
                 description=(
-                    "Both artifact result IDs are required."
+                    "Необходимо указать ID обоих результатов."
                 ),
             )
 

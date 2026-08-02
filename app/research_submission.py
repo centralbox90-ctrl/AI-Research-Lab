@@ -29,10 +29,10 @@ _CSRF_SESSION_KEY = "research_submission_csrf_token"
 
 RESEARCH_FORM_TEMPLATE = """
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="utf-8">
-    <title>Run market research · AI Research Lab</title>
+    <title>Запуск исследования · Лаборатория исследований ИИ</title>
     <link
         rel="stylesheet"
         href="{{ url_for('static', filename='research_lab.css') }}"
@@ -40,12 +40,12 @@ RESEARCH_FORM_TEMPLATE = """
 </head>
 <body>
     <main>
-        <p><a href="{{ url_for('index') }}">← Dashboard</a></p>
-        <h1>Run market research</h1>
+        <p><a href="{{ url_for('index') }}">← Панель исследований</a></p>
+        <h1>Запустить исследование</h1>
         <p>
-            Describe one reproducible generated-data market
-            experiment. The submitted values are validated through
-            the strict MarketExperimentSpecification contract.
+            Опишите один воспроизводимый рыночный эксперимент
+            на сгенерированных данных. Введённые значения проверяются
+            строгим контрактом MarketExperimentSpecification.
         </p>
 
         {% if error %}
@@ -53,7 +53,7 @@ RESEARCH_FORM_TEMPLATE = """
         {% endif %}
 
         <section>
-            <h2>Research specification</h2>
+            <h2>Спецификация исследования</h2>
             <form
                 class="research-entry-form"
                 action="{{
@@ -70,11 +70,11 @@ RESEARCH_FORM_TEMPLATE = """
                 >
 
                 <fieldset>
-                    <legend>Research question</legend>
+                    <legend>Исследовательский вопрос</legend>
                     <div class="research-form-grid">
                         <p class="form-field-wide">
                             <label for="question_title">
-                                Question
+                                Вопрос
                             </label>
                             <input
                                 id="question_title"
@@ -83,7 +83,7 @@ RESEARCH_FORM_TEMPLATE = """
                                 value="{{
                                     form_data.get(
                                         'question_title',
-                                        'Does simple momentum predict forward returns?'
+                                        'Предсказывает ли простой импульс будущую доходность?'
                                     )
                                 }}"
                                 required
@@ -91,7 +91,7 @@ RESEARCH_FORM_TEMPLATE = """
                         </p>
                         <p class="form-field-wide">
                             <label for="question_description">
-                                Question description
+                                Описание вопроса
                             </label>
                             <textarea
                                 id="question_description"
@@ -100,18 +100,18 @@ RESEARCH_FORM_TEMPLATE = """
                                 required
                             >{{ form_data.get(
                                 'question_description',
-                                'Evaluate a deterministic momentum signal on generated market data.'
+                                'Оценить детерминированный импульсный сигнал на сгенерированных рыночных данных.'
                             ) }}</textarea>
                         </p>
                     </div>
                 </fieldset>
 
                 <fieldset>
-                    <legend>Hypothesis</legend>
+                    <legend>Гипотеза</legend>
                     <div class="research-form-grid">
                         <p class="form-field-wide">
                             <label for="hypothesis_title">
-                                Hypothesis
+                                Гипотеза
                             </label>
                             <input
                                 id="hypothesis_title"
@@ -120,7 +120,7 @@ RESEARCH_FORM_TEMPLATE = """
                                 value="{{
                                     form_data.get(
                                         'hypothesis_title',
-                                        'Positive momentum precedes positive returns'
+                                        'Положительный импульс предшествует положительной доходности'
                                     )
                                 }}"
                                 required
@@ -128,7 +128,7 @@ RESEARCH_FORM_TEMPLATE = """
                         </p>
                         <p class="form-field-wide">
                             <label for="hypothesis_description">
-                                Hypothesis description
+                                Описание гипотезы
                             </label>
                             <textarea
                                 id="hypothesis_description"
@@ -137,12 +137,12 @@ RESEARCH_FORM_TEMPLATE = """
                                 required
                             >{{ form_data.get(
                                 'hypothesis_description',
-                                'A positive momentum signal should be profitable.'
+                                'Положительный импульсный сигнал должен приносить прибыль.'
                             ) }}</textarea>
                         </p>
                         <p class="form-field-wide">
                             <label for="expected_result">
-                                Expected result
+                                Ожидаемый результат
                             </label>
                             <textarea
                                 id="expected_result"
@@ -151,18 +151,18 @@ RESEARCH_FORM_TEMPLATE = """
                                 required
                             >{{ form_data.get(
                                 'expected_result',
-                                'The backtest produces at least one completed trade.'
+                                'Бэктест должен сформировать хотя бы одну завершённую сделку.'
                             ) }}</textarea>
                         </p>
                     </div>
                 </fieldset>
 
                 <fieldset>
-                    <legend>Experiment and generated data</legend>
+                    <legend>Эксперимент и сгенерированные данные</legend>
                     <div class="research-form-grid">
                         <p class="form-field-wide">
                             <label for="experiment_title">
-                                Experiment title
+                                Название эксперимента
                             </label>
                             <input
                                 id="experiment_title"
@@ -171,7 +171,7 @@ RESEARCH_FORM_TEMPLATE = """
                                 value="{{
                                     form_data.get(
                                         'experiment_title',
-                                        'Browser research example'
+                                        'Пример исследования из браузера'
                                     )
                                 }}"
                                 required
@@ -179,7 +179,7 @@ RESEARCH_FORM_TEMPLATE = """
                         </p>
                         <p class="form-field-wide">
                             <label for="experiment_description">
-                                Experiment description
+                                Описание эксперимента
                             </label>
                             <textarea
                                 id="experiment_description"
@@ -188,11 +188,11 @@ RESEARCH_FORM_TEMPLATE = """
                                 required
                             >{{ form_data.get(
                                 'experiment_description',
-                                'Run one generated-data experiment from the browser.'
+                                'Выполнить один эксперимент на сгенерированных данных из браузера.'
                             ) }}</textarea>
                         </p>
                         <p>
-                            <label for="symbol">Symbol</label>
+                            <label for="symbol">Символ</label>
                             <input
                                 id="symbol"
                                 name="symbol"
@@ -204,7 +204,7 @@ RESEARCH_FORM_TEMPLATE = """
                             >
                         </p>
                         <p>
-                            <label for="timeframe">Timeframe</label>
+                            <label for="timeframe">Таймфрейм</label>
                             <input
                                 id="timeframe"
                                 name="timeframe"
@@ -216,7 +216,7 @@ RESEARCH_FORM_TEMPLATE = """
                             >
                         </p>
                         <p>
-                            <label for="start_at">Start time (UTC)</label>
+                            <label for="start_at">Начало периода (UTC)</label>
                             <input
                                 id="start_at"
                                 name="start_at"
@@ -231,7 +231,7 @@ RESEARCH_FORM_TEMPLATE = """
                             >
                         </p>
                         <p>
-                            <label for="end_at">End time (UTC)</label>
+                            <label for="end_at">Конец периода (UTC)</label>
                             <input
                                 id="end_at"
                                 name="end_at"
@@ -246,7 +246,7 @@ RESEARCH_FORM_TEMPLATE = """
                             >
                         </p>
                         <p class="form-field-wide">
-                            <label for="entry_rule">Entry rule</label>
+                            <label for="entry_rule">Правило входа</label>
                             <input
                                 id="entry_rule"
                                 name="entry_rule"
@@ -254,14 +254,14 @@ RESEARCH_FORM_TEMPLATE = """
                                 value="{{
                                     form_data.get(
                                         'entry_rule',
-                                        'simple positive momentum'
+                                        'простой положительный импульс'
                                     )
                                 }}"
                                 required
                             >
                         </p>
                         <p class="form-field-wide">
-                            <label for="exit_rule">Exit rule</label>
+                            <label for="exit_rule">Правило выхода</label>
                             <input
                                 id="exit_rule"
                                 name="exit_rule"
@@ -269,7 +269,7 @@ RESEARCH_FORM_TEMPLATE = """
                                 value="{{
                                     form_data.get(
                                         'exit_rule',
-                                        'configured risk and holding policy'
+                                        'заданные правила риска и удержания позиции'
                                     )
                                 }}"
                                 required
@@ -279,14 +279,14 @@ RESEARCH_FORM_TEMPLATE = """
                 </fieldset>
 
                 <fieldset>
-                    <legend>Direction, risk, and costs</legend>
+                    <legend>Направление, риски и затраты</legend>
                     <div class="research-form-grid">
                         {% set selected_direction = form_data.get(
                             'direction',
                             'LONG'
                         ) %}
                         <p>
-                            <label for="direction">Direction</label>
+                            <label for="direction">Направление</label>
                             <select
                                 id="direction"
                                 name="direction"
@@ -297,18 +297,18 @@ RESEARCH_FORM_TEMPLATE = """
                                     {% if selected_direction == 'LONG' %}
                                         selected
                                     {% endif %}
-                                >Long</option>
+                                >Лонг</option>
                                 <option
                                     value="SHORT"
                                     {% if selected_direction == 'SHORT' %}
                                         selected
                                     {% endif %}
-                                >Short</option>
+                                >Шорт</option>
                             </select>
                         </p>
                         <p>
                             <label for="max_holding_bars">
-                                Maximum holding bars
+                                Максимальное удержание в барах
                             </label>
                             <input
                                 id="max_holding_bars"
@@ -327,7 +327,7 @@ RESEARCH_FORM_TEMPLATE = """
                         </p>
                         <p>
                             <label for="stop_loss_percent">
-                                Stop loss (%)
+                                Стоп-лосс (%)
                             </label>
                             <input
                                 id="stop_loss_percent"
@@ -346,7 +346,7 @@ RESEARCH_FORM_TEMPLATE = """
                         </p>
                         <p>
                             <label for="take_profit_percent">
-                                Take profit (%)
+                                Тейк-профит (%)
                             </label>
                             <input
                                 id="take_profit_percent"
@@ -365,7 +365,7 @@ RESEARCH_FORM_TEMPLATE = """
                         </p>
                         <p>
                             <label for="commission_percent">
-                                Commission (%)
+                                Комиссия (%)
                             </label>
                             <input
                                 id="commission_percent"
@@ -384,7 +384,7 @@ RESEARCH_FORM_TEMPLATE = """
                         </p>
                         <p>
                             <label for="slippage_percent">
-                                Slippage (%)
+                                Проскальзывание (%)
                             </label>
                             <input
                                 id="slippage_percent"
@@ -405,18 +405,18 @@ RESEARCH_FORM_TEMPLATE = """
                 </fieldset>
 
                 <p class="form-actions">
-                    <button type="submit">Run research</button>
+                    <button type="submit">Запустить исследование</button>
                 </p>
             </form>
 
             <details class="advanced-upload">
                 <summary>
-                    Advanced: upload JSON specification
+                    Расширенный режим: загрузить JSON-спецификацию
                 </summary>
                 <p>
-                    Upload one UTF-8 JSON document that follows the
-                    same strict MarketExperimentSpecification
-                    contract.
+                    Загрузите один JSON-документ в кодировке UTF-8,
+                    соответствующий тому же строгому контракту
+                    MarketExperimentSpecification.
                 </p>
                 <form
                     action="{{
@@ -434,7 +434,7 @@ RESEARCH_FORM_TEMPLATE = """
                     >
                     <p>
                         <label for="specification">
-                            JSON research specification
+                            JSON-спецификация исследования
                         </label>
                         <input
                             id="specification"
@@ -445,7 +445,7 @@ RESEARCH_FORM_TEMPLATE = """
                         >
                     </p>
                     <button type="submit">
-                        Run JSON specification
+                        Запустить JSON-спецификацию
                     </button>
                 </form>
             </details>
@@ -570,7 +570,7 @@ def create_research_submission_blueprint(
     def submit_research():
         if not _has_valid_csrf_token():
             return render_form(
-                error="The research form expired. Try again.",
+                error="Срок действия формы истёк. Попробуйте ещё раз.",
                 status_code=400,
             )
 
@@ -584,8 +584,8 @@ def create_research_submission_blueprint(
         ):
             return render_form(
                 error=(
-                    "Select a JSON research "
-                    "specification file."
+                    "Выберите JSON-файл со спецификацией "
+                    "исследования."
                 ),
                 status_code=400,
             )
@@ -602,8 +602,8 @@ def create_research_submission_blueprint(
         except UnicodeDecodeError:
             return render_form(
                 error=(
-                    "Research specification must "
-                    "use UTF-8 encoding."
+                    "Спецификация исследования должна "
+                    "быть в кодировке UTF-8."
                 ),
                 status_code=400,
             )
@@ -613,7 +613,7 @@ def create_research_submission_blueprint(
         except JSONDecodeError as error:
             return render_form(
                 error=(
-                    "Invalid specification JSON: "
+                    "Некорректный JSON спецификации: "
                     f"{error.msg}."
                 ),
                 status_code=400,
@@ -625,7 +625,7 @@ def create_research_submission_blueprint(
     def submit_research_form():
         if not _has_valid_csrf_token():
             return render_form(
-                error="The research form expired. Try again.",
+                error="Срок действия формы истёк. Попробуйте ещё раз.",
                 status_code=400,
             )
 

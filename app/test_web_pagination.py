@@ -134,7 +134,7 @@ def extract_research_artifact_section(
     body: str,
 ) -> str:
     section_start = body.rfind(
-        "<h2>Research artifacts</h2>"
+        "<h2>Исследовательские артефакты</h2>"
     )
 
     assert section_start != -1
@@ -294,10 +294,10 @@ def test_web_index_renders_first_page():
     assert "result-005" in section
     assert "result-006" not in section
 
-    assert "Page 1" in body
-    assert "of 2" in body
-    assert "Next page" in body
-    assert "Previous page" not in body
+    assert "Страница 1" in body
+    assert "из 2" in body
+    assert "Следующая страница" in body
+    assert "Предыдущая страница" not in body
 
 
 def test_web_index_renders_second_page():
@@ -332,10 +332,10 @@ def test_web_index_renders_second_page():
     assert "result-004" not in section
     assert "result-005" not in section
 
-    assert "Page 2" in body
-    assert "of 2" in body
-    assert "Previous page" in body
-    assert "Next page" not in body
+    assert "Страница 2" in body
+    assert "из 2" in body
+    assert "Предыдущая страница" in body
+    assert "Следующая страница" not in body
 
 
 def test_web_index_preserves_query_parameters_in_next_link():
@@ -364,7 +364,7 @@ def test_web_index_preserves_query_parameters_in_next_link():
         as_text=True,
     )
 
-    assert "Next page" in body
+    assert "Следующая страница" in body
     assert "symbol=USDT" in body
     assert "timeframe=1h" in body
     assert "hypothesis=Hypothesis" in body
@@ -394,8 +394,8 @@ def test_web_index_falls_back_for_invalid_page():
         as_text=True,
     )
 
-    assert "Page 1" in body
-    assert "of 1" in body
+    assert "Страница 1" in body
+    assert "из 1" in body
 
 
 def test_web_index_falls_back_for_disallowed_page_size():
@@ -418,5 +418,5 @@ def test_web_index_falls_back_for_disallowed_page_size():
     )
 
     assert 'value="10"' in body
-    assert "Page 1" in body
-    assert "of 1" in body
+    assert "Страница 1" in body
+    assert "из 1" in body

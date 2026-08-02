@@ -120,7 +120,7 @@ def extract_artifact_positions(
     body: str,
 ) -> dict[str, int]:
     section_start = body.rfind(
-        "<h2>Research artifacts</h2>"
+        "<h2>Исследовательские артефакты</h2>"
     )
 
     assert section_start != -1
@@ -570,7 +570,7 @@ def test_web_index_combines_filtering_and_sorting():
         as_text=True,
     )
 
-    assert "Showing 3 of 3 research artifacts." in body
+    assert "Показано 3 из 3 исследовательских артефактов." in body
 
     positions = extract_artifact_positions(body)
 

@@ -214,27 +214,27 @@ def test_web_index_renders_dashboard():
         as_text=True,
     )
 
-    assert "Research dashboard" in body
+    assert "Панель исследований" in body
 
-    assert "Total artifacts" in body
+    assert "Всего артефактов" in body
     assert "<dd>3</dd>" in body
 
-    assert "Root artifacts" in body
+    assert "Корневые артефакты" in body
     assert "<dd>1</dd>" in body
 
-    assert "Child artifacts" in body
+    assert "Дочерние артефакты" in body
     assert "<dd>2</dd>" in body
 
-    assert "Orphan artifacts" in body
+    assert "Артефакты-сироты" in body
 
-    assert "Average confidence" in body
+    assert "Средняя уверенность" in body
     assert "0.6" in body
 
-    assert "Artifacts by symbol" in body
+    assert "Артефакты по символам" in body
     assert "BTCUSDT: 2" in body
     assert "ETHUSDT: 1" in body
 
-    assert "Artifacts by timeframe" in body
+    assert "Артефакты по таймфреймам" in body
     assert "1h: 2" in body
     assert "4h: 1" in body
 
@@ -251,17 +251,17 @@ def test_web_index_renders_empty_dashboard():
         as_text=True,
     )
 
-    assert "Research dashboard" in body
-    assert "Total artifacts" in body
-    assert "Average confidence" in body
-    assert "Not available" in body
+    assert "Панель исследований" in body
+    assert "Всего артефактов" in body
+    assert "Средняя уверенность" in body
+    assert "Нет данных" in body
 
     assert (
-        "No symbol statistics are available."
+        "Статистика по символам отсутствует."
         in body
     )
 
     assert (
-        "No timeframe statistics are available."
+        "Статистика по таймфреймам отсутствует."
         in body
     )

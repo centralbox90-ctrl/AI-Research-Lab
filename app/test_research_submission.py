@@ -334,7 +334,10 @@ def test_research_submission_rejects_invalid_json():
     )
 
     assert response.status_code == 400
-    assert b"Invalid specification JSON" in response.data
+    assert (
+        "Некорректный JSON спецификации".encode("utf-8")
+        in response.data
+    )
     assert runner.specifications == []
 
 
@@ -393,7 +396,12 @@ def test_dashboard_registers_research_submission_when_configured():
     assert b'name="question_title"' in form.data
     assert b'name="symbol"' in form.data
     assert b'name="stop_loss_percent"' in form.data
-    assert b"Advanced: upload JSON specification" in form.data
+    assert b'lang="ru"' in form.data
+    assert (
+        "Расширенный режим: загрузить JSON-спецификацию"
+        .encode("utf-8")
+        in form.data
+    )
     assert form.data.count(b'step="any"') == 2
 
 
@@ -448,17 +456,27 @@ def test_build_web_app_runs_persists_and_reopens_research(
     )
     assert b"EURUSD" in dashboard.data
     assert b"H1" in dashboard.data
-    assert b"Unknown symbol" not in dashboard.data
-    assert b"market_backtest" in details.data
+    assert (
+        "Символ не указан".encode("utf-8")
+        not in dashboard.data
+    )
+    assert (
+        "Рыночный бэктест".encode("utf-8")
+        in details.data
+    )
     assert (
         b"Evaluate a deterministic momentum signal on generated market data."
         in details.data
     )
-    assert b"Technical execution" in details.data
-    assert b"SUCCEEDED" in details.data
+    assert (
+        "Техническое выполнение".encode("utf-8")
+        in details.data
+    )
+    assert "Успешно".encode("utf-8") in details.data
     assert details.data.count(b"&rarr;") == 2
     assert (
-        b"does not confirm or disprove"
+        "не подтверждает и не опровергает"
+        .encode("utf-8")
         in details.data
     )
 

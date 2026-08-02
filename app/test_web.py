@@ -337,7 +337,7 @@ def test_build_artifact_summary_handles_missing():
     )
 
     assert summary["artifact_id"] is None
-    assert summary["symbol"] == "Unknown symbol"
+    assert summary["symbol"] == "Символ не указан"
     assert summary["confidence"] is None
 
 
@@ -555,11 +555,12 @@ def test_web_index_returns_ui_shell():
 
     body = response.get_data(as_text=True)
 
-    assert "AI Research Lab" in body
-    assert "Filter and sort research artifacts" in body
-    assert "Compare research artifacts" in body
-    assert "Research lineage tree" in body
-    assert "No stored research artifacts." in body
+    assert '<html lang="ru">' in body
+    assert "Лаборатория исследований ИИ" in body
+    assert "Фильтрация и сортировка артефактов" in body
+    assert "Сравнение исследовательских артефактов" in body
+    assert "Дерево происхождения исследований" in body
+    assert "Сохранённые исследовательские артефакты отсутствуют." in body
 
 
 def test_web_index_lists_artifacts():
@@ -628,7 +629,7 @@ def test_web_index_filters_artifacts(
         as_text=True,
     )
 
-    assert "Showing 1 of 2 research artifacts." in body
+    assert "Показано 1 из 2 исследовательских артефактов." in body
     assert expected_text in body
     assert excluded_text not in body
 
@@ -648,10 +649,10 @@ def test_web_index_shows_empty_filter_result():
         as_text=True,
     )
 
-    assert "Showing 0 of 2 research artifacts." in body
+    assert "Показано 0 из 2 исследовательских артефактов." in body
 
     assert (
-        "No research artifacts match the active filters."
+        "Нет артефактов, соответствующих выбранным фильтрам."
         in body
     )
 
@@ -676,27 +677,29 @@ def test_web_artifact_details_returns_artifact():
 
     body = response.get_data(as_text=True)
 
-    assert "Result summary" in body
+    assert "Сводка результата" in body
     assert 'class="artifact-summary"' in body
     assert "Williams predicts reversal." in body
     assert "The hypothesis remains unconfirmed." in body
-    assert "Key evidence metrics" in body
+    assert "Ключевые метрики доказательств" in body
     assert (
-        "Technical execution lifecycle is recorded separately"
+        "Технический жизненный цикл выполнения хранится отдельно"
         in body
     )
-    assert "Technical execution" in body
+    assert "Техническое выполнение" in body
     assert 'class="execution-summary"' in body
-    assert "SUCCEEDED" in body
+    assert "Успешно" in body
+    assert "Да" in body
+    assert "True" not in body
     assert "execution-001" in body
     assert body.count("&rarr;") == 2
-    assert "does not confirm or disprove" in body
-    assert "Artifact identity" in body
-    assert "Research lineage" in body
-    assert "Artifact history" in body
-    assert "Evidence metrics" in body
-    assert "Hypothesis decision" in body
-    assert "Next research action" in body
+    assert "не подтверждает и не опровергает" in body
+    assert "Идентификаторы артефакта" in body
+    assert "Происхождение исследования" in body
+    assert "История артефакта" in body
+    assert "Метрики доказательств" in body
+    assert "Решение по гипотезе" in body
+    assert "Следующее исследовательское действие" in body
     assert "artifact-002" in body
 
 
@@ -730,7 +733,7 @@ def test_web_comparison_requires_both_ids():
     assert response.status_code == 400
 
     assert (
-        "Both artifact result IDs are required."
+        "Необходимо указать ID обоих результатов."
         in response.get_data(as_text=True)
     )
 
@@ -771,6 +774,7 @@ def test_web_comparison_renders_metric_deltas():
 
     body = response.get_data(as_text=True)
 
+    assert "Сравнение исследовательских артефактов" in body
     assert "artifact-001" in body
     assert "artifact-002" in body
     assert "net_profit" in body
@@ -779,7 +783,7 @@ def test_web_comparison_renders_metric_deltas():
     assert "-2.38" in body
     assert "added_metric" in body
     assert "removed_metric" in body
-    assert "Not comparable" in body
+    assert "Несопоставимо" in body
     assert "Confidence decreased." in body
 
 
@@ -821,7 +825,7 @@ def test_build_web_app_reads_persisted_artifacts(
 
     assert "artifact-001" in index_body
     assert "artifact-002" in index_body
-    assert "Research lineage tree" in index_body
+    assert "Дерево происхождения исследований" in index_body
 
     details_response = client.get(
         "/artifacts/result-002"
@@ -835,7 +839,7 @@ def test_build_web_app_reads_persisted_artifacts(
 
     assert "artifact-002" in details_body
     assert (
-        "No validated technical execution history is linked"
+        "С этим сохранённым результатом не связана проверенная"
         in details_body
     )
 

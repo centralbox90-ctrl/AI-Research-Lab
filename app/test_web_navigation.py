@@ -95,17 +95,17 @@ def test_web_index_renders_quick_navigation():
         as_text=True,
     )
 
-    assert 'aria-label="Quick navigation"' in body
+    assert 'aria-label="Быстрая навигация"' in body
 
     assert 'href="#dashboard"' in body
     assert 'href="#filters"' in body
     assert 'href="#comparison"' in body
     assert 'href="#artifacts"' in body
 
-    assert "Dashboard" in body
-    assert "Filters" in body
-    assert "Comparison" in body
-    assert "Artifacts" in body
+    assert "Панель исследований" in body
+    assert "Фильтры" in body
+    assert "Сравнение" in body
+    assert "Артефакты" in body
 
 
 def test_web_index_renders_navigation_targets():
@@ -152,7 +152,7 @@ def test_web_index_keeps_navigation_with_empty_storage():
         as_text=True,
     )
 
-    assert 'aria-label="Quick navigation"' in body
+    assert 'aria-label="Быстрая навигация"' in body
     assert 'href="#dashboard"' in body
     assert 'href="#filters"' in body
     assert 'href="#comparison"' in body
