@@ -334,7 +334,7 @@ RESEARCH_FORM_TEMPLATE = """
                                 name="stop_loss_percent"
                                 type="number"
                                 min="0.0001"
-                                step="0.01"
+                                step="any"
                                 value="{{
                                     form_data.get(
                                         'stop_loss_percent',
@@ -353,7 +353,7 @@ RESEARCH_FORM_TEMPLATE = """
                                 name="take_profit_percent"
                                 type="number"
                                 min="0.0001"
-                                step="0.01"
+                                step="any"
                                 value="{{
                                     form_data.get(
                                         'take_profit_percent',

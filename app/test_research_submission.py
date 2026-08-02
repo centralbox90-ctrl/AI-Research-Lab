@@ -394,6 +394,7 @@ def test_dashboard_registers_research_submission_when_configured():
     assert b'name="symbol"' in form.data
     assert b'name="stop_loss_percent"' in form.data
     assert b"Advanced: upload JSON specification" in form.data
+    assert form.data.count(b'step="any"') == 2
 
 
 def test_build_web_app_runs_persists_and_reopens_research(
