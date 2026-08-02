@@ -41,7 +41,12 @@ AI Research Lab — исследовательская платформа для
 - composition roots для сборки прикладных сценариев;
 - append-only Knowledge persistence и repository-backed feedback path;
 - read-only HTTP API с OpenAPI 3.1 contract;
-- отдельные local Flask и production Waitress entry points;
+- loopback-only local Flask и production Waitress entry points;
+- обязательная Bearer authentication production HTTP API;
+- public `/health` и SQLite-aware `/ready` endpoints;
+- безопасный HTTP logging без query, body и token;
+- validated SQLite backup, verify и restore CLI;
+- private-VPS deployment templates для systemd и Caddy TLS;
 - read-only MCP adapter с repository-backed stdio server;
 - автоматическая проверка чистого checkout через GitHub Actions.
 
@@ -145,7 +150,7 @@ python -m src.cli.main `
 
 HTTP boundary предоставляет три read-only операции: список research cycles, получение artifact и сравнение двух artifacts.
 
-OpenAPI 3.1 contract доступен через `/openapi.json`.
+OpenAPI 3.1 contract доступен через `/openapi.json`. Публичный `/health` подтверждает работу HTTP process, а публичный `/ready` дополнительно проверяет доступность SQLite.
 
 Локальный development server:
 
@@ -159,7 +164,11 @@ Production WSGI server:
 python -m src.api.production_server --database .research_lab/research-cycles.db --host 127.0.0.1 --port 8080 --threads 4
 ```
 
-Production server по умолчанию использует loopback interface. Внешнее размещение, TLS, authentication, authorization, CORS и rate limiting настраиваются отдельным deployment boundary. Встроенный Flask server не предназначен для production.
+Production entry point запускается только при наличии ASCII-token длиной не менее 32 символов в `AI_RESEARCH_LAB_API_TOKEN`. Bearer authentication защищает прикладные read-only маршруты, а `/health` и `/ready` остаются публичными для operational probes. Server использует только loopback interface; внешний HTTPS завершается через Caddy. Полная процедура развёртывания и эксплуатации: [OPERATIONS.md](OPERATIONS.md). Встроенный Flask server не предназначен для production.
+
+## SQLite backup and restore
+
+Validated create, verify и restore доступны через `python -m src.storage.sqlite_backup_cli`. Команды не перезаписывают существующие database или backup files. Production-процедура описана в [OPERATIONS.md](OPERATIONS.md).
 
 ## MCP adapter
 
