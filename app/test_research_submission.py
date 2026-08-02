@@ -292,6 +292,7 @@ def test_build_web_app_runs_persists_and_reopens_research(
     details = client.get(
         response.headers["Location"]
     )
+    dashboard = client.get("/")
 
     reopened_store = SqliteResearchCycleStore(
         db_path=database_path,
@@ -310,10 +311,23 @@ def test_build_web_app_runs_persists_and_reopens_research(
     )
 
     assert details.status_code == 200
+    assert dashboard.status_code == 200
     assert artifact is not None
     assert artifact["artifact_type"] == (
         "market_research_cycle"
     )
+    assert b"EURUSD" in dashboard.data
+    assert b"H1" in dashboard.data
+    assert b"Unknown symbol" not in dashboard.data
+    assert b"market_backtest" in details.data
+    assert (
+        b"Evaluate a deterministic momentum signal on generated market data."
+        in details.data
+    )
+
+    artifact_id = artifact["artifact_id"]
+    assert isinstance(artifact_id, str)
+    assert artifact_id.encode("utf-8") in details.data
     assert len(execution_ids) == 1
 
     history = execution_recorder.history(

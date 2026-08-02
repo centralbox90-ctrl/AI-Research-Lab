@@ -1496,6 +1496,21 @@ def first_available(
     return None
 
 
+def get_market_research_payload(
+    artifact: dict[str, Any],
+) -> dict[str, Any]:
+    payload = artifact.get("payload")
+
+    if (
+        artifact.get("artifact_type")
+        == "market_research_cycle"
+        and isinstance(payload, dict)
+    ):
+        return payload
+
+    return artifact
+
+
 def build_artifact_summary(
     result_id: str,
     artifact: dict[str, Any] | None,
@@ -1515,20 +1530,35 @@ def build_artifact_summary(
             "created_at": "Not available",
         }
 
+    artifact_payload = get_market_research_payload(
+        artifact
+    )
+
     metadata = as_dictionary(
-        artifact.get("metadata")
+        artifact_payload.get("metadata")
     )
 
     specification = as_dictionary(
-        artifact.get("specification")
+        artifact_payload.get("specification")
     )
 
     lineage = as_dictionary(
-        artifact.get("lineage")
+        artifact_payload.get("lineage")
     )
 
     cycle = as_dictionary(
-        artifact.get("cycle")
+        artifact_payload.get("cycle")
+    )
+
+    artifact_id = (
+        artifact.get("artifact_id")
+        if artifact_payload is not artifact
+        else metadata.get("artifact_id")
+    )
+    created_at = (
+        artifact.get("created_at")
+        if artifact_payload is not artifact
+        else metadata.get("created_at")
     )
 
     evidence_strength_evaluation = as_dictionary(
@@ -1543,7 +1573,7 @@ def build_artifact_summary(
 
     return {
         "result_id": result_id,
-        "artifact_id": metadata.get("artifact_id"),
+        "artifact_id": artifact_id,
         "parent_artifact_id": lineage.get(
             "parent_artifact_id"
         ),
@@ -1566,7 +1596,7 @@ def build_artifact_summary(
             "score"
         ),
         "created_at": (
-            metadata.get("created_at")
+            created_at
             or "Not available"
         ),
     }
@@ -2113,20 +2143,35 @@ def build_artifact_details(
     result_id: str,
     artifact: dict[str, Any],
 ) -> dict[str, Any]:
+    artifact_payload = get_market_research_payload(
+        artifact
+    )
+
     metadata = as_dictionary(
-        artifact.get("metadata")
+        artifact_payload.get("metadata")
     )
 
     specification = as_dictionary(
-        artifact.get("specification")
+        artifact_payload.get("specification")
     )
 
     lineage = as_dictionary(
-        artifact.get("lineage")
+        artifact_payload.get("lineage")
     )
 
     cycle = as_dictionary(
-        artifact.get("cycle")
+        artifact_payload.get("cycle")
+    )
+
+    artifact_id = (
+        artifact.get("artifact_id")
+        if artifact_payload is not artifact
+        else metadata.get("artifact_id")
+    )
+    created_at = (
+        artifact.get("created_at")
+        if artifact_payload is not artifact
+        else metadata.get("created_at")
     )
 
     evidence = as_dictionary(
@@ -2181,8 +2226,8 @@ def build_artifact_details(
 
     return {
         "result_id": result_id,
-        "artifact_id": metadata.get("artifact_id"),
-        "created_at": metadata.get("created_at"),
+        "artifact_id": artifact_id,
+        "created_at": created_at,
         "executor_type": metadata.get("executor_type"),
         "data_source": metadata.get("data_source"),
         "parent_artifact_id": lineage.get(
@@ -2197,7 +2242,7 @@ def build_artifact_details(
             "created_from_experiment"
         ),
         "history": normalize_history(
-            artifact.get("history")
+            artifact_payload.get("history")
         ),
         "question": question,
         "hypothesis": hypothesis,
