@@ -18,6 +18,9 @@ from src.application.generate_research_questions_from_knowledge_repositories imp
 from src.application.get_experiment_execution_history import (
     GetExperimentExecutionHistory,
 )
+from src.application.get_experiment_execution_history_for_result import (
+    GetExperimentExecutionHistoryForResult,
+)
 from src.application.get_stored_research_artifact import (
     GetStoredResearchArtifact,
     StoredResearchArtifactIntegrityError,
@@ -51,6 +54,7 @@ __all__ = (
     "ExportStoredResearchArtifact",
     "GenerateResearchQuestionsFromKnowledgeRepositories",
     "GetExperimentExecutionHistory",
+    "GetExperimentExecutionHistoryForResult",
     "GetStoredResearchArtifact",
     "GetStoredResearchCycle",
     "IndicatorComparativeHypothesisEvaluationApplication",

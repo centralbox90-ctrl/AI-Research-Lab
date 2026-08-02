@@ -6,6 +6,7 @@ EXPECTED_PUBLIC_NAMES = (
     "ExportStoredResearchArtifact",
     "GenerateResearchQuestionsFromKnowledgeRepositories",
     "GetExperimentExecutionHistory",
+    "GetExperimentExecutionHistoryForResult",
     "GetStoredResearchArtifact",
     "GetStoredResearchCycle",
     "IndicatorComparativeHypothesisEvaluationApplication",
