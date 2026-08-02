@@ -74,6 +74,10 @@ INDEX_TEMPLATE = """
 <head>
     <meta charset="utf-8">
     <title>AI Research Lab</title>
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='research_lab.css') }}"
+    >
 </head>
 <body>
     <main>
@@ -649,6 +653,10 @@ ARTIFACT_DETAILS_TEMPLATE = """
 <head>
     <meta charset="utf-8">
     <title>Research artifact</title>
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='research_lab.css') }}"
+    >
 </head>
 <body>
     <main>
@@ -1287,6 +1295,10 @@ COMPARISON_TEMPLATE = """
 <head>
     <meta charset="utf-8">
     <title>Research artifact comparison</title>
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='research_lab.css') }}"
+    >
 </head>
 <body>
     <main>

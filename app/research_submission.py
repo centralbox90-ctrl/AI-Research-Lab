@@ -33,6 +33,10 @@ RESEARCH_FORM_TEMPLATE = """
 <head>
     <meta charset="utf-8">
     <title>Run market research · AI Research Lab</title>
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='research_lab.css') }}"
+    >
 </head>
 <body>
     <main>

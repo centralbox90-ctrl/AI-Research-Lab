@@ -9,9 +9,13 @@ from flask import Flask
 
 from app.research_submission import (
     MAX_SPECIFICATION_BYTES,
+    RESEARCH_FORM_TEMPLATE,
     create_research_submission_blueprint,
 )
 from app.web import (
+    ARTIFACT_DETAILS_TEMPLATE,
+    COMPARISON_TEMPLATE,
+    INDEX_TEMPLATE,
     build_web_app,
     create_app,
 )
@@ -343,3 +347,32 @@ def test_build_web_app_runs_persists_and_reopens_research(
         "SUCCEEDED",
     ]
     assert history[-1].result_id == result_id
+
+
+def test_browser_pages_load_shared_stylesheet(
+    tmp_path: Path,
+):
+    stylesheet_reference = (
+        "static', filename='research_lab.css"
+    )
+
+    for template in (
+        INDEX_TEMPLATE,
+        ARTIFACT_DETAILS_TEMPLATE,
+        COMPARISON_TEMPLATE,
+        RESEARCH_FORM_TEMPLATE,
+    ):
+        assert stylesheet_reference in template
+
+    application = build_web_app(
+        db_path=tmp_path / "styled-browser.db",
+    )
+    client = application.test_client()
+
+    stylesheet = client.get(
+        "/static/research_lab.css"
+    )
+
+    assert stylesheet.status_code == 200
+    assert stylesheet.mimetype == "text/css"
+    assert b"--color-primary" in stylesheet.data
