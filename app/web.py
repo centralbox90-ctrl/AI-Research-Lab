@@ -671,6 +671,95 @@ ARTIFACT_DETAILS_TEMPLATE = """
 
         <h1>Research artifact</h1>
 
+        <section class="artifact-summary">
+            <h2>Result summary</h2>
+
+            <p class="artifact-summary-hypothesis">
+                <strong>Hypothesis</strong><br>
+                {{
+                    details.hypothesis
+                    or "Not available"
+                }}
+            </p>
+
+            <dl class="artifact-summary-grid">
+                <dt>Symbol</dt>
+                <dd>{{ details.symbol or "Not available" }}</dd>
+
+                <dt>Timeframe</dt>
+                <dd>{{ details.timeframe or "Not available" }}</dd>
+
+                <dt>Scientific result valid</dt>
+                <dd>
+                    {{
+                        details.result_is_valid
+                        if details.result_is_valid is not none
+                        else "Not available"
+                    }}
+                </dd>
+
+                <dt>Evidence strength</dt>
+                <dd>
+                    {{
+                        details.evidence_strength_level
+                        or details.evaluation_strength
+                        or "Not available"
+                    }}
+                </dd>
+
+                <dt>Hypothesis decision</dt>
+                <dd>
+                    {{
+                        details.hypothesis_decision
+                        or "Not available"
+                    }}
+                </dd>
+
+                <dt>Decision confidence</dt>
+                <dd>
+                    {{
+                        format_display_value(
+                            details.decision_confidence
+                        )
+                        if details.decision_confidence is not none
+                        else "Not available"
+                    }}
+                </dd>
+            </dl>
+
+            <h3>Scientific conclusion</h3>
+            <p>
+                {{
+                    details.conclusion_statement
+                    or "No scientific conclusion is available."
+                }}
+            </p>
+
+            {% if details.summary_metrics %}
+                <h3>Key evidence metrics</h3>
+
+                <div class="artifact-summary-metrics">
+                    {% for metric in details.summary_metrics %}
+                        <article class="artifact-summary-metric">
+                            <strong>{{ metric.name }}</strong>
+                            <span>
+                                {{
+                                    format_display_value(
+                                        metric.value
+                                    )
+                                }}
+                            </span>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <p class="artifact-boundary-note">
+                Technical execution lifecycle is recorded separately
+                from scientific evaluation.
+            </p>
+        </section>
+
         <section>
             <h2>Artifact identity</h2>
 
@@ -2268,6 +2357,15 @@ def build_artifact_details(
         "symbol": specification.get("symbol"),
         "timeframe": specification.get("timeframe"),
         "evidence_metrics": evidence_metrics,
+        "summary_metrics": [
+            {
+                "name": metric_name,
+                "value": metric_value,
+            }
+            for metric_name, metric_value in list(
+                evidence_metrics.items()
+            )[:4]
+        ],
         "result_is_valid": first_available(
             evaluation,
             "is_valid",

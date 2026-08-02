@@ -504,3 +504,5 @@ def test_browser_pages_load_shared_stylesheet(
     assert b"--color-primary" in stylesheet.data
     assert b".research-form-grid" in stylesheet.data
     assert b".advanced-upload" in stylesheet.data
+    assert b".artifact-summary" in stylesheet.data
+    assert b".artifact-boundary-note" in stylesheet.data

@@ -462,6 +462,15 @@ def test_build_artifact_details_returns_research_data():
         "Can Williams identify short-term reversal?"
     )
     assert details["evidence_metrics"]["net_profit"] == -11.17
+    assert [
+        metric["name"]
+        for metric in details["summary_metrics"]
+    ] == [
+        "net_profit",
+        "win_rate",
+        "total_trades",
+        "market",
+    ]
     assert details["evidence_strength_score"] == 0.41995
     assert details["hypothesis_decision"] == (
         "continue_research"
@@ -598,6 +607,15 @@ def test_web_artifact_details_returns_artifact():
 
     body = response.get_data(as_text=True)
 
+    assert "Result summary" in body
+    assert 'class="artifact-summary"' in body
+    assert "Williams predicts reversal." in body
+    assert "The hypothesis remains unconfirmed." in body
+    assert "Key evidence metrics" in body
+    assert (
+        "Technical execution lifecycle is recorded separately"
+        in body
+    )
     assert "Artifact identity" in body
     assert "Research lineage" in body
     assert "Artifact history" in body
