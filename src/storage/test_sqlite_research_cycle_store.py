@@ -1,6 +1,5 @@
+import sqlite3
 from pathlib import Path
-
-import pytest
 
 import pytest
 
@@ -106,6 +105,38 @@ def test_sqlite_research_cycle_store_rejects_payload_replacement(
         )
 
     assert store.get("result-001") == original_cycle
+
+
+def test_sqlite_research_cycle_store_reports_ready(
+    tmp_path: Path,
+) -> None:
+    store = SqliteResearchCycleStore(
+        db_path=tmp_path / "research_cycles.db",
+    )
+
+    assert store.is_ready() is True
+
+
+def test_sqlite_research_cycle_store_reports_not_ready_when_sqlite_fails(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    store = SqliteResearchCycleStore(
+        db_path=tmp_path / "research_cycles.db",
+    )
+
+    def fail_connection() -> None:
+        raise sqlite3.OperationalError(
+            "database unavailable"
+        )
+
+    monkeypatch.setattr(
+        store,
+        "_get_connection",
+        fail_connection,
+    )
+
+    assert store.is_ready() is False
 
 
 def test_sqlite_research_cycle_store_returns_none_when_missing(

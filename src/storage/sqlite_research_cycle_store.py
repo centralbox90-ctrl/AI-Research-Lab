@@ -111,6 +111,15 @@ class SqliteResearchCycleStore:
             for row in rows
         ]
 
+    def is_ready(self) -> bool:
+        try:
+            with self._get_connection() as connection:
+                connection.execute("SELECT 1").fetchone()
+        except sqlite3.Error:
+            return False
+
+        return True
+
     def _get_connection(self) -> sqlite3.Connection:
         return sqlite3.connect(self.db_path)
 

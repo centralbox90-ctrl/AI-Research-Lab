@@ -10,7 +10,7 @@ def test_builds_openapi_31_document(
     assert document["openapi"] == "3.1.0"
     assert document["info"] == {
         "title": "AI Research Lab API",
-        "version": "1.2.0",
+        "version": "1.3.0",
         "description": (
             "Read-only access to stored "
             "research results."
@@ -20,12 +20,35 @@ def test_builds_openapi_31_document(
     paths = document["paths"]
 
     assert set(paths) == {
+        "/health",
+        "/ready",
         "/v1/research-artifact-comparisons",
         "/v1/research-cycles",
         (
             "/v1/research-artifacts/"
             "{result_id}"
         ),
+    }
+
+    health_operation = paths["/health"]["get"]
+    readiness_operation = paths["/ready"]["get"]
+
+    assert health_operation["operationId"] == (
+        "getHealth"
+    )
+    assert health_operation["security"] == []
+    assert set(health_operation["responses"]) == {
+        "200",
+    }
+    assert readiness_operation["operationId"] == (
+        "getReadiness"
+    )
+    assert readiness_operation["security"] == []
+    assert set(
+        readiness_operation["responses"]
+    ) == {
+        "200",
+        "503",
     }
 
     assert paths[
@@ -140,10 +163,18 @@ def test_documents_optional_bearer_authentication(
         "unauthorized"
     )
 
-    for path_item in private_document[
+    for path, path_item in private_document[
         "paths"
-    ].values():
+    ].items():
         for operation in path_item.values():
+            if path in {
+                "/health",
+                "/ready",
+            }:
+                assert operation["security"] == []
+                assert "401" not in operation["responses"]
+                continue
+
             assert operation["responses"]["401"] == {
                 "description": (
                     "A valid Bearer token "
@@ -171,6 +202,9 @@ def test_defines_exact_transport_schemas(
     ]["schemas"]
 
     assert set(schemas) == {
+        "HealthStatus",
+        "ReadinessStatus",
+        "ServiceUnavailableError",
         "ResearchCycleList",
         "ResearchArtifact",
         "ResearchArtifactComparison",
@@ -188,6 +222,22 @@ def test_defines_exact_transport_schemas(
         assert schema[
             "additionalProperties"
         ] is False
+
+    assert schemas[
+        "HealthStatus"
+    ]["properties"]["status"]["const"] == (
+        "healthy"
+    )
+    assert schemas[
+        "ReadinessStatus"
+    ]["properties"]["status"]["const"] == (
+        "ready"
+    )
+    assert schemas[
+        "ServiceUnavailableError"
+    ]["properties"]["error"]["properties"][
+        "code"
+    ]["const"] == "service_unavailable"
 
     assert schemas[
         "ResearchArtifactComparison"

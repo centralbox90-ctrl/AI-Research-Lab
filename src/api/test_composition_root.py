@@ -81,6 +81,20 @@ def test_builds_api_with_bearer_authentication(
     )
     client = application.test_client()
 
+    health_response = client.get("/health")
+    readiness_response = client.get("/ready")
+
+    assert health_response.status_code == 200
+    assert health_response.get_json() == {
+        "schema_version": 1,
+        "status": "healthy",
+    }
+    assert readiness_response.status_code == 200
+    assert readiness_response.get_json() == {
+        "schema_version": 1,
+        "status": "ready",
+    }
+
     unauthorized_response = client.get(
         "/v1/research-cycles"
     )

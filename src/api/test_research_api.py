@@ -112,6 +112,139 @@ class MissingExecute:
     pass
 
 
+def test_serves_unauthenticated_operational_endpoints(
+) -> None:
+    readiness_calls = 0
+
+    def readiness_check() -> bool:
+        nonlocal readiness_calls
+        readiness_calls += 1
+
+        return True
+
+    application = create_research_api(
+        compare_stored_research_artifacts=(
+            StubCompareStoredResearchArtifacts()
+        ),
+        get_stored_research_artifact=(
+            StubGetStoredResearchArtifact({})
+        ),
+        list_stored_research_cycles=(
+            StubListStoredResearchCycles([])
+        ),
+        api_token="private-api-token-value",
+        readiness_check=readiness_check,
+    )
+    client = application.test_client()
+
+    health_response = client.get("/health")
+    ready_response = client.get("/ready")
+
+    assert health_response.status_code == 200
+    assert health_response.get_json() == {
+        "schema_version": 1,
+        "status": "healthy",
+    }
+    assert ready_response.status_code == 200
+    assert ready_response.get_json() == {
+        "schema_version": 1,
+        "status": "ready",
+    }
+    assert readiness_calls == 1
+
+
+def test_reports_service_not_ready(
+) -> None:
+    application = create_research_api(
+        compare_stored_research_artifacts=(
+            StubCompareStoredResearchArtifacts()
+        ),
+        get_stored_research_artifact=(
+            StubGetStoredResearchArtifact({})
+        ),
+        list_stored_research_cycles=(
+            StubListStoredResearchCycles([])
+        ),
+        readiness_check=lambda: False,
+    )
+
+    response = application.test_client().get(
+        "/ready"
+    )
+
+    assert response.status_code == 503
+    assert response.get_json() == {
+        "schema_version": 1,
+        "error": {
+            "code": "service_unavailable",
+            "message": "The service is not ready.",
+        },
+    }
+
+
+def test_reports_not_ready_without_leaking_check_error(
+) -> None:
+    def fail_readiness_check() -> bool:
+        raise RuntimeError(
+            "sensitive database details"
+        )
+
+    application = create_research_api(
+        compare_stored_research_artifacts=(
+            StubCompareStoredResearchArtifacts()
+        ),
+        get_stored_research_artifact=(
+            StubGetStoredResearchArtifact({})
+        ),
+        list_stored_research_cycles=(
+            StubListStoredResearchCycles([])
+        ),
+        readiness_check=fail_readiness_check,
+    )
+
+    response = application.test_client().get(
+        "/ready"
+    )
+
+    assert response.status_code == 503
+    assert response.get_json() == {
+        "schema_version": 1,
+        "error": {
+            "code": "service_unavailable",
+            "message": "The service is not ready.",
+        },
+    }
+    assert (
+        "sensitive database details"
+        not in response.get_data(as_text=True)
+    )
+
+
+def test_rejects_invalid_readiness_dependency(
+) -> None:
+    try:
+        create_research_api(
+            compare_stored_research_artifacts=(
+                StubCompareStoredResearchArtifacts()
+            ),
+            get_stored_research_artifact=(
+                StubGetStoredResearchArtifact({})
+            ),
+            list_stored_research_cycles=(
+                StubListStoredResearchCycles([])
+            ),
+            readiness_check=True,
+        )
+    except TypeError as error:
+        assert str(error) == (
+            "readiness_check must be callable or None"
+        )
+    else:
+        raise AssertionError(
+            "TypeError was not raised"
+        )
+
+
 def test_requires_valid_bearer_token(
 ) -> None:
     list_use_case = StubListStoredResearchCycles(
@@ -465,9 +598,11 @@ def test_serves_openapi_document(
 
     assert document["openapi"] == "3.1.0"
     assert document["info"]["version"] == (
-        "1.2.0"
+        "1.3.0"
     )
     assert set(document["paths"]) == {
+        "/health",
+        "/ready",
         "/v1/research-artifact-comparisons",
         "/v1/research-cycles",
         (

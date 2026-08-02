@@ -69,4 +69,5 @@ def build_research_api(
             list_stored_research_cycles
         ),
         api_token=api_token,
+        readiness_check=store.is_ready,
     )

@@ -24,13 +24,82 @@ def build_openapi_document(
         "openapi": "3.1.0",
         "info": {
             "title": "AI Research Lab API",
-            "version": "1.2.0",
+            "version": "1.3.0",
             "description": (
                 "Read-only access to stored "
                 "research results."
             ),
         },
         "paths": {
+            "/health": {
+                "get": {
+                    "operationId": "getHealth",
+                    "summary": "Report process liveness",
+                    "security": [],
+                    "responses": {
+                        "200": {
+                            "description": (
+                                "The HTTP process is alive."
+                            ),
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": (
+                                            "#/components/"
+                                            "schemas/"
+                                            "HealthStatus"
+                                        ),
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+            "/ready": {
+                "get": {
+                    "operationId": "getReadiness",
+                    "summary": (
+                        "Report service readiness"
+                    ),
+                    "security": [],
+                    "responses": {
+                        "200": {
+                            "description": (
+                                "The service and SQLite "
+                                "storage are ready."
+                            ),
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": (
+                                            "#/components/"
+                                            "schemas/"
+                                            "ReadinessStatus"
+                                        ),
+                                    },
+                                },
+                            },
+                        },
+                        "503": {
+                            "description": (
+                                "The service is not ready."
+                            ),
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": (
+                                            "#/components/"
+                                            "schemas/"
+                                            "ServiceUnavailableError"
+                                        ),
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
             "/v1/research-artifact-comparisons": {
                 "get": {
                     "operationId": (
@@ -243,6 +312,76 @@ def build_openapi_document(
         },
         "components": {
             "schemas": {
+                "HealthStatus": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": [
+                        "schema_version",
+                        "status",
+                    ],
+                    "properties": {
+                        "schema_version": {
+                            "type": "integer",
+                            "const": 1,
+                        },
+                        "status": {
+                            "type": "string",
+                            "const": "healthy",
+                        },
+                    },
+                },
+                "ReadinessStatus": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": [
+                        "schema_version",
+                        "status",
+                    ],
+                    "properties": {
+                        "schema_version": {
+                            "type": "integer",
+                            "const": 1,
+                        },
+                        "status": {
+                            "type": "string",
+                            "const": "ready",
+                        },
+                    },
+                },
+                "ServiceUnavailableError": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": [
+                        "schema_version",
+                        "error",
+                    ],
+                    "properties": {
+                        "schema_version": {
+                            "type": "integer",
+                            "const": 1,
+                        },
+                        "error": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "required": [
+                                "code",
+                                "message",
+                            ],
+                            "properties": {
+                                "code": {
+                                    "type": "string",
+                                    "const": (
+                                        "service_unavailable"
+                                    ),
+                                },
+                                "message": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                },
+                            },
+                        },
+                    },
+                },
                 "ResearchCycleList": {
                     "type": "object",
                     "additionalProperties": False,
@@ -641,6 +780,9 @@ def build_openapi_document(
 
         for path_item in document["paths"].values():
             for operation in path_item.values():
+                if operation.get("security") == []:
+                    continue
+
                 operation["responses"]["401"] = {
                     "description": (
                         "A valid Bearer token "

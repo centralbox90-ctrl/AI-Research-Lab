@@ -69,6 +69,7 @@ def create_research_api(
         ListStoredResearchCycles
     ),
     api_token: str | None = None,
+    readiness_check: Callable[[], bool] | None = None,
 ) -> Flask:
     """
     Create the HTTP adapter for public research use cases.
@@ -113,6 +114,14 @@ def create_research_api(
             "a callable execute method"
         )
 
+    if (
+        readiness_check is not None
+        and not callable(readiness_check)
+    ):
+        raise TypeError(
+            "readiness_check must be callable or None"
+        )
+
     if api_token is not None:
         if not isinstance(api_token, str):
             raise TypeError(
@@ -140,6 +149,12 @@ def create_research_api(
 
     @application.before_request
     def require_api_token():
+        if request.path in {
+            "/health",
+            "/ready",
+        }:
+            return None
+
         if expected_api_token is None:
             return None
 
@@ -167,6 +182,50 @@ def create_research_api(
             return _unauthorized_response()
 
         return None
+
+    @application.get("/health")
+    def get_health():
+        return jsonify(
+            {
+                "schema_version": 1,
+                "status": "healthy",
+            }
+        )
+
+    @application.get("/ready")
+    def get_readiness():
+        try:
+            is_ready = (
+                readiness_check is not None
+                and readiness_check() is True
+            )
+        except Exception:
+            is_ready = False
+
+        if not is_ready:
+            return (
+                jsonify(
+                    {
+                        "schema_version": 1,
+                        "error": {
+                            "code": (
+                                "service_unavailable"
+                            ),
+                            "message": (
+                                "The service is not ready."
+                            ),
+                        },
+                    }
+                ),
+                503,
+            )
+
+        return jsonify(
+            {
+                "schema_version": 1,
+                "status": "ready",
+            }
+        )
 
     @application.get("/openapi.json")
     def get_openapi_document():
