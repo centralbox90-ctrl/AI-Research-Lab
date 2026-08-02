@@ -342,10 +342,10 @@ Research Engine, Observation Layer и существующие indicators при
   изолированными compatibility boundaries;
 - полный lifecycle намеренно не объединён в один универсальный
   Application use case;
-- HTTP и MCP adapters предоставляют одинаковые три read-only
-  Application use case; authentication, authorization, TLS и внешняя
-  deployment configuration отсутствуют; отдельный ChatGPT adapter
-  добавляется только при подтверждённом consumer contract.
+- Production HTTP boundary использует mandatory Bearer authentication,
+  loopback-only Waitress, Caddy TLS templates и operational runbook;
+  fine-grained authorization, public multi-user и SaaS-функции
+  отложены до отдельного подтверждённого product phase.
 
 ## Artifact persistence decision gate
 
@@ -456,54 +456,51 @@ observability, UX и operational requirements относятся к отдель
 product-readiness программе и не являются незавершёнными частями
 утверждённого архитектурного scope.
 
-## Приоритеты следующего этапа
+## Operational readiness completion
 
-Knowledge feature development остаётся замороженной. Разрешены
-исправления, тесты, документация, integration существующих contracts и
-миграция подтверждённых boundaries.
+Audit baseline: `76f1261`.
+Local test baseline: `2482 passed`.
 
-Общие workflow, lifecycle, pipeline и orchestration abstractions
-по-прежнему запрещены без трёх независимых production scenarios с
-одинаковой технической семантикой.
-
-Первым внешним adapter выбран HTTP.
+В репозитории завершён утверждённый operational baseline для закрытого
+однопользовательского private VPS.
 
 Подтверждены:
 
-- отдельный transport package;
-- три read-only public use case;
-- repository-backed artifact comparison;
-- SQLite production composition;
-- versioned response DTO;
-- JSON error contract для statuses 400, 404 и 422;
-- OpenAPI 3.1 document с API version 1.1.0;
-- local-only Flask server entry point;
-- отдельный production Waitress WSGI entry point;
-- закреплённая Waitress dependency;
-- MCP SDK 2.0.0;
-- read-only MCP tools `list_research_cycles`,
-  `get_research_artifact` и `compare_research_artifacts`;
-- repository-backed MCP composition для трёх публичных use cases;
-- stdio MCP entry point;
-- protocol contract и SQLite integration tests через настоящий MCP
-  client.
+- production Waitress entry point с обязательным Bearer token из
+  environment и запретом non-loopback bind;
+- публичные `/health` и SQLite-aware `/ready`;
+- безопасный HTTP logging без query string, request body и token;
+- validated online SQLite backup, integrity verification и restore
+  только в отсутствующий target;
+- systemd service с отдельным пользователем, private environment file
+  и filesystem hardening;
+- Caddy TLS termination перед loopback backend;
+- воспроизводимый runbook для установки, обновления, backup, restore,
+  диагностики и token rotation;
+- явное исключение public multi-user и SaaS-функций из текущего scope.
 
-Следующий режим разработки:
+Этот checkpoint подтверждает готовность repository-backed private-VPS
+профиля к контролируемому развёртыванию. Он не утверждает, что выполнен
+live deployment на конкретный VPS, и не означает готовность публичного
+многопользовательского продукта.
 
-1. Расширять HTTP только по одному публичному Application use case.
-2. Не добавлять write endpoints до отдельного решения об
-   authentication, authorization и idempotency.
-3. Сохранять отдельный transport DTO для каждого сценария.
-4. Не раскрывать repositories, composition internals и Domain objects.
-5. Размещать production Waitress server только внутри отдельного
-   security и network deployment boundary.
-6. Сохранять MCP surface read-only; новые tools добавлять только поверх
-   стабильного `src.application.public_api`, а отдельный ChatGPT adapter
-   — только при подтверждённом consumer contract.
-7. Мигрировать legacy boundaries только по ADR-006 и при наличии
-   конкретного production consumer.
-8. Добавлять artifact readers или stores только для подтверждённого
-   внешнего сценария.
+## Приоритеты следующего этапа
+
+Architecture program, Knowledge feature scope и private-VPS operational
+baseline остаются замороженными.
+
+Разрешённые направления:
+
+1. Контролируемое развёртывание и smoke verification на конкретном VPS.
+2. Исправления, integrity hardening и эксплуатационные тесты.
+3. Consumer-driven research capabilities поверх стабильного
+   `src.application.public_api`.
+4. UX для подтверждённых пользовательских сценариев.
+5. Новая artifact persistence только при наличии persisted consumer.
+
+Без отдельного product decision по-прежнему не добавляются users,
+roles, OAuth, multitenancy, public write API, PostgreSQL, queues,
+distributed workers, Kubernetes или универсальный workflow engine.
 
 ## Критерий обновления
 

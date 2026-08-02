@@ -50,7 +50,7 @@ AI Research Lab — исследовательская платформа для
 - read-only MCP adapter с repository-backed stdio server;
 - автоматическая проверка чистого checkout через GitHub Actions.
 
-Основной этап архитектурной консолидации и production hardening утверждённого архитектурного scope завершён. Knowledge feature development временно заморожена. Дальнейшая работа разделяется на consumer-driven research capabilities и отдельную product-readiness программу: security, deployment, UX и operations.
+Основной этап архитектурной консолидации и production hardening утверждённого архитектурного scope завершён. Operational baseline для закрытого однопользовательского private VPS также реализован. Knowledge feature development временно заморожена. Дальнейшая работа ограничена controlled VPS deployment, consumer-driven research capabilities и UX подтверждённых сценариев; public multi-user и SaaS-функции отложены.
 
 ## Архитектурный цикл
 
