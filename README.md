@@ -149,9 +149,10 @@ python -m src.cli.main `
 
 ## Browser dashboard
 
-Локальный read-only dashboard показывает сохранённые research artifacts,
+Локальный dashboard показывает сохранённые research artifacts,
 детали результатов, lineage, фильтры и comparison через validated
-Application readers.
+Application readers. Через отдельную форму он также запускает один
+market research по строгой JSON-спецификации.
 
 Запуск с выбранной SQLite-базой:
 
@@ -162,10 +163,15 @@ python -m app.web `
     --port 5000
 ```
 
-После запуска откройте `http://127.0.0.1:5000` в браузере. Local
-dashboard принимает только loopback address и не предназначен для
-внешнего production-доступа. На текущем этапе dashboard остаётся
-read-only; запуск исследований выполняется через CLI.
+После запуска откройте `http://127.0.0.1:5000` в браузере. Для
+проверочного запуска выберите `Run research` и загрузите
+`examples/market_research_specification.json`. Успешный запуск
+сохраняет artifact и append-only execution history в выбранной базе,
+после чего открывает страницу созданного результата.
+
+Форма принимает только UTF-8 JSON размером не более 64 KiB, использует
+CSRF-защиту и строгий typed loader. Dashboard принимает только loopback
+address и не предназначен для внешнего production-доступа.
 
 ## HTTP API
 

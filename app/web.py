@@ -2,6 +2,7 @@ import argparse
 from collections.abc import Sequence
 from ipaddress import ip_address
 from pathlib import Path
+from secrets import token_urlsafe
 from typing import Any, Protocol
 
 from flask import (
@@ -11,9 +12,23 @@ from flask import (
     request,
 )
 
+from app.research_submission import (
+    MarketResearchRunner,
+    create_research_submission_blueprint,
+)
+
 from src.application import (
     GetStoredResearchArtifact,
     ListStoredResearchCycles,
+)
+from src.application.generated_market_data_provider import (
+    GeneratedMarketDataProvider,
+)
+from src.application.market_research_application import (
+    build_market_research_application,
+)
+from src.application.simple_market_signal_provider import (
+    SimpleMarketSignalProvider,
 )
 from src.application.artifact_comparison import (
     ArtifactComparison,
@@ -26,6 +41,7 @@ from src.application.compare_stored_research_artifacts import (
 )
 from src.storage import (
     RESEARCH_CYCLE_DATABASE_PATH,
+    SqliteExperimentExecutionRecorder,
     SqliteResearchCycleStore,
 )
 
@@ -80,6 +96,12 @@ INDEX_TEMPLATE = """
                 <a href="#artifacts">
                     Artifacts
                 </a>
+                {% if research_submission_enabled %}
+                    |
+                    <a href="{{ url_for('research_submission.new_research') }}">
+                        Run research
+                    </a>
+                {% endif %}
             </p>
         </nav>
          <section id="filters">
@@ -2337,8 +2359,14 @@ def create_app(
     cycle_lister: StoredResearchCycleLister | None = None,
     artifact_getter: StoredResearchArtifactGetter | None = None,
     artifact_comparer: StoredResearchArtifactComparer | None = None,
+    *,
+    research_runner: MarketResearchRunner | None = None,
+    secret_key: str | None = None,
 ) -> Flask:
     app = Flask(__name__)
+    app.config["SECRET_KEY"] = (
+        secret_key or token_urlsafe(32)
+    )
 
     @app.get("/")
     def index() -> str:
@@ -2488,6 +2516,9 @@ def create_app(
             filters=filters,
             sorting=sorting,
             filters_are_active=filters_are_active,
+            research_submission_enabled=(
+                research_runner is not None
+            ),
             format_display_value=format_display_value,
         )
 
@@ -2593,6 +2624,13 @@ def create_app(
             format_display_value=format_display_value,
         )
 
+    if research_runner is not None:
+        app.register_blueprint(
+            create_research_submission_blueprint(
+                runner=research_runner,
+            )
+        )
+
     return app
 
 
@@ -2601,6 +2639,27 @@ def build_web_app(
 ) -> Flask:
     store = SqliteResearchCycleStore(
         db_path=db_path,
+    )
+
+    execution_recorder = (
+        SqliteExperimentExecutionRecorder(
+            db_path=db_path,
+        )
+    )
+
+    research_runner = (
+        build_market_research_application(
+            data_provider=(
+                GeneratedMarketDataProvider()
+            ),
+            signal_provider=(
+                SimpleMarketSignalProvider()
+            ),
+            store=store,
+            execution_recorder=(
+                execution_recorder
+            ),
+        )
     )
 
     cycle_lister = ListStoredResearchCycles(
@@ -2620,6 +2679,7 @@ def build_web_app(
         cycle_lister=cycle_lister,
         artifact_getter=artifact_getter,
         artifact_comparer=artifact_comparer,
+        research_runner=research_runner,
     )
 
 

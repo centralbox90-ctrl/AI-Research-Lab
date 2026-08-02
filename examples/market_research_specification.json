@@ -1,0 +1,31 @@
+{
+  "executor_type": "market_backtest",
+  "question_title": "Does simple momentum predict forward returns?",
+  "question_description": "Evaluate a deterministic momentum signal on generated market data.",
+  "hypothesis_title": "Positive momentum precedes positive forward returns",
+  "hypothesis_description": "A positive generated momentum signal should produce profitable long trades.",
+  "expected_result": "The backtest produces at least one completed trade.",
+  "experiment_title": "Browser single-market research example",
+  "experiment_description": "Run one reproducible generated-data experiment from the browser.",
+  "data_source": "generated",
+  "symbol": "EURUSD",
+  "timeframe": "H1",
+  "start_at": "2026-01-01T00:00:00Z",
+  "end_at": "2026-07-01T00:00:00Z",
+  "entry_rule": "simple positive momentum",
+  "exit_rule": "configured risk and holding policy",
+  "direction": "LONG",
+  "stop_loss_percent": 1.0,
+  "take_profit_percent": 2.0,
+  "max_holding_bars": 10,
+  "commission_percent": 0.0,
+  "slippage_percent": 0.0,
+  "strategy_parameters": {
+    "signal_type": "simple_momentum"
+  },
+  "tags": [
+    "browser",
+    "example",
+    "generated-data"
+  ]
+}
