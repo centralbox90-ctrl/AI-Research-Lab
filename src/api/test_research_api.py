@@ -1,3 +1,4 @@
+import logging
 from typing import get_type_hints
 
 from src.api import create_research_api
@@ -123,6 +124,128 @@ class MissingExecute:
     pass
 
 
+def test_logs_safe_http_request_metadata(
+    caplog,
+) -> None:
+    api_token = "private-api-token-value"
+    sensitive_result_id = (
+        "sensitive-result-identifier"
+    )
+    application = create_research_api(
+        compare_stored_research_artifacts=(
+            StubCompareStoredResearchArtifacts()
+        ),
+        get_stored_research_artifact=(
+            StubGetStoredResearchArtifact({})
+        ),
+        list_stored_research_cycles=(
+            StubListStoredResearchCycles([])
+        ),
+        api_token=api_token,
+    )
+    application.logger.setLevel(logging.INFO)
+    client = application.test_client()
+
+    with caplog.at_level(
+        logging.INFO,
+        logger=application.logger.name,
+    ):
+        response = client.get(
+            (
+                "/v1/research-artifact-"
+                "comparisons"
+            ),
+            query_string={
+                "artifact_a_result_id": (
+                    sensitive_result_id
+                ),
+                "artifact_b_result_id": (
+                    "result-002"
+                ),
+            },
+            headers={
+                "Authorization": (
+                    f"Bearer {api_token}"
+                ),
+            },
+        )
+
+    assert response.status_code == 200
+
+    log_text = caplog.text
+
+    assert "http_request method=GET" in log_text
+    assert (
+        "route=/v1/research-artifact-comparisons"
+        in log_text
+    )
+    assert "status=200" in log_text
+    assert "duration_ms=" in log_text
+    assert sensitive_result_id not in log_text
+    assert api_token not in log_text
+
+
+def test_logs_safe_http_request_metadata(
+    caplog,
+) -> None:
+    api_token = "private-api-token-value"
+    sensitive_result_id = (
+        "sensitive-result-identifier"
+    )
+    application = create_research_api(
+        compare_stored_research_artifacts=(
+            StubCompareStoredResearchArtifacts()
+        ),
+        get_stored_research_artifact=(
+            StubGetStoredResearchArtifact({})
+        ),
+        list_stored_research_cycles=(
+            StubListStoredResearchCycles([])
+        ),
+        api_token=api_token,
+    )
+    application.logger.setLevel(logging.INFO)
+    client = application.test_client()
+
+    with caplog.at_level(
+        logging.INFO,
+        logger=application.logger.name,
+    ):
+        response = client.get(
+            (
+                "/v1/research-artifact-"
+                "comparisons"
+            ),
+            query_string={
+                "artifact_a_result_id": (
+                    sensitive_result_id
+                ),
+                "artifact_b_result_id": (
+                    "result-002"
+                ),
+            },
+            headers={
+                "Authorization": (
+                    f"Bearer {api_token}"
+                ),
+            },
+        )
+
+    assert response.status_code == 200
+
+    log_text = caplog.text
+
+    assert "http_request method=GET" in log_text
+    assert (
+        "route=/v1/research-artifact-comparisons"
+        in log_text
+    )
+    assert "status=200" in log_text
+    assert "duration_ms=" in log_text
+    assert sensitive_result_id not in log_text
+    assert api_token not in log_text
+
+
 def test_serves_unauthenticated_operational_endpoints(
 ) -> None:
     readiness_calls = 0
@@ -194,6 +317,7 @@ def test_reports_service_not_ready(
 
 
 def test_reports_not_ready_without_leaking_check_error(
+    caplog,
 ) -> None:
     def fail_readiness_check() -> bool:
         raise RuntimeError(
@@ -228,6 +352,15 @@ def test_reports_not_ready_without_leaking_check_error(
     assert (
         "sensitive database details"
         not in response.get_data(as_text=True)
+    )
+    assert (
+        "readiness_check_failed "
+        "error_type=RuntimeError"
+        in caplog.text
+    )
+    assert (
+        "sensitive database details"
+        not in caplog.text
     )
 
 

@@ -158,6 +158,60 @@ def test_runs_waitress_with_explicit_options(
     ]
 
 
+def test_configures_production_logging(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    configure_production_server(
+        monkeypatch
+    )
+    configuration_calls: list[
+        dict[str, object]
+    ] = []
+
+    def configure_logging(
+        **options: object,
+    ) -> None:
+        configuration_calls.append(options)
+
+    monkeypatch.setattr(
+        production_server.logging,
+        "basicConfig",
+        configure_logging,
+    )
+
+    exit_code = production_server.main(
+        [
+            "--log-level",
+            "WARNING",
+        ]
+    )
+
+    assert exit_code == 0
+    assert configuration_calls == [
+        {
+            "level": (
+                production_server.logging.WARNING
+            ),
+            "format": production_server.LOG_FORMAT,
+        },
+    ]
+
+
+def test_rejects_invalid_log_level(
+) -> None:
+    with pytest.raises(
+        SystemExit,
+    ) as error:
+        production_server.main(
+            [
+                "--log-level",
+                "VERBOSE",
+            ]
+        )
+
+    assert error.value.code == 2
+
+
 @pytest.mark.parametrize(
     "value",
     [

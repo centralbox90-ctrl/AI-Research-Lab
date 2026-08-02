@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import os
 from collections.abc import Sequence
 from ipaddress import ip_address
@@ -20,6 +21,18 @@ API_TOKEN_ENVIRONMENT_VARIABLE = (
     "AI_RESEARCH_LAB_API_TOKEN"
 )
 MINIMUM_API_TOKEN_LENGTH = 32
+LOG_LEVEL_CHOICES = (
+    "DEBUG",
+    "INFO",
+    "WARNING",
+    "ERROR",
+    "CRITICAL",
+)
+LOG_FORMAT = (
+    "%(asctime)s level=%(levelname)s "
+    "logger=%(name)s %(message)s"
+)
+LOGGER = logging.getLogger(__name__)
 
 
 def main(
@@ -78,11 +91,28 @@ def main(
             "Defaults to 4."
         ),
     )
+    parser.add_argument(
+        "--log-level",
+        choices=LOG_LEVEL_CHOICES,
+        default="INFO",
+        help=(
+            "Production log level. "
+            "Defaults to INFO."
+        ),
+    )
 
     arguments = parser.parse_args(
         None
         if argv is None
         else list(argv)
+    )
+
+    logging.basicConfig(
+        level=getattr(
+            logging,
+            arguments.log_level,
+        ),
+        format=LOG_FORMAT,
     )
 
     try:
@@ -93,6 +123,18 @@ def main(
     application = build_research_api(
         db_path=arguments.database,
         api_token=api_token,
+    )
+
+    LOGGER.info(
+        (
+            "production_server_starting "
+            "host=%s port=%d threads=%d "
+            "log_level=%s"
+        ),
+        arguments.host,
+        arguments.port,
+        arguments.threads,
+        arguments.log_level,
     )
 
     serve(

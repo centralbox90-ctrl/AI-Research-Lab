@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from hmac import compare_digest
+from time import perf_counter
 
-from flask import Flask, jsonify, request
+from flask import Flask, g, jsonify, request
 
 from src.api.openapi import (
     build_openapi_document,
@@ -149,6 +150,10 @@ def create_research_api(
     application = Flask(__name__)
 
     @application.before_request
+    def record_request_start():
+        g.request_started_at = perf_counter()
+
+    @application.before_request
     def require_api_token():
         if request.path in {
             "/health",
@@ -184,6 +189,40 @@ def create_research_api(
 
         return None
 
+    @application.after_request
+    def log_request(response):
+        started_at = getattr(
+            g,
+            "request_started_at",
+            perf_counter(),
+        )
+        duration_ms = max(
+            (
+                perf_counter()
+                - started_at
+            )
+            * 1000.0,
+            0.0,
+        )
+        route = (
+            request.url_rule.rule
+            if request.url_rule is not None
+            else "unmatched"
+        )
+
+        application.logger.info(
+            (
+                "http_request method=%s route=%s "
+                "status=%d duration_ms=%.3f"
+            ),
+            request.method,
+            route,
+            response.status_code,
+            duration_ms,
+        )
+
+        return response
+
     @application.get("/health")
     def get_health():
         return jsonify(
@@ -200,7 +239,14 @@ def create_research_api(
                 readiness_check is not None
                 and readiness_check() is True
             )
-        except Exception:
+        except Exception as error:
+            application.logger.warning(
+                (
+                    "readiness_check_failed "
+                    "error_type=%s"
+                ),
+                type(error).__name__,
+            )
             is_ready = False
 
         if not is_ready:
