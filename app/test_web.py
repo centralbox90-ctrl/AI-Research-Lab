@@ -808,3 +808,24 @@ def test_web_main_rejects_invalid_port() -> None:
         )
 
     assert error.value.code == 2
+
+
+def test_dashboard_and_filters_are_sibling_sections():
+    response = create_app().test_client().get("/")
+
+    assert response.status_code == 200
+
+    body = response.get_data(as_text=True)
+    dashboard_start = body.index(
+        '<section id="dashboard">'
+    )
+    dashboard_end = body.index(
+        "</section>",
+        dashboard_start,
+    )
+    filters_start = body.index(
+        '<section id="filters">'
+    )
+
+    assert dashboard_start < dashboard_end
+    assert dashboard_end < filters_start

@@ -108,8 +108,7 @@ INDEX_TEMPLATE = """
                 {% endif %}
             </p>
         </nav>
-         <section id="filters">
-            <h2>Filter and sort research artifacts</h2>
+
         <section id="dashboard">
             <h2>Research dashboard</h2>
 
@@ -176,6 +175,10 @@ INDEX_TEMPLATE = """
                 <p>No timeframe statistics are available.</p>
             {% endif %}
         </section>
+
+        <section id="filters">
+            <h2>Filter and sort research artifacts</h2>
+
             <form action="{{ url_for('index') }}" method="get">
                 <p>
                     <label for="filter-symbol">
