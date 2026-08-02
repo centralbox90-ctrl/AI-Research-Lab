@@ -153,6 +153,133 @@ def upload(
     )
 
 
+def submit_structured_form(
+    client,
+    *,
+    token: str,
+    overrides: dict[str, str] | None = None,
+):
+    data = {
+        "csrf_token": token,
+        "question_title": (
+            "Does simple momentum predict forward returns?"
+        ),
+        "question_description": (
+            "Evaluate a deterministic momentum signal "
+            "on generated market data."
+        ),
+        "hypothesis_title": (
+            "Positive momentum precedes positive returns"
+        ),
+        "hypothesis_description": (
+            "A positive momentum signal should be profitable."
+        ),
+        "expected_result": (
+            "The backtest produces at least one completed trade."
+        ),
+        "experiment_title": "Browser research example",
+        "experiment_description": (
+            "Run one generated-data experiment from the browser."
+        ),
+        "symbol": "EURUSD",
+        "timeframe": "H1",
+        "start_at": "2026-01-01T00:00",
+        "end_at": "2026-07-01T00:00",
+        "entry_rule": "simple positive momentum",
+        "exit_rule": "configured risk and holding policy",
+        "direction": "LONG",
+        "stop_loss_percent": "1.0",
+        "take_profit_percent": "2.0",
+        "max_holding_bars": "10",
+        "commission_percent": "0.0",
+        "slippage_percent": "0.0",
+    }
+
+    if overrides is not None:
+        data.update(overrides)
+
+    return client.post(
+        "/research/form",
+        data=data,
+    )
+
+
+def test_structured_research_form_runs_typed_specification():
+    runner = FakeMarketResearchRunner()
+    client = build_test_app(runner).test_client()
+    token = get_csrf_token(client)
+
+    response = submit_structured_form(
+        client,
+        token=token,
+    )
+
+    assert response.status_code == 303
+    assert response.headers["Location"].endswith(
+        "/artifacts/result-browser-001"
+    )
+    assert len(runner.specifications) == 1
+
+    specification = runner.specifications[0]
+
+    assert isinstance(
+        specification,
+        MarketExperimentSpecification,
+    )
+    assert specification.executor_type == (
+        "market_backtest"
+    )
+    assert specification.data_source == "generated"
+    assert specification.symbol == "EURUSD"
+    assert specification.timeframe == "H1"
+    assert specification.direction.value == "LONG"
+    assert specification.stop_loss_percent == 1.0
+    assert specification.take_profit_percent == 2.0
+    assert specification.max_holding_bars == 10
+    assert specification.strategy_parameters == {
+        "signal_type": "simple_momentum",
+    }
+    assert specification.tags == (
+        "browser",
+        "generated-data",
+    )
+
+
+def test_structured_research_form_rejects_invalid_number():
+    runner = FakeMarketResearchRunner()
+    client = build_test_app(runner).test_client()
+    token = get_csrf_token(client)
+
+    response = submit_structured_form(
+        client,
+        token=token,
+        overrides={
+            "stop_loss_percent": "not-a-number",
+        },
+    )
+
+    assert response.status_code == 422
+    assert (
+        b"stop loss percent must be a number"
+        in response.data
+    )
+    assert runner.specifications == []
+
+
+def test_structured_research_form_rejects_invalid_csrf():
+    runner = FakeMarketResearchRunner()
+    client = build_test_app(runner).test_client()
+    get_csrf_token(client)
+
+    response = submit_structured_form(
+        client,
+        token="wrong-token",
+    )
+
+    assert response.status_code == 400
+    assert runner.specifications == []
+
+
 def test_valid_research_submission_runs_typed_specification():
     runner = FakeMarketResearchRunner()
     client = build_test_app(runner).test_client()
@@ -262,6 +389,11 @@ def test_dashboard_registers_research_submission_when_configured():
     assert dashboard.status_code == 200
     assert b"/research/new" in dashboard.data
     assert form.status_code == 200
+    assert b'action="/research/form"' in form.data
+    assert b'name="question_title"' in form.data
+    assert b'name="symbol"' in form.data
+    assert b'name="stop_loss_percent"' in form.data
+    assert b"Advanced: upload JSON specification" in form.data
 
 
 def test_build_web_app_runs_persists_and_reopens_research(
@@ -274,16 +406,9 @@ def test_build_web_app_runs_persists_and_reopens_research(
     client = application.test_client()
     token = get_csrf_token(client)
 
-    example_path = (
-        Path(__file__).resolve().parents[1]
-        / "examples"
-        / "market_research_specification.json"
-    )
-
-    response = upload(
+    response = submit_structured_form(
         client,
         token=token,
-        source=example_path.read_bytes(),
     )
 
     assert response.status_code == 303
@@ -376,3 +501,5 @@ def test_browser_pages_load_shared_stylesheet(
     assert stylesheet.status_code == 200
     assert stylesheet.mimetype == "text/css"
     assert b"--color-primary" in stylesheet.data
+    assert b".research-form-grid" in stylesheet.data
+    assert b".advanced-upload" in stylesheet.data
