@@ -11,6 +11,7 @@ from app.web import (
     build_web_app,
     create_app,
     filter_artifacts,
+    main,
     normalize_history,
 )
 from src.application.artifact_comparison_factory import (
@@ -737,3 +738,73 @@ def test_build_web_app_reads_persisted_artifacts(
     assert "artifact-002" in details_response.get_data(
         as_text=True,
     )
+
+
+class RecordingLocalWebApplication:
+    def __init__(self) -> None:
+        self.run_arguments: dict[str, Any] | None = None
+
+    def run(self, **arguments: Any) -> None:
+        self.run_arguments = arguments
+
+
+def test_web_main_uses_selected_database_and_loopback(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    database_path = tmp_path / "browser.db"
+    application = RecordingLocalWebApplication()
+    captured: dict[str, Any] = {}
+
+    def fake_build_web_app(
+        db_path: str | Path,
+    ) -> RecordingLocalWebApplication:
+        captured["db_path"] = db_path
+        return application
+
+    monkeypatch.setattr(
+        "app.web.build_web_app",
+        fake_build_web_app,
+    )
+
+    exit_code = main(
+        [
+            "--database",
+            str(database_path),
+            "--port",
+            "5123",
+        ]
+    )
+
+    assert exit_code == 0
+    assert captured["db_path"] == database_path
+    assert application.run_arguments == {
+        "host": "127.0.0.1",
+        "port": 5123,
+        "debug": False,
+        "use_reloader": False,
+    }
+
+
+def test_web_main_rejects_non_loopback_host() -> None:
+    with pytest.raises(SystemExit) as error:
+        main(
+            [
+                "--host",
+                "0.0.0.0",
+            ]
+        )
+
+    assert error.value.code == 2
+
+
+def test_web_main_rejects_invalid_port() -> None:
+    with pytest.raises(SystemExit) as error:
+        main(
+            [
+                "--port",
+                "70000",
+            ]
+        )
+
+    assert error.value.code == 2

@@ -1,3 +1,6 @@
+import argparse
+from collections.abc import Sequence
+from ipaddress import ip_address
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -2620,15 +2623,101 @@ def build_web_app(
     )
 
 
-def main() -> None:
-    app = build_web_app()
+def main(
+    argv: Sequence[str] | None = None,
+) -> int:
+    parser = argparse.ArgumentParser(
+        prog="python -m app.web",
+        description=(
+            "Run the local AI Research Lab "
+            "browser dashboard."
+        ),
+    )
+    parser.add_argument(
+        "--database",
+        type=Path,
+        default=RESEARCH_CYCLE_DATABASE_PATH,
+        help="Path to the SQLite research database.",
+    )
+    parser.add_argument(
+        "--host",
+        type=_parse_host,
+        default="127.0.0.1",
+        help=(
+            "Local loopback interface to bind. "
+            "Defaults to 127.0.0.1."
+        ),
+    )
+    parser.add_argument(
+        "--port",
+        type=_parse_port,
+        default=5000,
+        help="Local TCP port. Defaults to 5000.",
+    )
+
+    arguments = parser.parse_args(
+        None
+        if argv is None
+        else list(argv)
+    )
+
+    app = build_web_app(
+        db_path=arguments.database,
+    )
 
     app.run(
-        host="127.0.0.1",
-        port=5000,
+        host=arguments.host,
+        port=arguments.port,
         debug=False,
+        use_reloader=False,
     )
+
+    return 0
+
+
+def _parse_host(value: str) -> str:
+    normalized = value.strip()
+
+    if not normalized:
+        raise argparse.ArgumentTypeError(
+            "host must not be empty"
+        )
+
+    if normalized.casefold() == "localhost":
+        return "localhost"
+
+    try:
+        address = ip_address(normalized)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(
+            "host must be localhost or "
+            "a loopback IP address"
+        ) from error
+
+    if not address.is_loopback:
+        raise argparse.ArgumentTypeError(
+            "host must be localhost or "
+            "a loopback IP address"
+        )
+
+    return normalized
+
+
+def _parse_port(value: str) -> int:
+    try:
+        port = int(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(
+            "port must be an integer"
+        ) from error
+
+    if port < 1 or port > 65535:
+        raise argparse.ArgumentTypeError(
+            "port must be between 1 and 65535"
+        )
+
+    return port
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

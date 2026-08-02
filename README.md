@@ -40,6 +40,7 @@ AI Research Lab — исследовательская платформа для
 - CLI acceptance-проверка контролируемого отказа execution listing при повреждённой persisted history;
 - composition roots для сборки прикладных сценариев;
 - append-only Knowledge persistence и repository-backed feedback path;
+- local read-only browser dashboard поверх validated Application readers;
 - read-only HTTP API с OpenAPI 3.1 contract;
 - loopback-only local Flask и production Waitress entry points;
 - обязательная Bearer authentication production HTTP API;
@@ -145,6 +146,46 @@ python -m src.cli.main `
 ```
 
 Команда возвращает детерминированно отсортированный список identities из того же append-only SQLite recorder. Listing не изменяет состояния выполнений и не дублирует snapshots.
+
+## Browser dashboard
+
+Локальный read-only dashboard показывает сохранённые research artifacts,
+детали результатов, lineage, фильтры и comparison через validated
+Application readers.
+
+Запуск с выбранной SQLite-базой:
+
+```powershell
+python -m app.web `
+    --database .research_lab/research-cycles.db `
+    --host 127.0.0.1 `
+    --port 5000
+```
+
+После запуска откройте `http://127.0.0.1:5000` в браузере. Local
+dashboard принимает только loopback address и не предназначен для
+внешнего production-доступа. На текущем этапе dashboard остаётся
+read-only; запуск исследований выполняется через CLI.
+
+## Browser dashboard
+
+Локальный read-only dashboard показывает сохранённые research artifacts,
+детали результатов, lineage, фильтры и comparison через validated
+Application readers.
+
+Запуск с выбранной SQLite-базой:
+
+```powershell
+python -m app.web `
+    --database .research_lab/research-cycles.db `
+    --host 127.0.0.1 `
+    --port 5000
+```
+
+После запуска откройте `http://127.0.0.1:5000` в браузере. Local
+dashboard принимает только loopback address и не предназначен для
+внешнего production-доступа. На текущем этапе dashboard остаётся
+read-only; запуск исследований выполняется через CLI.
 
 ## HTTP API
 
