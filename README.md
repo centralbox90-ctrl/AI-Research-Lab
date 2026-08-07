@@ -127,7 +127,7 @@ python -m pytest -q
 Полную append-only историю одного технического выполнения можно получить по `execution_id`:
 
 ```powershell
-python -m src.cli.main `
+python -m src.cli `
     --database .research_lab/research-cycles.db `
     get-experiment-execution-history `
     <execution_id> `
@@ -139,7 +139,7 @@ python -m src.cli.main `
 Список доступных `execution_id` можно получить отдельно:
 
 ```powershell
-python -m src.cli.main `
+python -m src.cli `
     --database .research_lab/research-cycles.db `
     list-experiment-executions `
     --compact
@@ -233,7 +233,7 @@ python -m src.mcp_adapter --database .research_lab/research-cycles.db
 Запуск примера:
 
 ```powershell
-python -m src.cli.main `
+python -m src.cli `
     --database .research_lab/example-campaign.db `
     run-market-research-campaign `
     --design examples/campaign_design.json `
@@ -264,3 +264,30 @@ Registration JSON содержит идентификаторы, детерми�
 4. автоматические тесты;
 5. обновление документации текущего состояния;
 6. успешное прохождение GitHub Actions.
+## MT5 research campaigns
+
+Production CLI routes market data according to the
+`data_source` field in each registered market specification.
+
+Supported sources:
+
+- `generated` — deterministic generated market data;
+- `mt5` — historical closed candles loaded from MetaTrader 5.
+
+An indicator campaign may include a strict nested
+`research_specification`. It declares the indicator version,
+calculation parameters, observation rule and signal rule.
+
+For an RSI oversold campaign, use:
+
+- indicator `rsi`, version `1`;
+- calculation parameter `period: 14`;
+- profile `overbought_oversold`;
+- observation type `level_cross`;
+- observation parameters `level: 30` and
+  `direction: cross_below`;
+- signal rule `long_on_observation`.
+
+The MT5 terminal must be running and connected before the
+campaign starts. The application reads historical candles and
+runs a backtest; it does not submit real trading orders.

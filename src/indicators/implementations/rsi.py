@@ -113,6 +113,7 @@ RESEARCH_SPACE = IndicatorResearchSpace(
 
     signal_rule_ids=(
         "indicator_direction",
+        "long_on_observation",
     ),
 )
 
