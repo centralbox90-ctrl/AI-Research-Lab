@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Hashable
 from dataclasses import dataclass
+from decimal import Decimal
 from math import isfinite
 from typing import (
     Generic,
@@ -77,25 +78,46 @@ class IntegerParameter(ParameterSpace[int]):
     minimum: int
     maximum: int
     default: int
+    step: int = 1
 
     def __post_init__(self) -> None:
         for field_name, value in (
             ("minimum", self.minimum),
             ("maximum", self.maximum),
             ("default", self.default),
+            ("step", self.step),
         ):
             if isinstance(value, bool) or not isinstance(value, int):
                 raise TypeError(
                     f"{field_name} must be an integer."
                 )
 
-        super().__post_init__()
+        ParameterSpace.__post_init__(self)
+
+        if self.step < 1:
+            raise ValueError(
+                "step must be a positive integer."
+            )
+
+        if self.default not in self.grid_values():
+            raise ValueError(
+                "Parameter default must belong to the declared grid."
+            )
 
     def contains(self, value: object) -> bool:
         if isinstance(value, bool) or not isinstance(value, int):
             return False
 
         return self.minimum <= value <= self.maximum
+
+    def grid_values(self) -> tuple[int, ...]:
+        return tuple(
+            range(
+                self.minimum,
+                self.maximum + 1,
+                self.step,
+            )
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,12 +127,14 @@ class FloatParameter(ParameterSpace[float]):
     minimum: float
     maximum: float
     default: float
+    step: float = 1.0
 
     def __post_init__(self) -> None:
         values = (
             ("minimum", self.minimum),
             ("maximum", self.maximum),
             ("default", self.default),
+            ("step", self.step),
         )
 
         for field_name, value in values:
@@ -143,7 +167,26 @@ class FloatParameter(ParameterSpace[float]):
             float(self.default),
         )
 
-        super().__post_init__()
+        object.__setattr__(
+            self,
+            "step",
+            float(self.step),
+        )
+
+        ParameterSpace.__post_init__(self)
+
+        if self.step <= 0.0:
+            raise ValueError(
+                "step must be greater than zero."
+            )
+
+        if Decimal(str(self.default)) not in {
+            Decimal(str(value))
+            for value in self.grid_values()
+        }:
+            raise ValueError(
+                "Parameter default must belong to the declared grid."
+            )
 
     def contains(self, value: object) -> bool:
         if isinstance(value, bool) or not isinstance(
@@ -158,6 +201,19 @@ class FloatParameter(ParameterSpace[float]):
             return False
 
         return self.minimum <= numeric_value <= self.maximum
+
+    def grid_values(self) -> tuple[float, ...]:
+        minimum = Decimal(str(self.minimum))
+        maximum = Decimal(str(self.maximum))
+        step = Decimal(str(self.step))
+        values: list[float] = []
+        current = minimum
+
+        while current <= maximum:
+            values.append(float(current))
+            current += step
+
+        return tuple(values)
 
 
 @dataclass(frozen=True, slots=True)
@@ -200,3 +256,6 @@ class ChoiceParameter(Generic[ChoiceValue]):
 
     def contains(self, value: object) -> bool:
         return value in self.values
+
+    def grid_values(self) -> tuple[ChoiceValue, ...]:
+        return self.values

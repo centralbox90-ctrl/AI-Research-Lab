@@ -3,7 +3,6 @@ from __future__ import annotations
 from src.indicators.series import IndicatorSeries
 from src.indicators.descriptor import IndicatorDescriptor
 from src.indicators.parameter_spaces import (
-    ChoiceParameter,
     FloatParameter,
     IntegerParameter,
 )
@@ -77,26 +76,27 @@ RESEARCH_SPACE = IndicatorResearchSpace(
             minimum=10,
             maximum=17,
             default=14,
+            step=1,
         ),
     },
 
     observation_parameters={
-        "level": FloatParameter(
-            minimum=-100.0,
-            maximum=0.0,
-            default=-20.0,
+        "lower_level": FloatParameter(
+            minimum=-90.0,
+            maximum=-60.0,
+            default=-80.0,
+            step=1.0,
         ),
-        "direction": ChoiceParameter(
-            values=(
-                "cross_above",
-                "cross_below",
-            ),
-            default="cross_below",
+        "upper_level": FloatParameter(
+            minimum=-40.0,
+            maximum=-10.0,
+            default=-20.0,
+            step=1.0,
         ),
     },
 
     observation_types=(
-        "level_cross",
+        "band_reentry",
     ),
 
     research_profiles=(

@@ -140,6 +140,8 @@ class FakeSignalProvider:
 
 def build_specification(
     experiment_title: str,
+    *,
+    symbol: str = "BTCUSDT",
 ) -> MarketExperimentSpecification:
     return MarketExperimentSpecification(
         executor_type="market_backtest",
@@ -157,7 +159,7 @@ def build_specification(
             "Build and execute a prepared session."
         ),
         data_source="test",
-        symbol="BTCUSDT",
+        symbol=symbol,
         timeframe="1H",
         start_at=datetime(
             2024,
@@ -228,7 +230,7 @@ def test_factory_builds_campaign_from_two_specifications() -> None:
         )
     )
 
-    assert data_provider.load_count == 2
+    assert data_provider.load_count == 1
 
     assert len(session.contexts) == 2
     assert len(session.experiments) == 2
@@ -272,3 +274,28 @@ def test_factory_builds_campaign_from_two_specifications() -> None:
         session.experiments[1].title
         == "Campaign experiment B"
     )
+
+
+def test_factory_loads_distinct_market_data_separately() -> None:
+    data_provider = CountingMarketDataProvider()
+
+    factory = MarketResearchCampaignSessionFactory(
+        data_provider=data_provider,
+        signal_provider=FakeSignalProvider(),
+        context_factory=build_context_factory(),
+    )
+
+    factory.create(
+        (
+            build_specification(
+                "BTC experiment",
+                symbol="BTCUSDT",
+            ),
+            build_specification(
+                "Gold experiment",
+                symbol="XAUUSD",
+            ),
+        )
+    )
+
+    assert data_provider.load_count == 2

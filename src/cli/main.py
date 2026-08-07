@@ -46,6 +46,9 @@ from src.application.git_command_runner import (
 from src.application.indicator_research_execution_factory import (
     IndicatorResearchExecutionFactory,
 )
+from src.application.indicator_parameter_search_application import (
+    IndicatorParameterSearchApplication,
+)
 from src.application.hypothesis_evaluation_artifact_envelope_factory import (
     HypothesisEvaluationArtifactEnvelopeFactory,
 )
@@ -64,11 +67,20 @@ from src.application.knowledge_research_question_application import (
 from src.application.market_research_application import (
     build_market_research_application,
 )
+from src.application.market_research_campaign_session_factory import (
+    MarketResearchCampaignSessionFactory,
+)
+from src.application.market_research_context_factory import (
+    MarketResearchContextFactory,
+)
 from src.application.market_signal_provider_factory import (
     MarketSignalProviderFactory,
 )
 from src.application.mt5_market_data_provider import (
     Mt5MarketDataProvider,
+)
+from src.application.research_runtime_configuration import (
+    ResearchRuntimeConfiguration,
 )
 from src.application.market_research_campaign_artifact_envelope_factory import (
     MarketResearchCampaignArtifactEnvelopeFactory,
@@ -106,6 +118,9 @@ from src.cli.indicator_comparative_hypothesis_evaluation_composition_root import
 from src.cli.research_cli import ResearchCli
 from src.cli.run_market_research_campaign_command import (
     RunMarketResearchCampaignCommand,
+)
+from src.cli.run_indicator_parameter_search_command import (
+    RunIndicatorParameterSearchCommand,
 )
 from src.cli.run_market_research_command import (
     RunMarketResearchCommand,
@@ -234,11 +249,12 @@ def build_research_cli(
         }
     )
 
+    indicator_catalog = IndicatorCatalog(
+        discover_indicators()
+    )
     indicator_research_execution_service = (
         IndicatorResearchExecutionFactory(
-            indicator_catalog=IndicatorCatalog(
-                discover_indicators()
-            ),
+            indicator_catalog=indicator_catalog,
         ).create()
     )
 
@@ -338,6 +354,37 @@ def build_research_cli(
             git_commit_reader=GitCommandRunner(),
             fallback="development",
         ).get_code_version()
+    )
+
+    parameter_search_application = (
+        IndicatorParameterSearchApplication(
+            indicator_catalog=indicator_catalog,
+            session_factory=(
+                MarketResearchCampaignSessionFactory(
+                    data_provider=CanonicalMarketDataProvider(
+                        market_data_provider
+                    ),
+                    signal_provider=market_signal_provider,
+                    context_factory=MarketResearchContextFactory(
+                        runtime_configuration=(
+                            ResearchRuntimeConfiguration(
+                                code_version=application_code_version,
+                                executor_version="backtest-engine:v1",
+                                statistical_method_version=(
+                                    "statistics:v1"
+                                ),
+                                random_seed=42,
+                            )
+                        )
+                    ),
+                )
+            ),
+        )
+    )
+    run_parameter_search_command = (
+        RunIndicatorParameterSearchCommand(
+            application=parameter_search_application
+        )
     )
 
     campaign_envelope_factory = (
@@ -440,6 +487,9 @@ def build_research_cli(
         ),
         run_market_research_campaign_command=(
             run_campaign_command
+        ),
+        run_indicator_parameter_search_command=(
+            run_parameter_search_command
         ),
         run_comparative_hypothesis_evaluation_command=(
             comparative_evaluation_command

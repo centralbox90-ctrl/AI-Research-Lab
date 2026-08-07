@@ -198,6 +198,29 @@ class MarketResearchCampaignCommand(Protocol):
         """
 
 
+class IndicatorParameterSearchCommand(Protocol):
+    """Command boundary for generic indicator parameter searches."""
+
+    def execute(
+        self,
+        *,
+        indicator_id: str,
+        symbol: str,
+        timeframe: str,
+        start_at: str,
+        end_at: str,
+        stop_loss_percent: float = 1.0,
+        take_profit_percent: float = 2.0,
+        max_holding_bars: int = 24,
+        commission_percent: float = 0.0,
+        slippage_percent: float = 0.0,
+        metric: str = "net_profit",
+        top: int = 20,
+        indent: int | None = 2,
+    ) -> str:
+        """Run the full grid declared by one indicator plugin."""
+
+
 class ResearchCli:
     """
     Parses CLI arguments and delegates work to command handlers.
@@ -240,6 +263,9 @@ class ResearchCli:
         run_market_research_campaign_command: (
             MarketResearchCampaignCommand | None
         ) = None,
+        run_indicator_parameter_search_command: (
+            IndicatorParameterSearchCommand | None
+        ) = None,
     ) -> None:
         self.get_research_cycle_command = (
             get_research_cycle_command
@@ -270,6 +296,9 @@ class ResearchCli:
         )
         self.run_market_research_campaign_command = (
             run_market_research_campaign_command
+        )
+        self.run_indicator_parameter_search_command = (
+            run_indicator_parameter_search_command
         )
 
         self.get_research_artifact_command = (
@@ -397,6 +426,13 @@ class ResearchCli:
 
         if arguments.command == "run-market-research-campaign":
             return self._run_market_research_campaign(
+                arguments,
+                output_stream,
+                error_stream,
+            )
+
+        if arguments.command == "run-indicator-parameter-search":
+            return self._run_indicator_parameter_search(
                 arguments,
                 output_stream,
                 error_stream,
@@ -877,6 +913,53 @@ class ResearchCli:
 
         return 0
 
+    def _run_indicator_parameter_search(
+        self,
+        arguments: argparse.Namespace,
+        stdout: TextIO,
+        stderr: TextIO,
+    ) -> int:
+        command = self.run_indicator_parameter_search_command
+        if command is None:
+            stderr.write(
+                "Run indicator parameter search command "
+                "is not configured.\n"
+            )
+            return 2
+
+        indent = None if arguments.compact else 2
+        try:
+            rendered = command.execute(
+                indicator_id=arguments.indicator_id,
+                symbol=arguments.symbol,
+                timeframe=arguments.timeframe,
+                start_at=arguments.start_at,
+                end_at=arguments.end_at,
+                stop_loss_percent=arguments.stop_loss_percent,
+                take_profit_percent=arguments.take_profit_percent,
+                max_holding_bars=arguments.max_holding_bars,
+                commission_percent=arguments.commission_percent,
+                slippage_percent=arguments.slippage_percent,
+                metric=arguments.metric,
+                top=arguments.top,
+                indent=indent,
+            )
+        except (
+            TypeError,
+            ValueError,
+            LookupError,
+            RuntimeError,
+        ) as error:
+            stderr.write(
+                "Unable to run indicator parameter search: "
+                f"{error}\n"
+            )
+            return 1
+
+        stdout.write(rendered)
+        stdout.write("\n")
+        return 0
+
     def _build_parser(self) -> argparse.ArgumentParser:
         parser = argparse.ArgumentParser(
             prog="ai-research-lab",
@@ -1075,6 +1158,73 @@ class ResearchCli:
             "--correlation-id",
             dest="correlation_id",
         )
+
+        parameter_search_parser = subparsers.add_parser(
+            "run-indicator-parameter-search",
+            help=(
+                "Run every parameter combination declared by "
+                "one indicator plugin on MT5 history."
+            ),
+        )
+        parameter_search_parser.add_argument(
+            "--indicator",
+            dest="indicator_id",
+            required=True,
+        )
+        parameter_search_parser.add_argument("--symbol", required=True)
+        parameter_search_parser.add_argument(
+            "--timeframe",
+            required=True,
+        )
+        parameter_search_parser.add_argument(
+            "--start",
+            dest="start_at",
+            required=True,
+        )
+        parameter_search_parser.add_argument(
+            "--end",
+            dest="end_at",
+            required=True,
+        )
+        parameter_search_parser.add_argument(
+            "--stop-loss-percent",
+            type=float,
+            default=1.0,
+        )
+        parameter_search_parser.add_argument(
+            "--take-profit-percent",
+            type=float,
+            default=2.0,
+        )
+        parameter_search_parser.add_argument(
+            "--max-holding-bars",
+            type=int,
+            default=24,
+        )
+        parameter_search_parser.add_argument(
+            "--commission-percent",
+            type=float,
+            default=0.0,
+        )
+        parameter_search_parser.add_argument(
+            "--slippage-percent",
+            type=float,
+            default=0.0,
+        )
+        parameter_search_parser.add_argument(
+            "--metric",
+            default="net_profit",
+        )
+        parameter_search_parser.add_argument(
+            "--top",
+            type=int,
+            default=20,
+        )
+        parameter_search_parser.add_argument(
+            "--compact",
+            action="store_true",
+        )
+
         comparative_evaluation_parser = (
             subparsers.add_parser(
                 "run-comparative-hypothesis-evaluation",
