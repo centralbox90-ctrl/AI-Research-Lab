@@ -11,6 +11,7 @@ from flask import (
     render_template_string,
     request,
 )
+from werkzeug.exceptions import HTTPException
 
 from app.research_submission import (
     MarketResearchRunner,
@@ -81,6 +82,65 @@ class ExperimentExecutionHistoryForResultGetter(
         result_id: str,
     ) -> tuple[ExperimentExecution, ...]:
         ...
+
+
+_HTTP_ERROR_TITLES = {
+    400: "Некорректный запрос",
+    401: "Требуется авторизация",
+    403: "Доступ запрещён",
+    404: "Страница не найдена",
+    405: "Метод не поддерживается",
+    409: "Конфликт запроса",
+    413: "Слишком большой запрос",
+    422: "Некорректные данные",
+    429: "Слишком много запросов",
+    500: "Внутренняя ошибка сервера",
+}
+
+_HTTP_ERROR_DESCRIPTIONS = {
+    400: "Запрос содержит некорректные данные.",
+    401: "Для выполнения запроса требуется авторизация.",
+    403: "Доступ к запрошенному ресурсу запрещён.",
+    404: "Запрошенная страница не найдена.",
+    405: "Этот метод запроса не поддерживается.",
+    409: "Запрос конфликтует с текущим состоянием ресурса.",
+    413: "Размер запроса превышает допустимый предел.",
+    422: "Переданные данные не прошли проверку.",
+    429: "Получено слишком много запросов.",
+    500: "Во время обработки запроса произошла внутренняя ошибка.",
+}
+
+HTTP_ERROR_TEMPLATE = """
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>
+        {{ error_title }} · Лаборатория исследований ИИ
+    </title>
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='research_lab.css') }}"
+    >
+</head>
+<body>
+    <main>
+        <nav aria-label="Навигация">
+            <p>
+                <a href="{{ url_for('index') }}">
+                    Вернуться к панели исследований
+                </a>
+            </p>
+        </nav>
+
+        <section>
+            <h1>{{ error_title }}</h1>
+            <p>{{ error_description }}</p>
+        </section>
+    </main>
+</body>
+</html>
+"""
 
 
 INDEX_TEMPLATE = """
@@ -2665,6 +2725,36 @@ def create_app(
     app.config["SECRET_KEY"] = (
         secret_key or token_urlsafe(32)
     )
+
+    @app.errorhandler(HTTPException)
+    def handle_http_error(
+        error: HTTPException,
+    ) -> tuple[str, int]:
+        status_code = error.code or 500
+        default_description = getattr(
+            type(error),
+            "description",
+            None,
+        )
+
+        if error.description == default_description:
+            description = _HTTP_ERROR_DESCRIPTIONS.get(
+                status_code,
+                "Не удалось обработать запрос.",
+            )
+        else:
+            description = str(error.description)
+
+        title = _HTTP_ERROR_TITLES.get(
+            status_code,
+            "Ошибка запроса",
+        )
+
+        return render_template_string(
+            HTTP_ERROR_TEMPLATE,
+            error_title=title,
+            error_description=description,
+        ), status_code
 
     @app.get("/")
     def index() -> str:

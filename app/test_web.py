@@ -717,6 +717,13 @@ def test_web_artifact_details_returns_not_found():
 
     assert response.status_code == 404
 
+    body = response.get_data(as_text=True)
+
+    assert '<html lang="ru">' in body
+    assert "Страница не найдена" in body
+    assert "Запрошенная страница не найдена." in body
+    assert "Not Found" not in body
+
 
 def test_web_comparison_requires_both_ids():
 
@@ -732,10 +739,15 @@ def test_web_comparison_requires_both_ids():
 
     assert response.status_code == 400
 
+    body = response.get_data(as_text=True)
+
+    assert '<html lang="ru">' in body
+    assert "Некорректный запрос" in body
     assert (
         "Необходимо указать ID обоих результатов."
-        in response.get_data(as_text=True)
+        in body
     )
+    assert "Bad Request" not in body
 
 
 def test_web_comparison_returns_not_found():
