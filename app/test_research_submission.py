@@ -363,7 +363,12 @@ def test_research_submission_rejects_invalid_contract():
 
 def test_research_submission_rejects_oversized_file():
     runner = FakeMarketResearchRunner()
-    client = build_test_app(runner).test_client()
+    application = create_app(
+        research_runner=runner,
+        secret_key="test-secret",
+    )
+    application.config["TESTING"] = True
+    client = application.test_client()
     token = get_csrf_token(client)
 
     response = upload(
@@ -375,6 +380,16 @@ def test_research_submission_rejects_oversized_file():
     )
 
     assert response.status_code == 413
+
+    body = response.get_data(as_text=True)
+
+    assert '<html lang="ru">' in body
+    assert "Слишком большой запрос" in body
+    assert (
+        "Размер запроса превышает допустимый предел."
+        in body
+    )
+    assert "Request Entity Too Large" not in body
     assert runner.specifications == []
 
 
