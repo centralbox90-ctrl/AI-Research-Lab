@@ -8,6 +8,9 @@ from src.application.market_experiment_specification import (
     MarketExperimentSpecification,
     MarketPositionDirection,
 )
+from src.application.research_specification_loader import (
+    ResearchSpecificationLoader,
+)
 
 
 class MarketExperimentSpecificationLoader:
@@ -44,9 +47,33 @@ class MarketExperimentSpecificationLoader:
     _OPTIONAL_FIELDS = {
         "commission_percent",
         "slippage_percent",
+        "research_specification",
         "strategy_parameters",
         "tags",
     }
+
+    def __init__(
+        self,
+        research_specification_loader: (
+            ResearchSpecificationLoader | None
+        ) = None,
+    ) -> None:
+        if (
+            research_specification_loader is not None
+            and not isinstance(
+                research_specification_loader,
+                ResearchSpecificationLoader,
+            )
+        ):
+            raise TypeError(
+                "research_specification_loader must be a "
+                "ResearchSpecificationLoader or None"
+            )
+
+        self._research_specification_loader = (
+            research_specification_loader
+            or ResearchSpecificationLoader()
+        )
 
     def load(
         self,
@@ -105,6 +132,18 @@ class MarketExperimentSpecificationLoader:
         if not isinstance(tags, list):
             raise ValueError("tags must be an array")
 
+        research_payload = payload.get(
+            "research_specification"
+        )
+        research_specification = None
+
+        if research_payload is not None:
+            research_specification = (
+                self._research_specification_loader.from_dict(
+                    research_payload
+                )
+            )
+
         return MarketExperimentSpecification(
             executor_type=payload["executor_type"],
             question_title=payload["question_title"],
@@ -149,6 +188,7 @@ class MarketExperimentSpecificationLoader:
                 "slippage_percent",
                 0.0,
             ),
+            research_specification=research_specification,
             strategy_parameters=dict(strategy_parameters),
             tags=tuple(tags),
         )

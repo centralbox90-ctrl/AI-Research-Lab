@@ -13,6 +13,18 @@ from src.application.knowledge_research_questions_artifact_envelope_factory impo
 from src.application.market_research_campaign_artifact_envelope_factory import (
     MarketResearchCampaignArtifactEnvelopeFactory,
 )
+from src.application.generated_market_data_provider import (
+    GeneratedMarketDataProvider,
+)
+from src.application.hybrid_market_signal_provider import (
+    HybridMarketSignalProvider,
+)
+from src.application.market_data_provider_router import (
+    MarketDataProviderRouter,
+)
+from src.application.mt5_market_data_provider import (
+    Mt5MarketDataProvider,
+)
 from src.application.promote_hypothesis_evaluation_to_knowledge import (
     PromoteHypothesisEvaluationToKnowledge,
 )
@@ -271,6 +283,38 @@ def test_build_research_cli_configures_campaign_command(
         command._artifact_envelope_factory,
         MarketResearchCampaignArtifactEnvelopeFactory,
     )
+
+    data_provider = (
+        command
+        ._runner
+        ._session_factory
+        ._data_provider
+        ._provider
+    )
+
+    assert isinstance(
+        data_provider,
+        MarketDataProviderRouter,
+    )
+
+    assert isinstance(
+        data_provider._providers["generated"],
+        GeneratedMarketDataProvider,
+    )
+
+    assert isinstance(
+        data_provider._providers["mt5"],
+        Mt5MarketDataProvider,
+    )
+
+    assert isinstance(
+        command
+        ._runner
+        ._session_factory
+        ._signal_provider,
+        HybridMarketSignalProvider,
+    )
+
 
 def test_build_research_cli_configures_knowledge_command(
     tmp_path: Path,

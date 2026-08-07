@@ -226,3 +226,42 @@ def test_loader_rejects_non_array_tags() -> None:
         MarketExperimentSpecificationLoader().from_dict(
             payload,
         )
+def test_loader_creates_nested_research_specification() -> None:
+    payload = build_payload()
+
+    payload["research_specification"] = {
+        "indicator": {
+            "id": "rsi",
+            "version": 1,
+        },
+        "output": "rsi",
+        "profile": None,
+        "observation_type": "level_cross",
+        "signal_rule_id": "long_on_observation",
+        "calculation_parameters": {
+            "period": 14,
+        },
+        "observation_parameters": {
+            "level": 30.0,
+            "direction": "cross_below",
+        },
+    }
+
+    specification = (
+        MarketExperimentSpecificationLoader().from_dict(
+            payload
+        )
+    )
+
+    research = specification.research_specification
+
+    assert research is not None
+    assert research.indicator.indicator_id == "rsi"
+
+    assert (
+        research.observation_parameter_values
+        == {
+            "direction": "cross_below",
+            "level": 30.0,
+        }
+    )

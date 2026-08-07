@@ -34,11 +34,17 @@ from src.application.canonical_market_data_provider import (
 from src.application.generated_market_data_provider import (
     GeneratedMarketDataProvider,
 )
+from src.application.market_data_provider_router import (
+    MarketDataProviderRouter,
+)
 from src.application.git_code_version_provider import (
     GitCodeVersionProvider,
 )
 from src.application.git_command_runner import (
     GitCommandRunner,
+)
+from src.application.indicator_research_execution_factory import (
+    IndicatorResearchExecutionFactory,
 )
 from src.application.hypothesis_evaluation_artifact_envelope_factory import (
     HypothesisEvaluationArtifactEnvelopeFactory,
@@ -58,14 +64,17 @@ from src.application.knowledge_research_question_application import (
 from src.application.market_research_application import (
     build_market_research_application,
 )
+from src.application.market_signal_provider_factory import (
+    MarketSignalProviderFactory,
+)
+from src.application.mt5_market_data_provider import (
+    Mt5MarketDataProvider,
+)
 from src.application.market_research_campaign_artifact_envelope_factory import (
     MarketResearchCampaignArtifactEnvelopeFactory,
 )
 from src.application.promote_hypothesis_evaluation_to_knowledge import (
     PromoteHypothesisEvaluationToKnowledge,
-)
-from src.application.simple_market_signal_provider import (
-    SimpleMarketSignalProvider,
 )
 from src.cli.compare_research_artifacts_command import (
     CompareResearchArtifactsCommand,
@@ -101,6 +110,8 @@ from src.cli.run_market_research_campaign_command import (
 from src.cli.run_market_research_command import (
     RunMarketResearchCommand,
 )
+from src.indicators.catalog import IndicatorCatalog
+from src.indicators.discovery import discover_indicators
 from src.research.hypothesis_evaluation import (
     HypothesisEvaluationState,
 )
@@ -216,10 +227,31 @@ def build_research_cli(
         list_stored_research_cycles=list_stored_cycles,
     )
 
+    market_data_provider = MarketDataProviderRouter(
+        {
+            "generated": GeneratedMarketDataProvider(),
+            "mt5": Mt5MarketDataProvider(),
+        }
+    )
+
+    indicator_research_execution_service = (
+        IndicatorResearchExecutionFactory(
+            indicator_catalog=IndicatorCatalog(
+                discover_indicators()
+            ),
+        ).create()
+    )
+
+    market_signal_provider = MarketSignalProviderFactory(
+        indicator_research_execution_service=(
+            indicator_research_execution_service
+        ),
+    ).create()
+
     market_research_application = (
         build_market_research_application(
-            data_provider=GeneratedMarketDataProvider(),
-            signal_provider=SimpleMarketSignalProvider(),
+            data_provider=market_data_provider,
+            signal_provider=market_signal_provider,
             store=store,
             execution_recorder=execution_recorder,
         )
@@ -373,7 +405,7 @@ def build_research_cli(
     comparative_evaluation_command = (
         build_default_indicator_comparative_hypothesis_evaluation_command(
             data_provider=CanonicalMarketDataProvider(
-                GeneratedMarketDataProvider()
+                market_data_provider
             ),
             execution_recorder=execution_recorder,
             code_version=application_code_version,
