@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from datetime import datetime
 
 from src.application.market_data_provider import (
     CanonicalMarketDatasetProvider,
+)
+from src.application.canonical_market_dataset import (
+    CanonicalMarketDataset,
 )
 from src.application.market_experiment_mapper import (
     MarketExperimentMapper,
@@ -73,14 +77,31 @@ class MarketResearchCampaignSessionFactory:
             PreparedMarketBacktestExecutor,
         ] = {}
 
+        datasets_by_identity: dict[
+            tuple[str, str, str, datetime, datetime],
+            CanonicalMarketDataset,
+        ] = {}
+
         for specification, experiment in zip(
             specifications,
             mapped.experiments,
             strict=True,
         ):
-            dataset = self._data_provider.load(
+            data_identity = self._data_identity(
                 specification
             )
+
+            dataset = datasets_by_identity.get(
+                data_identity
+            )
+
+            if dataset is None:
+                dataset = self._data_provider.load(
+                    specification
+                )
+                datasets_by_identity[
+                    data_identity
+                ] = dataset
 
             context = self._context_factory.create(
                 specification=specification,
@@ -126,7 +147,17 @@ class MarketResearchCampaignSessionFactory:
             executor=campaign_executor,
         )
 
-
+    @staticmethod
+    def _data_identity(
+        specification: MarketExperimentSpecification,
+    ) -> tuple[str, str, str, datetime, datetime]:
+        return (
+            specification.data_source.strip().lower(),
+            specification.symbol.strip(),
+            specification.timeframe.strip(),
+            specification.start_at,
+            specification.end_at,
+        )
 
 
 

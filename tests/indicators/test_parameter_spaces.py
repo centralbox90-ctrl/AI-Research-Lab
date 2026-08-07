@@ -126,3 +126,40 @@ def test_float_parameter_rejects_wrong_type() -> None:
     assert not parameter.contains(True)
     assert not parameter.contains("-20")
     assert not parameter.contains(float("nan"))
+
+
+def test_integer_parameter_enumerates_declared_grid() -> None:
+    parameter = IntegerParameter(
+        minimum=10,
+        maximum=16,
+        default=12,
+        step=2,
+    )
+
+    assert parameter.grid_values() == (10, 12, 14, 16)
+
+
+def test_float_parameter_enumerates_decimal_grid() -> None:
+    parameter = FloatParameter(
+        minimum=-80.0,
+        maximum=-70.0,
+        default=-75.0,
+        step=1.0,
+    )
+
+    assert parameter.grid_values() == tuple(
+        float(value)
+        for value in range(-80, -69)
+    )
+
+
+def test_choice_parameter_exposes_declared_grid() -> None:
+    parameter = ChoiceParameter(
+        values=("cross_above", "cross_below"),
+        default="cross_above",
+    )
+
+    assert parameter.grid_values() == (
+        "cross_above",
+        "cross_below",
+    )

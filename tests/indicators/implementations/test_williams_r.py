@@ -1,41 +1,27 @@
-from src.indicators.implementations.williams_r import (
-    INDICATOR,
-)
+from src.indicators.implementations.williams_r import INDICATOR
 from src.indicators.parameter_spaces import (
-    ChoiceParameter,
+    FloatParameter,
+    IntegerParameter,
 )
 
 
-def test_indicator_declares_research_space() -> None:
-    assert INDICATOR.research_space is not None
-
-
-def test_indicator_supports_level_cross() -> None:
+def test_indicator_declares_parameter_search_space() -> None:
     research_space = INDICATOR.research_space
 
     assert research_space is not None
     assert research_space.observation_types == (
-        "level_cross",
+        "band_reentry",
     )
 
+    period = research_space.calculation_parameters["period"]
+    lower = research_space.observation_parameters["lower_level"]
+    upper = research_space.observation_parameters["upper_level"]
 
-def test_indicator_declares_direction_parameter() -> None:
-    research_space = INDICATOR.research_space
-
-    assert research_space is not None
-
-    direction = research_space.observation_parameters[
-        "direction"
-    ]
-
-    assert isinstance(
-        direction,
-        ChoiceParameter,
-    )
-
-    assert direction.values == (
-        "cross_above",
-        "cross_below",
-    )
-
-    assert direction.default == "cross_below"
+    assert isinstance(period, IntegerParameter)
+    assert period.grid_values() == tuple(range(10, 18))
+    assert isinstance(lower, FloatParameter)
+    assert lower.grid_values()[0] == -90.0
+    assert lower.grid_values()[-1] == -60.0
+    assert isinstance(upper, FloatParameter)
+    assert upper.grid_values()[0] == -40.0
+    assert upper.grid_values()[-1] == -10.0
